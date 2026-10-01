@@ -463,3 +463,10 @@ td input[type="checkbox"] { margin: 0 auto; }
   .avatar { width: 2.4rem; height: 2.4rem; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+.chat-tools { position: relative; flex: none; }
+.chat-menu { position: absolute; right: 0; top: calc(100% + .4rem); z-index: 20; width: min(19rem, 80vw); background: var(--card); border: 1px solid var(--line); border-radius: 1rem; box-shadow: 0 16px 36px rgba(43,27,46,.16); padding: .4rem; display: grid; gap: .15rem; }
+.chat-menu button { text-align: left; border: 0; background: none; border-radius: .75rem; padding: .65rem .75rem; cursor: pointer; display: grid; gap: .15rem; }
+.chat-menu button:hover { background: var(--blush); }
+.chat-menu button span { font-size: .78rem; color: var(--muted); }
+.chat-menu button.danger strong { color: #A33D52; }
+@media (max-width: 700px) { .chat-tools .btn { padding: .38rem .6rem; font-size: 0; } .chat-tools .btn span { margin-right: 0 !important; font-size: .8rem; } }
