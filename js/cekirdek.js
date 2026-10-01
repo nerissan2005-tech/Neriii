@@ -40,6 +40,17 @@ async function currentAdminHash() {
   return d.exists && d.data().passHash ? d.data().passHash : DEFAULT_ADMIN_HASH;
 }
 
+function applyTheme() {
+  let t = "auto";
+  try { t = (typeof data !== "undefined" && data && data.theme) || localStorage.getItem("neriii-theme") || "auto"; } catch (e) {}
+  try { localStorage.setItem("neriii-theme", t); } catch (e) {}
+  const dark = t === "dark" || (t === "auto" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  document.documentElement.dataset.theme = dark ? "dark" : "light";
+  const m = document.querySelector('meta[name="theme-color"]');
+  if (m) m.content = dark ? "#1A1320" : "#2B1B2E";
+}
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => applyTheme());
+
 function defaults() {
   return { city: "", journal: {}, favAff: [], affStart: todayKey, visPref: {}, v3: true };
 }
@@ -266,6 +277,11 @@ function go(view, opts) {
 
 function render() {
   if (!me) return;
+  const more = !TAB_MAIN.includes(state.view);
+  document.querySelectorAll("#tabbar button").forEach(b => {
+    const on = b.dataset.view === state.view || (b.dataset.view === "more" && more);
+    if (on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+  });
   document.querySelectorAll("#nav button").forEach(b => {
     if (b.dataset.view === state.view) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
   });
@@ -304,7 +320,7 @@ function card(o) {
   );
 }
 
-const VIS_OPTS = [["private", "Sadece ben", "lock", "Diğer profiller göremez, yönetici görebilir"], ["public", "Herkes", "users", "Tüm profiller görebilir"]];
+const VIS_OPTS = [["private", "Kişisel", "lock", "Kişisel"], ["public", "Herkese açık", "users", "Tüm profiller görebilir"]];
 function visSwitch(cur, onPick, label) {
   const wrap = h("div", { class: "vis", role: "group", "aria-label": label || "Kimler görsün" });
   VIS_OPTS.forEach(([v, l, ic, tip]) => wrap.append(h("button", {
@@ -327,7 +343,7 @@ function whoTag(it) {
 function visBtn(it) {
   if (!isMine(it)) return null;
   const pub = it.vis === "public";
-  return h("button", { class: "icon-btn sm", type: "button", title: pub ? "Sadece bana özel yap" : "Herkesle paylaş", "aria-label": pub ? "Sadece bana özel yap" : "Herkesle paylaş",
+  return h("button", { class: "icon-btn sm", type: "button", title: pub ? "Kişisel yap" : "Herkesle paylaş", "aria-label": pub ? "Kişisel yap" : "Herkesle paylaş",
     html: ico(pub ? "users" : "lock", 16), onclick: () => updItem(it, { vis: pub ? "private" : "public" }) });
 }
 function delBtn(it, label, ask) {

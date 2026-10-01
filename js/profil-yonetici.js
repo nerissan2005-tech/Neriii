@@ -19,6 +19,95 @@ function shrinkImage(file, size) {
   });
 }
 
+function lastSeenCard() {
+  const list = allProfiles.slice().sort((a, b) => (b.lastSeen || 0) - (a.lastSeen || 0));
+  return card({ title: "Son görülme", icon: "users", span: "span-6", tint: "t-sage", body: [
+    h("div", { class: "seen-list" }, list.map(p => h("div", { class: "seen-row" },
+      avatar(p),
+      h("div", { style: "flex:1;min-width:0" }, h("strong", {}, p.name, p.uid === me.uid ? " (sen)" : ""),
+        h("div", { class: "tag" + (isOnline(p) || p.uid === me.uid ? " online" : ""), text: p.uid === me.uid ? "Çevrimiçi" : seenText(p) || "Henüz giriş yapmadı" })),
+      p.disabled ? h("span", { class: "role off", text: "Devre dışı" }) : null
+    )))
+  ] });
+}
+
+function backupCard() {
+  const msg = h("p", { class: "ok" });
+  return card({ title: "Sitenin yedeği", icon: "book", span: "span-6", body: [
+    h("p", { class: "empty", text: "Tüm profillerin, kayıtların, mesajların ve duyuruların yedeğini tek dosya olarak indirir." }),
+    h("div", { class: "row", style: "margin-top:1rem" },
+      h("button", { class: "btn primary", type: "button", text: "Tüm yedeği indir", onclick: async e => {
+        const b = e.currentTarget;
+        b.disabled = true; msg.className = "ok"; msg.textContent = "Hazırlanıyor…";
+        try {
+          const [items, msgs, siteDoc] = await Promise.all([itemsCol().get(), db.collection("messages").get(), db.collection("config").doc("site").get()]);
+          const dump = {
+            tarih: new Date().toISOString(),
+            profiller: allProfiles.map(p => { const x = Object.assign({}, p); delete x.photo; return x; }),
+            kayitlar: items.docs.map(d => Object.assign({ id: d.id }, d.data())),
+            mesajlar: msgs.docs.map(d => Object.assign({ id: d.id }, d.data())),
+            duyuru: siteDoc.exists ? siteDoc.data() : {}
+          };
+          const url = URL.createObjectURL(new Blob([JSON.stringify(dump, null, 2)], { type: "application/json" }));
+          const a = h("a", { href: url, download: "neriii-yedek-" + todayKey + ".json" });
+          document.body.append(a); a.click(); a.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+          msg.textContent = dump.kayitlar.length + " kayıt ve " + dump.mesajlar.length + " mesaj indirildi.";
+        } catch (ex) { msg.className = "err"; msg.textContent = "Yedek alınamadı, tekrar dene."; }
+        b.disabled = false;
+      } })),
+    msg
+  ] });
+}
+
+let installPrompt = null;
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installPrompt = e; if (state.view === "settings") render(); });
+window.addEventListener("appinstalled", () => { installPrompt = null; showToast("Neriii yüklendi ♡", "Artık ana ekranından açabilirsin."); });
+
+function themeCard() {
+  const cur = (data.theme || "auto");
+  const opts = [["light", "Açık", "sun"], ["dark", "Koyu", "moon"], ["auto", "Otomatik", "star"]];
+  const standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  return h("div", {},
+    h("p", { class: "empty", text: "Otomatik seçilirse telefonun ya da bilgisayarın gece moduna göre değişir." }),
+    h("div", { class: "vis theme-switch", role: "group", "aria-label": "Görünüm" }, opts.map(([v, l, ic]) =>
+      h("button", { type: "button", "aria-pressed": cur === v ? "true" : "false", onclick: () => { data.theme = v; save(); applyTheme(); render(); } },
+        h("span", { html: ico(ic, 14), style: "display:grid" }), l))),
+    h("div", { class: "install-box" },
+      h("strong", { text: "Uygulama olarak yükle" }),
+      standalone ? h("p", { class: "empty", text: "Neriii zaten uygulama olarak açık ♡" })
+        : installPrompt ? h("div", {}, h("p", { class: "empty", text: "Neriii'yi ana ekranına ekle, tarayıcı çubuğu olmadan tam ekran açılsın." }),
+            h("button", { class: "btn primary", type: "button", style: "margin-top:.7rem", text: "Uygulamayı yükle", onclick: async () => { installPrompt.prompt(); await installPrompt.userChoice; installPrompt = null; render(); } }))
+        : h("p", { class: "empty", text: ios ? "Safari'de alttaki Paylaş simgesine bas, sonra Ana Ekrana Ekle'yi seç." : "Tarayıcının menüsünden Ana ekrana ekle ya da Uygulamayı yükle seçeneğini kullan." })
+    )
+  );
+}
+
+function notifyCard() {
+  const supported = "Notification" in window;
+  const perm = supported ? Notification.permission : "denied";
+  const on = supported && perm === "granted" && data.notify !== false;
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) && !window.matchMedia("(display-mode: standalone)").matches;
+  let note;
+  if (!supported) note = ios ? "iPhone'da bildirimler için siteyi Paylaş menüsünden Ana Ekrana Ekle ile ekleyip oradan açman gerekiyor." : "Bu tarayıcı bildirimleri desteklemiyor.";
+  else if (perm === "denied") note = "Bildirimler tarayıcı ayarlarından engellenmiş. Adres çubuğundaki kilit simgesinden bildirimlere izin verebilirsin.";
+  else note = on ? "Yeni bir mesaj geldiğinde, site başka bir sekmede ya da arka planda açıkken bildirim alırsın." : "Yeni mesaj geldiğinde bildirim almak için aç.";
+  return h("div", {},
+    h("p", { class: "empty", text: note }),
+    supported && perm !== "denied" ? h("div", { class: "row", style: "margin-top:1rem" },
+      h("button", { class: "btn " + (on ? "" : "primary"), type: "button", text: on ? "Bildirimleri kapat" : "Bildirimleri aç", onclick: async () => {
+        if (on) { data.notify = false; save(); render(); return; }
+        const r = perm === "granted" ? "granted" : await Notification.requestPermission();
+        data.notify = r === "granted";
+        save(); render();
+        if (r === "granted") notify("Bildirimler açık ♡", "Yeni mesajların artık bildirim olarak gelecek.");
+      } }),
+      on ? h("button", { class: "btn", type: "button", text: "Deneme bildirimi", onclick: () => notify("Neriii ♡", "Bildirimler çalışıyor.") }) : null
+    ) : null
+  );
+}
+
 function renderSettings() {
   const cityMsg = h("p", { class: "ok" });
   const nameMsg = h("p", { class: "err" });
@@ -110,17 +199,25 @@ function renderSettings() {
         )]
       }),
       card({
-        title: "Verilerim", icon: "book", span: "span-6",
+        title: "Görünüm ve uygulama", icon: "moon", span: "span-6", tint: "t-peach",
+        body: [themeCard()]
+      }),
+      card({
+        title: "Bildirimler", icon: "bell", span: "span-6", tint: "t-lilac",
+        body: [notifyCard()]
+      }),
+      card({
+        title: "Hesap", icon: "logout", span: "span-6",
         body: [
-          h("p", { class: "empty", style: "margin-bottom:1rem", text: "Verilerin hesabında saklanır, hangi cihazdan girersen gir aynısını görürsün. Sadece ben olarak kaydettiklerini diğer profiller göremez, yönetici görebilir." }),
+          h("p", { class: "empty", style: "margin-bottom:1rem", text: "Verilerin hesabında saklanır, hangi cihazdan girersen gir aynısını görürsün." }),
           h("div", { class: "row" },
-            h("button", { class: "btn", type: "button", text: "Verilerimi indir", onclick: () => {
+            me.isAdmin ? h("button", { class: "btn", type: "button", text: "Verilerimi indir", onclick: () => {
               const mine = [...allItems().values()].filter(isMine);
               const url = URL.createObjectURL(new Blob([JSON.stringify({ profil: me.name, ayarlar: data, kayitlar: mine }, null, 2)], { type: "application/json" }));
-              const a = h("a", { href: url, download: "nerii-" + slugOf(me.name) + "-" + todayKey + ".json" });
+              const a = h("a", { href: url, download: "neriii-" + slugOf(me.name) + "-" + todayKey + ".json" });
               document.body.append(a); a.click(); a.remove();
               setTimeout(() => URL.revokeObjectURL(url), 1000);
-            } }),
+            } }) : null,
             h("button", { class: "btn primary", type: "button", text: "Çıkış yap", onclick: logout })
           )
         ]
@@ -337,7 +434,7 @@ function renderAdmin() {
           annMsg
         ]
       }),
-      adminChatsCard(),
+      lastSeenCard(),
       card({
         title: "Yönetici şifresi", icon: "lock", span: "span-6",
         body: [h("form", { onsubmit: async e => {
@@ -361,6 +458,8 @@ function renderAdmin() {
           apMsg
         )]
       }),
+      backupCard(),
+      adminChatsCard(),
       allItemsCard()
     )
   );

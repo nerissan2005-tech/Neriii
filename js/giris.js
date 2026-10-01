@@ -163,6 +163,7 @@ async function startApp(user) {
   $("login").replaceChildren();
   $("appRoot").hidden = false;
   $("band").hidden = false;
+  $("tabbar").hidden = false;
   const paintMe = () => {
     $("logoName").textContent = me.name + " ♡";
     $("logoShort").textContent = initial(me.name) + "♡";
@@ -170,6 +171,12 @@ async function startApp(user) {
     if (ab) ab.hidden = !me.isAdmin;
   };
   paintMe();
+  applyTheme();
+
+  const beat = () => { if (me && document.visibilityState === "visible") db.collection("profiles").doc(me.uid).update({ lastSeen: Date.now() }).catch(() => {}); };
+  beat();
+  presenceTimer = setInterval(beat, 60000);
+  document.addEventListener("visibilitychange", beat);
 
   let firstIn = true;
   unsubs.push(db.collection("profiles").onSnapshot(snap => {
@@ -200,6 +207,9 @@ async function startApp(user) {
     } else {
       snap.docChanges().forEach(ch => {
         const m = Object.assign({ id: ch.doc.id }, ch.doc.data());
+        if (ch.type === "added" && !m.read && !m.unsent && (document.visibilityState !== "visible" || !document.hasFocus())) {
+          notify(m.fromName + " sana yazdı", msgPreview(m), m.id, "messages", m.from);
+        }
         if (ch.type === "added" && !m.read && !m.unsent && !(state.view === "messages" && state.chatWith === m.from && document.visibilityState === "visible")) {
           showToast(m.fromName + " sana yazdı", msgPreview(m), () => go("messages", { chatWith: m.from }), "Cevap ver");
         }
@@ -232,7 +242,10 @@ async function startApp(user) {
   }, () => {}));
 }
 
+let presenceTimer = null;
 function logout() {
+  clearInterval(presenceTimer);
+  if (me && db) db.collection("profiles").doc(me.uid).update({ lastSeen: Date.now() - 3 * 60000, typingTo: "", typingAt: 0 }).catch(() => {});
   lockAdmin();
   if (saveTimer) pushData();
   flushItems();
@@ -274,6 +287,9 @@ function updateHeader() {
   ab.textContent = me.photo ? "" : initial(me.name);
   ab.style.backgroundImage = me.photo ? "url(\"" + me.photo + "\")" : "";
   ab.classList.toggle("has-photo", !!me.photo);
+  document.title = unread ? "(" + unread + ") Neriii" : "Neriii";
+  const tb = document.querySelector('#tabbar button[data-view="messages"] .ti-ic');
+  if (tb) { const old = tb.querySelector(".badge"); if (old) old.remove(); if (unread) tb.append(h("span", { class: "badge", text: String(unread) })); }
   const mBtn = document.querySelector('#nav button[data-view="messages"] .lbl');
   if (mBtn) mBtn.textContent = unread ? "Mesajlar (" + unread + ")" : "Mesajlar";
 }
@@ -333,6 +349,49 @@ $("bellBtn").addEventListener("click", () => {
 $("avatarBtn").addEventListener("click", () => go("settings"));
 
 
+let swReg = null;
+if ("serviceWorker" in navigator && location.protocol === "https:") {
+  navigator.serviceWorker.register("sw.js").then(r => { swReg = r; }).catch(() => {});
+  navigator.serviceWorker.addEventListener("message", e => {
+    const d = e.data || {};
+    if (d.type === "open" && me) go(d.view || "home", d.chatWith ? { chatWith: d.chatWith } : {});
+  });
+}
+function notify(title, body, tag, view, chatWith) {
+  if (!("Notification" in window) || Notification.permission !== "granted" || data.notify === false) return;
+  const opts = { body, icon: "icons/icon-192.png", badge: "icons/icon-192.png", tag: tag || "neriii", data: { view: view || "home", chatWith: chatWith || null } };
+  if (swReg && swReg.showNotification) { swReg.showNotification(title, opts).catch(() => {}); return; }
+  try {
+    const n = new Notification(title, opts);
+    n.onclick = () => { window.focus(); if (view) go(view, chatWith ? { chatWith } : {}); n.close(); };
+  } catch (e) {}
+}
+
+function openSheet() {
+  const sh = $("sheet");
+  const close = () => { sh.classList.remove("show"); setTimeout(() => { sh.hidden = true; sh.replaceChildren(); }, 200); };
+  const items = VIEWS.filter(([v]) => !TAB_MAIN.includes(v) && (v !== "admin" || (me && me.isAdmin)));
+  sh.replaceChildren(
+    h("div", { class: "sheet-back", onclick: close }),
+    h("div", { class: "sheet-panel", role: "dialog", "aria-modal": "true", "aria-label": "Diğer bölümler" },
+      h("div", { class: "sheet-grab" }),
+      h("div", { class: "sheet-grid" },
+        items.map(([v, label, icon]) => h("button", { type: "button", "aria-current": state.view === v ? "page" : null, onclick: () => { close(); go(v); } },
+          h("span", { class: "sheet-ic", html: ico(icon, 22) }), h("span", { text: label }))),
+        h("button", { type: "button", class: "out", onclick: () => { close(); logout(); } },
+          h("span", { class: "sheet-ic", html: ico("logout", 22) }), h("span", { text: "Çıkış yap" }))
+      )
+    )
+  );
+  sh.hidden = false;
+  requestAnimationFrame(() => sh.classList.add("show"));
+}
+
+$("tabbar").append(...TAB_MAIN.map(v => {
+  const [, label, icon] = VIEWS.find(x => x[0] === v);
+  return h("button", { type: "button", "data-view": v, onclick: () => go(v) }, h("span", { class: "ti-ic", html: ico(icon, 22) }), h("span", { class: "ti-l", text: v === "affirm" ? "Olumlama" : v === "home" ? "Ana Sayfa" : label }));
+}), h("button", { type: "button", "data-view": "more", onclick: openSheet }, h("span", { class: "ti-ic", html: ico("menu", 22) }), h("span", { class: "ti-l", text: "Daha fazla" })));
+
 $("nav").append(...VIEWS.map(([v, label, icon]) =>
   h("button", { type: "button", "data-view": v, title: label, hidden: v === "admin", onclick: () => go(v) }, h("span", { html: ico(icon, 21), style: "display:grid" }), h("span", { class: "lbl", text: label }))
 ));
@@ -340,6 +399,8 @@ $("nav").append(h("button", { type: "button", class: "logout", title: "Çıkış
 
 window.addEventListener("hashchange", () => { if (!me) return; const v = location.hash.slice(1); if (v !== state.view) go(v); });
 setInterval(tick, 20000);
+
+applyTheme();
 
 if (!FB_READY || typeof firebase === "undefined") {
   showLogin();

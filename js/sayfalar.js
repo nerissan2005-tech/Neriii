@@ -199,7 +199,7 @@ function renderAffirm() {
   const list = shown.length ? h("ul", { class: "aff-list" }, shown.map(x => h("li", {},
     h("div", { style: "flex:1;min-width:0" },
       h("p", { text: x.text }),
-      h("div", { class: "aff-meta" }, catTag(x.cat), h("span", { text: fmtDate.format(x.date) }), x.item ? (whoTag(x.item) || h("span", { text: "Sadece sen" })) : null)
+      h("div", { class: "aff-meta" }, catTag(x.cat), h("span", { text: fmtDate.format(x.date) }), x.item ? (whoTag(x.item) || h("span", { text: "Kişisel" })) : null)
     ),
     h("button", { class: "fav" + (isFav(x.text) ? " on" : ""), type: "button", "aria-pressed": isFav(x.text) ? "true" : "false",
       "aria-label": isFav(x.text) ? "Favorilerden çıkar" : "Favorilere ekle", html: ico("heart", 19), onclick: () => toggleFav(x.text) }),
@@ -443,7 +443,7 @@ function renderJournal() {
   }
 
   return h("div", {},
-    pageHead("Günlük", "Ruh halin, şükrettiklerin ve aklından geçenler. Her günü sadece kendine ya da herkese açık kaydedebilirsin."),
+    pageHead("Günlük", "Ruh halin, şükrettiklerin ve aklından geçenler. Her günü kişisel ya da herkese açık kaydedebilirsin."),
     h("div", { class: "grid" },
       main,
       card({

@@ -40,6 +40,29 @@ function insertAtCaret(el, text) {
   state.msgDraft = el.value;
 }
 
+const REACTIONS = ["❤️", "😂", "😮", "😢", "👍", "🙏"];
+function toggleReaction(m, emoji) {
+  const F = firebase.firestore;
+  const cur = (m.reactions || {})[me.uid];
+  state.msgMenu = null;
+  db.collection("messages").doc(m.id).update(new F.FieldPath("reactions", me.uid), cur === emoji ? F.FieldValue.delete() : emoji)
+    .catch(() => showToast("Tepki eklenemedi", "İnternet bağlantını kontrol et."));
+  render();
+}
+
+function seenText(p) {
+  if (!p || !p.lastSeen) return "";
+  const diff = Date.now() - p.lastSeen;
+  if (diff < 2.5 * 60000) return "Çevrimiçi";
+  const d = new Date(p.lastSeen);
+  const k = keyOf(d);
+  if (k === todayKey) return "Son görülme bugün " + fmtTime.format(d);
+  if (k === keyOf(addDays(today, -1))) return "Son görülme dün " + fmtTime.format(d);
+  return "Son görülme " + fmtShort.format(d) + " " + fmtTime.format(d);
+}
+const isOnline = p => !!(p && p.lastSeen && Date.now() - p.lastSeen < 2.5 * 60000);
+const isTypingTo = p => !!(p && p.typingTo === me.uid && Date.now() - (p.typingAt || 0) < 6000);
+
 function bubbleNode(m, opts) {
   const mine = m.from === me.uid;
   const d = new Date(m.at);
@@ -49,6 +72,9 @@ function bubbleNode(m, opts) {
     : m.sticker ? (st => h("span", { class: "sticker s-" + (st ? st[2] : "float"), title: st ? st[3] : "", text: st ? st[1] : "✨" }))(stickerOf(m.sticker))
     : document.createTextNode(m.text);
   const actions = [];
+  const reacts = Object.entries(m.reactions || {});
+  if (!opts.readOnly && !m.unsent) actions.push(h("div", { class: "react-row" }, REACTIONS.map(r =>
+    h("button", { type: "button", "aria-label": r + " tepkisi", "aria-pressed": (m.reactions || {})[me.uid] === r ? "true" : "false", text: r, onclick: () => toggleReaction(m, r) }))));
   if (!opts.readOnly) {
     if (!m.unsent && m.text) actions.push(h("button", { type: "button", text: "Kopyala", onclick: async () => { try { await navigator.clipboard.writeText(m.text); } catch (e) {} state.msgMenu = null; render(); } }));
     if (mine && !m.unsent) actions.push(h("button", { type: "button", text: "Geri çek", onclick: async () => {
@@ -67,9 +93,12 @@ function bubbleNode(m, opts) {
   } }));
   const isRight = opts.rightUid ? m.from === opts.rightUid : mine;
   return h("div", { class: "msg-line" + (isRight ? " right" : "") },
-    h("div", { class: "bubble" + (isRight ? " mine" : "") + (m.sticker && !m.unsent ? " is-sticker" : "") },
+    h("div", { class: "bubble" + (isRight ? " mine" : "") + (m.sticker && !m.unsent ? " is-sticker" : "") + (reacts.length ? " has-react" : ""),
+      ondblclick: opts.readOnly || m.unsent ? null : () => toggleReaction(m, "❤️") },
       content,
-      h("small", { text: (opts.admin ? (m.fromName || "") + ", " : "") + fmtTime.format(d) + (mine && m.read && !m.unsent && !opts.readOnly ? ", okundu" : "") })),
+      h("small", { text: (opts.admin ? (m.fromName || "") + ", " : "") + fmtTime.format(d) + (mine && m.read && !m.unsent && !opts.readOnly ? ", okundu" : "") }),
+      reacts.length ? h("span", { class: "reacts", title: reacts.map(([u, r]) => ((profileOf(u) || {}).name || (u === me.uid ? me.name : "")) + " " + r).join(", ") },
+        [...new Set(reacts.map(x => x[1]))].join(""), reacts.length > 1 ? h("b", { text: String(reacts.length) }) : null) : null),
     actions.length ? h("button", { class: "msg-more", type: "button", "aria-label": "Mesaj seçenekleri", "aria-expanded": menuOpen ? "true" : "false", text: "⋯",
       onclick: () => { state.msgMenu = menuOpen ? null : m.id; render(); } }) : null,
     menuOpen ? h("div", { class: "msg-menu" }, actions) : null
@@ -123,6 +152,20 @@ async function unsendAll(mine, other) {
   render();
 }
 
+let typingTimer = null;
+let typingSentAt = 0, typingState = "";
+function sendTyping(to, on) {
+  const now = Date.now();
+  if (on) {
+    if (typingState === to && now - typingSentAt < 2500) return;
+    typingState = to; typingSentAt = now;
+    db.collection("profiles").doc(me.uid).update({ typingTo: to, typingAt: now }).catch(() => {});
+  } else if (typingState) {
+    typingState = ""; typingSentAt = 0;
+    db.collection("profiles").doc(me.uid).update({ typingTo: "", typingAt: 0 }).catch(() => {});
+  }
+}
+
 function renderMessages() {
   const all = allMessages();
   const withUser = uid => all.filter(m => (m.from === uid && m.to === me.uid) || (m.from === me.uid && m.to === uid));
@@ -161,7 +204,7 @@ function renderMessages() {
       const un = unreadFrom(p.uid);
       return h("button", { type: "button", "aria-current": p.uid === state.chatWith ? "true" : "false", onclick: () => { state.chatWith = p.uid; state.msgMenu = null; state.chatMenu = false; state.focus = "#msgInput"; render(); } },
         avatar(p),
-        h("span", { class: "meta" }, h("strong", { text: p.name }), h("span", { text: last ? (last.from === me.uid ? "Sen: " : "") + msgPreview(last) : "Yeni sohbet" })),
+        h("span", { class: "meta" }, h("strong", {}, p.name, isOnline(p) ? h("i", { class: "dot-online", title: "Çevrimiçi" }) : null), h("span", { class: isTypingTo(p) ? "typing-tag" : "", text: isTypingTo(p) ? "yazıyor…" : last ? (last.from === me.uid ? "Sen: " : "") + msgPreview(last) : "Yeni sohbet" })),
         un ? h("span", { class: "unread", text: String(un) }) : null
       );
     })) : h("p", { class: "empty", text: "Henüz bir sohbetin yok. Yeni mesaj'a dokunup kime yazmak istediğini seç." })) : null
@@ -195,6 +238,7 @@ function renderMessages() {
       const text = input.value.trim();
       if (!text) return;
       input.value = ""; state.msgDraft = "";
+      sendTyping(other.uid, false);
       if (!(await sendMsg({ text }))) { input.value = text; state.msgDraft = text; }
     };
 
@@ -211,7 +255,9 @@ function renderMessages() {
     ) : null;
 
     chatCard = h("section", { class: "card" },
-      h("div", { class: "thread-head" }, avatar(other), h("div", { style: "flex:1;min-width:0" }, h("strong", { text: other.name }), h("div", { class: "tag", text: other.gone ? "Bu profil artık yok" : "Mesajlarınızı sadece siz ve yönetici görebilir" })),
+      h("div", { class: "thread-head" }, avatar(other), h("div", { style: "flex:1;min-width:0" }, h("strong", { text: other.name }), other.gone ? h("div", { class: "tag", text: "Bu profil artık yok" })
+          : isTypingTo(other) ? h("div", { class: "tag typing-tag", text: "yazıyor…" })
+          : seenText(other) ? h("div", { class: "tag" + (isOnline(other) ? " online" : ""), text: seenText(other) }) : null),
         thread.length ? h("div", { class: "chat-tools" },
           h("button", { class: "btn small", type: "button", "aria-expanded": state.chatMenu ? "true" : "false", onclick: () => { state.chatMenu = !state.chatMenu; render(); } },
             h("span", { html: ico("trash", 15), style: "display:inline-grid;vertical-align:-2px;margin-right:.35rem" }), "Sohbeti temizle"),
@@ -224,14 +270,23 @@ function renderMessages() {
               h("strong", { text: "Herkes için kalıcı sil" }), h("span", { text: "Sohbetin tamamı iki taraftan da tamamen silinir." })) : null
           ) : null
         ) : null),
-      threadNode(thread, { empty: other.name + " ile henüz mesajın yok. İlk mesajı sen yaz ♡", keepScroll: !!state.msgMenu }),
+      (() => {
+        const box = threadNode(thread, { empty: other.name + " ile henüz mesajın yok. İlk mesajı sen yaz ♡", keepScroll: !!state.msgMenu });
+        if (isTypingTo(other)) {
+          box.append(h("div", { class: "msg-line" }, h("div", { class: "bubble typing" }, h("i"), h("i"), h("i"))));
+          clearTimeout(typingTimer);
+          typingTimer = setTimeout(() => { if (state.view === "messages") scheduleRender(); }, 6200 - (Date.now() - (other.typingAt || 0)));
+        }
+        return box;
+      })(),
       other.gone ? h("p", { class: "empty", text: "Bu profile artık mesaj gönderilemiyor." }) : h("div", {},
         panel,
         h("form", { class: "composer", onsubmit: e => { e.preventDefault(); send(); } },
           h("button", { class: "icon-btn emoji-btn", type: "button", "aria-label": "Emoji ve çıkartmalar", "aria-pressed": state.emojiOpen ? "true" : "false", text: "😊",
             onclick: () => { state.emojiOpen = !state.emojiOpen; render(); } }),
           h("textarea", { id: "msgInput", class: "field", rows: "1", placeholder: other.name + " için bir mesaj yaz…", "aria-label": "Mesaj",
-            oninput: e => { state.msgDraft = e.target.value; },
+            oninput: e => { state.msgDraft = e.target.value; sendTyping(other.uid, !!e.target.value.trim()); },
+            onblur: () => sendTyping(other.uid, false),
             onkeydown: e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } } }, state.msgDraft || ""),
           h("button", { class: "btn primary", type: "submit", "aria-label": "Gönder", html: ico("send", 18) })
         )
@@ -239,7 +294,7 @@ function renderMessages() {
     );
   }
 
-  return h("div", {}, pageHead("Mesajlar", "Kime yazmak istediğini seç. Sohbetlerini sadece sen, karşındaki kişi ve yönetici görebilir."), h("div", { class: "chat" }, list, chatCard));
+  return h("div", {}, pageHead("Mesajlar", "Kime yazmak istediğini seç ve sohbete başla."), h("div", { class: "chat" }, list, chatCard));
 }
 
 async function loadAdminChats() {
