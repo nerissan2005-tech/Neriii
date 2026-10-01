@@ -90,6 +90,39 @@ function threadNode(list, opts) {
   return box;
 }
 
+async function runInBatches(list, fn) {
+  for (let i = 0; i < list.length; i += 400) {
+    const batch = db.batch();
+    list.slice(i, i + 400).forEach(m => fn(batch, db.collection("messages").doc(m.id)));
+    await batch.commit();
+  }
+}
+
+async function clearChat(thread, other, forAll) {
+  state.chatMenu = false;
+  const ok = await ask(forAll
+    ? { title: other.name + " ile sohbet herkes için silinsin mi?", text: thread.length + " mesaj iki taraftan da kalıcı olarak silinir. Bu işlem geri alınamaz.", ok: "Kalıcı sil", danger: true }
+    : { title: other.name + " ile sohbet temizlensin mi?", text: thread.length + " mesaj senin ekranından kalkar. Karşı taraf mesajları görmeye devam eder.", ok: "Temizle", danger: true });
+  if (!ok) { render(); return; }
+  try {
+    if (forAll) await runInBatches(thread, (b, ref) => b.delete(ref));
+    else await runInBatches(thread, (b, ref) => b.update(ref, { hidden: firebase.firestore.FieldValue.arrayUnion(me.uid) }));
+    state.chatWith = null;
+    showToast(forAll ? "Sohbet herkes için silindi" : "Sohbet temizlendi");
+  } catch (e) { showToast("Sohbet temizlenemedi", "İnternet bağlantını kontrol edip tekrar dene."); }
+  render();
+}
+
+async function unsendAll(mine, other) {
+  state.chatMenu = false;
+  if (!(await ask({ title: "Gönderdiğin mesajlar geri çekilsin mi?", text: other.name + " ile sohbette gönderdiğin " + mine.length + " mesaj iki taraftan da geri çekilir.", ok: "Geri çek", danger: true, icon: "chat" }))) { render(); return; }
+  try {
+    await runInBatches(mine, (b, ref) => b.update(ref, { unsent: true, text: "", sticker: null }));
+    showToast("Mesajların geri çekildi");
+  } catch (e) { showToast("Geri çekilemedi", "İnternet bağlantını kontrol edip tekrar dene."); }
+  render();
+}
+
 function renderMessages() {
   const all = allMessages();
   const withUser = uid => all.filter(m => (m.from === uid && m.to === me.uid) || (m.from === me.uid && m.to === uid));
@@ -126,7 +159,7 @@ function renderMessages() {
     !picker ? (convs.length ? h("div", { class: "people" }, convs.map(p => {
       const last = withUser(p.uid).slice(-1)[0];
       const un = unreadFrom(p.uid);
-      return h("button", { type: "button", "aria-current": p.uid === state.chatWith ? "true" : "false", onclick: () => { state.chatWith = p.uid; state.msgMenu = null; state.focus = "#msgInput"; render(); } },
+      return h("button", { type: "button", "aria-current": p.uid === state.chatWith ? "true" : "false", onclick: () => { state.chatWith = p.uid; state.msgMenu = null; state.chatMenu = false; state.focus = "#msgInput"; render(); } },
         avatar(p),
         h("span", { class: "meta" }, h("strong", { text: p.name }), h("span", { text: last ? (last.from === me.uid ? "Sen: " : "") + msgPreview(last) : "Yeni sohbet" })),
         un ? h("span", { class: "unread", text: String(un) }) : null
@@ -143,6 +176,7 @@ function renderMessages() {
       h("button", { class: "btn primary", type: "button", text: "Yeni mesaj", onclick: () => { state.msgPicker = true; state.focus = "#pickQ"; render(); } }));
   } else {
     const thread = withUser(other.uid);
+    const mine = thread.filter(m => m.from === me.uid && !m.unsent);
     const toMark = thread.filter(m => m.to === me.uid && !m.read && !markedRead.has(m.id));
     if (toMark.length) {
       const batch = db.batch();
@@ -177,7 +211,19 @@ function renderMessages() {
     ) : null;
 
     chatCard = h("section", { class: "card" },
-      h("div", { class: "thread-head" }, avatar(other), h("div", {}, h("strong", { text: other.name }), h("div", { class: "tag", text: other.gone ? "Bu profil artık yok" : "Mesajlarınızı sadece siz ve yönetici görebilir" }))),
+      h("div", { class: "thread-head" }, avatar(other), h("div", { style: "flex:1;min-width:0" }, h("strong", { text: other.name }), h("div", { class: "tag", text: other.gone ? "Bu profil artık yok" : "Mesajlarınızı sadece siz ve yönetici görebilir" })),
+        thread.length ? h("div", { class: "chat-tools" },
+          h("button", { class: "btn small", type: "button", "aria-expanded": state.chatMenu ? "true" : "false", onclick: () => { state.chatMenu = !state.chatMenu; render(); } },
+            h("span", { html: ico("trash", 15), style: "display:inline-grid;vertical-align:-2px;margin-right:.35rem" }), "Sohbeti temizle"),
+          state.chatMenu ? h("div", { class: "chat-menu" },
+            h("button", { type: "button", onclick: () => clearChat(thread, other, false) },
+              h("strong", { text: "Benden temizle" }), h("span", { text: "Mesajlar sadece senin ekranından kalkar, " + other.name + " görmeye devam eder." })),
+            mine.length ? h("button", { type: "button", onclick: () => unsendAll(mine, other) },
+              h("strong", { text: "Gönderdiklerimi geri çek" }), h("span", { text: "Senin gönderdiğin " + mine.length + " mesaj iki taraftan da geri çekilir." })) : null,
+            me.isAdmin ? h("button", { type: "button", class: "danger", onclick: () => clearChat(thread, other, true) },
+              h("strong", { text: "Herkes için kalıcı sil" }), h("span", { text: "Sohbetin tamamı iki taraftan da tamamen silinir." })) : null
+          ) : null
+        ) : null),
       threadNode(thread, { empty: other.name + " ile henüz mesajın yok. İlk mesajı sen yaz ♡", keepScroll: !!state.msgMenu }),
       other.gone ? h("p", { class: "empty", text: "Bu profile artık mesaj gönderilemiyor." }) : h("div", {},
         panel,
