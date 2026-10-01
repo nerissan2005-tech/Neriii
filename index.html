@@ -264,6 +264,40 @@ td input[type="checkbox"] { margin: 0 auto; }
 .band p { margin: 0; font-family: "Caveat", cursive; font-size: 1.75rem; }
 .band i { display: block; width: 5rem; height: 1px; background: rgba(232,220,229,.4); }
 
+
+.hero .cat, .aff-hero .cat { background: rgba(255,255,255,.2); color: #fff; }
+.cat { display: inline-block; font-size: .74rem; font-weight: 700; padding: .16rem .6rem; border-radius: 999px; background: color-mix(in srgb, var(--c) 15%, white); color: var(--c); white-space: nowrap; }
+.aff-hero {
+  position: relative; overflow: hidden; border-radius: 1.15rem; padding: 2rem 2.25rem; margin-bottom: 1.25rem; color: #FFF6F1; box-shadow: var(--shadow);
+  background: radial-gradient(circle at 86% 22%, rgba(255,240,208,.4), transparent 28%), linear-gradient(135deg, #36234D, #7B4E72 55%, #E59A86);
+}
+.aff-hero::after {
+  content: ""; position: absolute; right: 12%; top: 18%; width: 2.6rem; height: 2.6rem; background: #FFF8E6;
+  clip-path: polygon(50% 0, 57% 43%, 100% 50%, 57% 57%, 50% 100%, 43% 57%, 0 50%, 43% 43%);
+  filter: drop-shadow(0 0 14px rgba(255,240,200,.9));
+}
+.aff-top { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; position: relative; }
+.aff-count { font-size: .85rem; opacity: .85; }
+.aff-big { position: relative; font-family: "Caveat", cursive; font-weight: 500; font-size: clamp(2.2rem, 4.5vw, 3.3rem); line-height: 1.08; margin: 1rem 0 1.4rem; max-width: 20ch; text-shadow: 0 2px 14px rgba(40,18,40,.35); }
+.aff-note { position: relative; font-size: .82rem; opacity: .82; margin: 1.1rem 0 0; }
+.btn.light { background: rgba(255,255,255,.16); border-color: rgba(255,255,255,.35); color: #fff; display: inline-flex; gap: .45rem; align-items: center; }
+.btn.light[aria-pressed="true"] { background: #fff; color: var(--plum); }
+.btn.light[aria-pressed="true"] svg path { fill: currentColor; }
+.chips { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .75rem; }
+.chips button { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: .38rem .85rem; cursor: pointer; font-size: .84rem; }
+.chips button small { color: var(--muted); margin-left: .25rem; }
+.chips button[aria-pressed="true"] { background: var(--plum); border-color: var(--plum); color: #fff; }
+.chips button[aria-pressed="true"] small { color: #E8DCE5; }
+.aff-list { list-style: none; margin: 0; padding: 0; }
+.aff-list li { display: flex; gap: .5rem; align-items: flex-start; padding: .95rem 0; border-bottom: 1px solid var(--line); }
+.aff-list li:last-child { border-bottom: 0; }
+.aff-list p { margin: 0 0 .4rem; font-size: 1rem; }
+.aff-meta { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; font-size: .78rem; color: var(--muted); }
+.fav { border: 0; background: none; cursor: pointer; color: #C9B5C1; width: 2.1rem; height: 2.1rem; display: grid; place-items: center; border-radius: .65rem; flex: none; }
+.fav:hover { background: var(--blush); }
+.fav.on { color: var(--rose); }
+.fav.on svg path { fill: currentColor; }
+
 @media (max-width: 1300px) {
   .span-9 { grid-column: span 12; }
   .span-3 { grid-column: span 6; }
@@ -355,7 +389,6 @@ const ICONS = {
   heart: "M12 20s-7-4.5-9-9a4.5 4.5 0 0 1 9-2 4.5 4.5 0 0 1 9 2c-2 4.5-9 9-9 9z",
   cart: "M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 8H6.2M9 20.5h.01M17 20.5h.01",
   book: "M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 21V5M19 19v2H6",
-  chef: "M7 3v8a2 2 0 0 0 4 0V3M9 11v10M17 3c-2 0-3 2-3 6s1 5 3 5v7",
   settings: "M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1M15 4v4M9 10v4M17 16v4",
   plus: "M12 5v14M5 12h14",
   search: "M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4",
@@ -369,7 +402,6 @@ const ICONS = {
 const ico = (n, s) => '<svg viewBox="0 0 24 24" width="' + (s || 20) + '" height="' + (s || 20) + '" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + ICONS[n] + '"/></svg>';
 const DOODLES = {
   leaf: "M12 60 C 24 44 34 30 52 6 M24 44 c -10 -2 -14 -10 -12 -18 c 8 2 12 8 12 18 M31 34 c 8 -6 16 -6 20 0 c -6 6 -14 6 -20 0 M39 23 c -8 -4 -10 -12 -6 -18 c 6 4 8 10 6 18",
-  whisk: "M40 60 L30 36 M30 36 C 12 30 10 8 22 4 C 34 0 44 22 30 36 M30 36 C 20 26 18 10 22 4 M30 36 C 34 24 32 8 22 4",
   flag: "M2 60 L 22 28 L 31 40 L 42 22 L 62 60 M42 22 V 4 L 54 8 L 42 12 M14 60 c 6 -4 10 -4 14 0",
   basket: "M6 28 H58 L52 58 H12 Z M18 28 L28 8 M46 28 L36 8 M20 36 V50 M32 36 V50 M44 36 V50",
   sprout: "M32 60 V30 M32 40 C 20 40 12 32 12 20 C 24 20 32 28 32 40 M32 30 C 32 18 40 10 52 10 C 52 22 44 30 32 30",
@@ -379,12 +411,12 @@ const doodle = n => h("span", { class: "doodle", "aria-hidden": "true", html: '<
 
 const VIEWS = [
   ["home", "Ana Sayfa", "home"],
+  ["affirm", "Olumlamalar", "star"],
   ["notes", "Notlar", "note"],
   ["goals", "Hedefler", "target"],
   ["habits", "Alışkanlıklar", "repeat"],
   ["calendar", "Takvim", "calendar"],
   ["journal", "Günlük", "heart"],
-  ["recipes", "Tarifler", "chef"],
   ["shopping", "Alışveriş Listesi", "cart"],
   ["books", "Okuma Listesi", "book"],
   ["settings", "Ayarlar", "settings"]
@@ -393,53 +425,400 @@ const TILES = [
   ["journal", "Duygu Günlüğü", "Bugünün ruh hali ve şükran listesi", "heart", "#C46A8A"],
   ["books", "Okuma Listesi", "Okunacaklar, okuduklarım ve bitenler", "book", "#6F8F78"],
   ["habits", "Alışkanlıklar", "Her gün küçük bir adım, uzun seriler", "repeat", "#E0975A"],
-  ["recipes", "Tarifler", "Sevdiğin tarifler tek bir yerde", "chef", "#8C6BB1"],
+  ["affirm", "Olumlamalar", "Aşk, bolluk, şükür ve daha fazlası", "star", "#8C6BB1"],
   ["goals", "Hedefler", "Hayallerini adım adım takip et", "target", "#5B2E4F"],
   ["calendar", "Takvim", "Günlerini önceden planla", "calendar", "#4F7FA3"]
 ];
 
-const AFFIRMATIONS = [
-  "Bugün kendime nazik davranmayı seçiyorum.",
-  "Yeterliyim, olduğum gibi değerliyim.",
-  "Her küçük adım beni hedefime yaklaştırıyor.",
-  "Hatalarım bana öğretir, beni tanımlamaz.",
-  "Kendime güveniyorum ve sezgilerimi dinliyorum.",
-  "Bugün enerjimi beni büyüten şeylere harcıyorum.",
-  "Değişime açığım ve her gün gelişiyorum.",
-  "Sınırlarımı korumak kendime duyduğum saygıdır.",
-  "Zorluklar beni güçlendiriyor.",
-  "Hayatımdaki güzelliklere şükrediyorum.",
-  "Kendi hızımda ilerlemek bana yeter.",
-  "Düşüncelerimi seçebilirim, bugün iyi olanı seçiyorum.",
-  "İçimde ihtiyacım olan gücü taşıyorum.",
-  "Dinlenmek de ilerlemenin bir parçası.",
-  "Kendimi dünkü halimle kıyaslıyorum, başkalarıyla değil.",
-  "Sevgiyi vermeyi ve almayı hak ediyorum.",
-  "Bugün elimden gelenin en iyisini yapıyorum ve bu yeterli.",
-  "Korkularım var ama onlardan büyüğüm.",
-  "Yeni başlangıçlar için hiçbir zaman geç değil.",
-  "Bedenime ve zihnime iyi bakıyorum.",
-  "Her gün biraz daha cesurum.",
-  "Hayallerim planlarımla gerçekleşiyor.",
-  "Kontrol edemediklerimi bırakıyorum.",
-  "Sesim önemli, onu kullanmaktan çekinmiyorum.",
-  "Bugün kendimle gurur duyacağım bir şey yapacağım.",
-  "Huzur içimde başlıyor.",
-  "Başarı benim için mümkün ve yakın.",
-  "Kendimi affediyorum ve yoluma devam ediyorum.",
-  "Disiplinim kendime verdiğim bir hediye.",
-  "Bugün merakla öğrenmeye açığım.",
-  "Hayatımın yazarı benim.",
-  "Güzel insanları ve fırsatları hayatıma çekiyorum.",
-  "Sakin kalabilirim, nefesim benim çapam.",
-  "Emeklerimin karşılığını alacağıma inanıyorum.",
-  "Bugün kendime zaman ayırıyorum.",
-  "Kusurlarımla birlikte bütünüm.",
-  "Her sabah yeni bir şans getiriyor.",
-  "Yolumu kaybetsem de yıldızım beni bulur.",
-  "Küçük alışkanlıklar büyük değişimler yaratır.",
-  "Bugün iyi ki varım."
-];
+const AFF_CATS = ["Aşk", "Bolluk ve Para", "Şükür", "Özgüven", "Sağlık", "Huzur", "Başarı"];
+const CAT_COLORS = { "Aşk": "#C0567D", "Bolluk ve Para": "#B9781F", "Şükür": "#5E8A6A", "Özgüven": "#8459AE", "Sağlık": "#3F84A0", "Huzur": "#6A6FB0", "Başarı": "#5B2E4F" };
+const AFF = {
+  "Aşk": [
+    "Sevgiye layık biriyim.",
+    "Kalbim sevgiyi vermeye ve almaya açık.",
+    "Hayatımda sevgi dolu ilişkiler büyüyor.",
+    "Önce kendimi seviyorum, sevgi bana kolayca geliyor.",
+    "Beni olduğum gibi seven insanlarla çevriliyim.",
+    "Sevgiyi korkusuzca ifade ediyorum.",
+    "İlişkilerimde saygı ve güven var.",
+    "Kalbimi iyileştiriyor ve yeniden açıyorum.",
+    "Sevildiğimi hissetmeye kendime izin veriyorum.",
+    "Bana iyi gelen sevgiyi hayatıma çekiyorum.",
+    "Sevdiklerimle aramdaki bağ her gün güçleniyor.",
+    "Sevgi benim doğal halim.",
+    "Kendime şefkatle bakıyorum.",
+    "Eski kırgınlıkları bırakıyor, sevgiye yer açıyorum.",
+    "Aşk hayatıma doğru zamanda geliyor.",
+    "Sınırlarımı koruyarak sevebiliyorum.",
+    "Sevgiyi hak etmek için değişmem gerekmiyor.",
+    "Her gün kendimle daha barışığım.",
+    "Kalbimdeki sevgi etrafıma yayılıyor.",
+    "İçten ve dürüst ilişkiler kuruyorum.",
+    "Sevmek de sevilmek de benim için güvenli.",
+    "Kendimi sevdikçe dünya da bana sevgiyle dönüyor.",
+    "Bana değer veren insanları fark ediyorum.",
+    "İlişkilerimde anlaşılmış ve dinlenmiş hissediyorum.",
+    "Sevgimi küçük jestlerle gösteriyorum.",
+    "Ailemle ve dostlarımla sevgi dolu anlar yaşıyorum.",
+    "Kalbim yumuşak ama güçlü.",
+    "Kendime âşık olmayı öğreniyorum.",
+    "Geçmişin yükü olmadan seviyorum.",
+    "Doğru insan beni olduğum gibi kabul ediyor.",
+    "Sevgi bende eksik değil, bolca var.",
+    "Affetmek kalbimi özgürleştiriyor.",
+    "Yakın olmaktan korkmuyorum.",
+    "Sevgiyi kıyaslamadan, beklentisiz veriyorum.",
+    "Her ilişki bana yeni bir şey öğretiyor.",
+    "Kendi değerimi biliyor, seçimlerimi buna göre yapıyorum.",
+    "Sıcaklık ve şefkat hayatımın merkezinde.",
+    "Sevgi dolu sözler söylüyor, sevgi dolu sözler duyuyorum.",
+    "Kalbimin sesini dinliyorum.",
+    "Yalnız olduğumda da tamım.",
+    "Sevgi her gün beni yeniden buluyor.",
+    "İlişkilerim beni büyütüyor.",
+    "Kendime gösterdiğim nezaket başkalarına da yansıyor.",
+    "Mutlu bir ilişkiyi hak ediyorum.",
+    "Sevgiyi kabul etmekte zorlanmıyorum.",
+    "Sevdiğim insanlara zaman ayırıyorum.",
+    "Kalbim hem cesur hem nazik.",
+    "Aşk benim için huzur demek.",
+    "Bugün birine sevgimi söyleyeceğim.",
+    "Birlikte gülmek, birlikte büyümek bana iyi geliyor.",
+    "Sevginin her türlüsüne açığım.",
+    "Kendimi sevdiğim her gün daha çok parlıyorum.",
+    "Sevgi dolu bir hayat kuruyorum."
+  ],
+  "Bolluk ve Para": [
+    "Para bana kolaylıkla ve bolca geliyor.",
+    "Bolluğu hak ediyorum.",
+    "Emeklerimin karşılığını fazlasıyla alıyorum.",
+    "Parayla sağlıklı ve huzurlu bir ilişkim var.",
+    "Gelirim her geçen gün artıyor.",
+    "Paramı bilinçli ve akıllıca yönetiyorum.",
+    "Yeni gelir kapıları önümde açılıyor.",
+    "Bolluk zihniyetiyle düşünüyorum.",
+    "Harcadığım her kuruş bana bereketle geri dönüyor.",
+    "Finansal özgürlüğe her gün yaklaşıyorum.",
+    "Yeteneklerim bana kazanç getiriyor.",
+    "Hayatımda her şeyin fazlası var.",
+    "Paranın iyi bir enerji olduğuna inanıyorum.",
+    "Birikimlerim düzenli olarak büyüyor.",
+    "Fırsatları görüyor ve değerlendiriyorum.",
+    "Borçlarımdan kurtuluyor, ferahlıyorum.",
+    "Cömert olmak bana daha fazlasını getiriyor.",
+    "Değerimi biliyor, emeğimin hakkını istiyorum.",
+    "Para hayallerimi gerçekleştirmeme yardım ediyor.",
+    "Evren bana her gün bolluk gönderiyor.",
+    "Kazanmak benim için doğal ve kolay.",
+    "Finansal kararlarımı güvenle veriyorum.",
+    "Sahip olduklarım için minnettarım, daha fazlası yolda.",
+    "Bereket evimde ve hayatımda.",
+    "Zenginlik benim için mümkün.",
+    "Para konusunda kendimi güvende hissediyorum.",
+    "İşimi severek yapıyor, bolca kazanıyorum.",
+    "Beklenmedik yerlerden güzel kazançlar geliyor.",
+    "Her gün daha bilinçli harcıyorum.",
+    "Kıtlık korkularını bırakıyorum.",
+    "Bolluğun akışına güveniyorum.",
+    "Kendi kazancımı yaratma gücüne sahibim.",
+    "Maddi hedeflerime adım adım ulaşıyorum.",
+    "Para bana özgürlük ve seçenek sunuyor.",
+    "Bugün bolluk için yeni bir adım atıyorum.",
+    "Başkalarının başarısına sevinebiliyorum, sıra bana da geliyor.",
+    "Bütçem dengede, zihnim rahat.",
+    "Hem kazanmayı hem paylaşmayı seviyorum.",
+    "Yaratıcılığım bana yeni gelir fikirleri getiriyor.",
+    "Para hakkındaki eski inançlarımı yeniliyorum.",
+    "Geleceğim için sağlam bir temel kuruyorum.",
+    "Her ay biraz daha fazla biriktiriyorum.",
+    "İhtiyacım olan her şey bana zamanında geliyor.",
+    "Bolluk içinde yaşamak benim hakkım.",
+    "Değer kattıkça kazancım artıyor.",
+    "Paraya açık ve hazırım.",
+    "Maddi konularda sakin ve bilinçliyim.",
+    "Bereketli bir yılın içindeyim.",
+    "Zenginliğim sadece paramda değil, hayatımın her yerinde.",
+    "Yatırımlarım ve emeklerim meyve veriyor.",
+    "Kazandıkça daha çok iyilik yapabiliyorum.",
+    "Bolluk kapımı çalıyor, kapıyı açıyorum.",
+    "Finansal huzur içinde yaşıyorum."
+  ],
+  "Şükür": [
+    "Bugün nefes alabildiğim için şükrediyorum.",
+    "Hayatımdaki küçük mucizeleri fark ediyorum.",
+    "Sahip olduklarım bana yetiyor.",
+    "Sevdiklerim için minnettarım.",
+    "Her sabah yeni bir gün için şükrediyorum.",
+    "Başımın üstündeki çatı için minnettarım.",
+    "Soframa gelen her lokma için şükrediyorum.",
+    "Zor günlerin bana öğrettikleri için minnettarım.",
+    "Bedenimin benim için yaptığı her şeye teşekkür ediyorum.",
+    "Güneşin sıcaklığı için şükrediyorum.",
+    "Hayatıma giren güzel insanlar için minnettarım.",
+    "Bugün gülümsememe sebep olan şeyleri sayıyorum.",
+    "Şükrettikçe hayatım daha da güzelleşiyor.",
+    "Geçmişime teşekkür ediyor, bugüne kucak açıyorum.",
+    "Sağlığım için minnettarım.",
+    "Öğrenebildiğim her şey için şükrediyorum.",
+    "Sıradan anların değerini biliyorum.",
+    "Bir fincan çayın huzuru için minnettarım.",
+    "Dostlarımın varlığı için şükrediyorum.",
+    "Bu kadar yol geldiğim için kendime teşekkür ediyorum.",
+    "Doğanın güzelliği karşısında minnettarım.",
+    "Bugün bana verilen fırsatlar için şükrediyorum.",
+    "Kalbim minnetle dolu.",
+    "Ailemin sevgisi için minnettarım.",
+    "Gülebildiğim her an için şükrediyorum.",
+    "Bana yardım eden herkese teşekkür ediyorum.",
+    "Yaşadığım her deneyim beni zenginleştiriyor.",
+    "Zihnimin berraklığı için minnettarım.",
+    "Bugünün sessizliği için şükrediyorum.",
+    "Sahip olmadıklarım yerine sahip olduklarıma bakıyorum.",
+    "Yağmurun sesi için bile minnettarım.",
+    "Uyandığım her sabah bir hediye.",
+    "İyiliğe şahit olduğum her an için şükrediyorum.",
+    "Hayallerim olduğu için minnettarım.",
+    "Güvende olduğum için şükrediyorum.",
+    "Bana iyi gelen alışkanlıklarım için minnettarım.",
+    "Küçük şeylerle mutlu olabildiğim için şükrediyorum.",
+    "Hayatın bana sunduğu ikinci şanslar için minnettarım.",
+    "Yıldızlı bir gecenin güzelliği için şükrediyorum.",
+    "Okuduğum kitaplar ve öğrendiklerim için minnettarım.",
+    "Kendime ayırabildiğim zaman için şükrediyorum.",
+    "Kalbimi ısıtan anılar için minnettarım.",
+    "Şükür benim için bir yaşam biçimi.",
+    "Bugün beni güldüren her şeye teşekkür ediyorum.",
+    "Hayatın akışına teşekkür ediyorum.",
+    "Bugün de bir şeylere sevinebildiğim için minnettarım.",
+    "Bana bir şey öğreten herkese şükrediyorum.",
+    "Evimin sıcaklığı için minnettarım.",
+    "Beni dinleyen ve anlayan insanlar için şükrediyorum.",
+    "Her yeni mevsim için minnettarım.",
+    "Zorlukların ardından gelen huzur için şükrediyorum.",
+    "Olduğum kişi için minnettarım.",
+    "Şimdi, burada olduğum için şükrediyorum."
+  ],
+  "Özgüven": [
+    "Kendime inanıyorum.",
+    "Yeterliyim, olduğum gibi değerliyim.",
+    "Sesim önemli ve onu kullanmaktan çekinmiyorum.",
+    "Kararlarımın arkasında duruyorum.",
+    "Kendime güveniyorum ve sezgilerimi dinliyorum.",
+    "Başkalarının onayına ihtiyacım yok.",
+    "Güçlü yanlarımı biliyor ve kullanıyorum.",
+    "Hatalarım bana öğretir, beni tanımlamaz.",
+    "Kendimi dünkü halimle kıyaslıyorum, başkalarıyla değil.",
+    "Korkularım var ama onlardan büyüğüm.",
+    "Her gün biraz daha cesurum.",
+    "Hayır demek benim hakkım.",
+    "Kendimi ifade etmekten keyif alıyorum.",
+    "Olduğum kişiden gurur duyuyorum.",
+    "İçimde ihtiyacım olan gücü taşıyorum.",
+    "Zorluklarla başa çıkabilirim.",
+    "Kusurlarımla birlikte bütünüm.",
+    "Kendi yolumu kendim çiziyorum.",
+    "Yeni şeyler denemekten korkmuyorum.",
+    "Fikirlerim değerli.",
+    "Kendime verdiğim sözleri tutuyorum.",
+    "Aynaya baktığımda gördüğüm kişiyi seviyorum.",
+    "Benim ışığım kimseyle yarışmıyor.",
+    "Hayatımın yazarı benim.",
+    "Kendi değerimi başkalarının sözlerine bırakmıyorum.",
+    "Zor anlarda bile kendime destek oluyorum.",
+    "Kendimi küçültmeden var olabiliyorum.",
+    "Başarabileceğime inanıyorum.",
+    "İçimdeki eleştirmeni nazikçe susturuyorum.",
+    "Kendim olmak benim süper gücüm.",
+    "Korkuya rağmen adım atıyorum, cesaret budur.",
+    "Kendimi affediyorum ve yoluma devam ediyorum.",
+    "Düşüncelerimi açıkça söyleyebiliyorum.",
+    "Benim gibi biri daha yok, bu harika.",
+    "Hayatta yer kaplamaya hakkım var.",
+    "Kendi kararlarımı vermekte özgürüm.",
+    "Eleştiriyi büyümek için kullanıyorum.",
+    "Kendimi her gün biraz daha iyi tanıyorum.",
+    "İçimdeki çocuğa güven veriyorum.",
+    "Sınırlarımı korumak kendime duyduğum saygıdır.",
+    "Başkalarının ne düşündüğü beni durdurmuyor.",
+    "Duruşum dik, bakışım net.",
+    "Kendimi kanıtlamak zorunda değilim.",
+    "Hata yapmaktan korkmadan deniyorum.",
+    "Yeteneklerime güveniyorum.",
+    "Her yeni gün kendime güvenimi artırıyor.",
+    "Kendim için en iyisini istemekten çekinmiyorum.",
+    "Zayıf anlarım da beni ben yapıyor.",
+    "Kendi ritmimde ilerlemek bana yeter.",
+    "İçimdeki güce dokunuyorum.",
+    "Kendimle gurur duyacağım seçimler yapıyorum.",
+    "Ben yeterliyim, her zaman da yeterliydim.",
+    "Bugün kendime inanmak için bir sebep daha buluyorum."
+  ],
+  "Sağlık": [
+    "Bedenim güçlü ve sağlıklı.",
+    "Her nefesimle yenileniyorum.",
+    "Bedenimi seviyor ve ona iyi bakıyorum.",
+    "Bana iyi gelen yiyecekleri seçiyorum.",
+    "Hücrelerim her gün kendini yeniliyor.",
+    "Hareket etmek bana enerji veriyor.",
+    "Uykum derin ve dinlendirici.",
+    "Bedenimin sinyallerini dinliyorum.",
+    "Su içmek bedenime gösterdiğim bir sevgi.",
+    "Enerjim gün boyu dengeli.",
+    "Dinlenmek de iyileşmenin bir parçası.",
+    "Zihnim ve bedenim uyum içinde.",
+    "Her gün biraz daha zindeyim.",
+    "Bedenim kendini iyileştirmeyi biliyor.",
+    "Sağlıklı alışkanlıklar benim için kolaylaşıyor.",
+    "Yürüyüşlerim bana nefes aldırıyor.",
+    "Stresi bedenimden nazikçe bırakıyorum.",
+    "Bedenime teşekkür ediyorum.",
+    "Kendime iyi bakmak benim önceliğim.",
+    "Sağlığım en büyük hazinem.",
+    "Bugün bedenim için güzel bir şey yapıyorum.",
+    "Nefesim sakin ve derin.",
+    "Bedenimi kıyaslamadan kabul ediyorum.",
+    "Gücüm her gün artıyor.",
+    "Esnek, hafif ve canlı hissediyorum.",
+    "İyi beslenmek bana keyif veriyor.",
+    "Bedenimin bilgeliğine güveniyorum.",
+    "Ekrandan uzaklaşıp kendime dönüyorum.",
+    "Gün ışığı bana iyi geliyor.",
+    "Bedenimdeki gerginliği bırakıyorum.",
+    "Sağlıklı bir hayatı hak ediyorum.",
+    "Her adımım bedenime bir hediye.",
+    "Sağlığımın sorumluluğunu sevgiyle alıyorum.",
+    "Zihinsel sağlığıma da özen gösteriyorum.",
+    "Ritmimi buluyor ve ona saygı duyuyorum.",
+    "İyileşmek için sabırlıyım.",
+    "Bedenimle barışığım.",
+    "Her gün biraz daha güçleniyorum.",
+    "Sabahları enerjiyle uyanıyorum.",
+    "Bedenimi dinlemek beni güçlendiriyor.",
+    "Sağlıklı seçimler yapmak bana doğal geliyor.",
+    "Gülmek bedenime şifa veriyor.",
+    "Kendime ayırdığım her dakika sağlığıma bir yatırım.",
+    "Bedenim benim evim, ona özenle bakıyorum.",
+    "Dengeli bir yaşam kuruyorum.",
+    "Hareket etmeyi seviyorum.",
+    "Sağlık ve canlılık benim doğal halim.",
+    "Zihnimi de bedenim kadar besliyorum.",
+    "Yorgunluğumu dinlenerek onarıyorum.",
+    "Bedenim her gün benim için çalışıyor, ona minnettarım.",
+    "İyi hissetmek benim hakkım.",
+    "Sağlıklı alışkanlıklarım uzun ve mutlu bir hayat kuruyor.",
+    "Bugün kendime şefkatle bakıyorum."
+  ],
+  "Huzur": [
+    "Huzur içimde başlıyor.",
+    "Sakin kalabilirim, nefesim benim çapam.",
+    "Kontrol edemediklerimi bırakıyorum.",
+    "Şu an, burada, güvendeyim.",
+    "Zihnim berrak ve sakin.",
+    "Her şeyin olması gerektiği gibi olduğuna güveniyorum.",
+    "Acele etmeden yaşıyorum.",
+    "Düşüncelerimi seçebilirim, bugün iyi olanı seçiyorum.",
+    "Kaygılarımı nazikçe bırakıyorum.",
+    "Yavaşlamak bana iyi geliyor.",
+    "İç sesim yumuşak ve sakin.",
+    "Huzuru küçük anlarda buluyorum.",
+    "Geçmişi bırakıyor, şimdiye dönüyorum.",
+    "Geleceği dert etmeden bugünü yaşıyorum.",
+    "Kalbim hafif, zihnim dingin.",
+    "Sessizlik bana güç veriyor.",
+    "Her nefeste biraz daha gevşiyorum.",
+    "Gerginliği bırakmak benim elimde.",
+    "İçimdeki fırtına geçiyor, deniz duruluyor.",
+    "Hayatın akışına teslim oluyorum.",
+    "Kendime yavaşlama izni veriyorum.",
+    "Etrafımda karmaşa olsa da içim sakin.",
+    "Huzurlu bir ev, huzurlu bir zihin yaratıyorum.",
+    "Bugün kendime nazik davranmayı seçiyorum.",
+    "Dinlenmek de ilerlemenin bir parçası.",
+    "Mükemmel olmak zorunda değilim.",
+    "Her şeyi bir anda çözmem gerekmiyor.",
+    "Güzel düşüncelerle uykuya dalıyorum.",
+    "Kalbim dinginlikle dolu.",
+    "Bırakmak beni özgürleştiriyor.",
+    "Doğada huzurumu buluyorum.",
+    "Endişe yerine güveni seçiyorum.",
+    "Her sabaha sakin bir zihinle başlıyorum.",
+    "Hayatımdaki karmaşayı sadeleştiriyorum.",
+    "Barış önce içimde, sonra çevremde.",
+    "Sorunlarımı sakin bir kafayla çözüyorum.",
+    "Bana ağır gelenleri bırakıyorum.",
+    "Huzurumu bozan şeylere sınır koyuyorum.",
+    "Şimdiki an bana yetiyor.",
+    "Nefesimi izliyorum, zihnim yavaşlıyor.",
+    "Kendimle baş başa kalmaktan keyif alıyorum.",
+    "İç huzurum dış koşullara bağlı değil.",
+    "Bugün hiçbir şeyi zorlamıyorum.",
+    "Ruhum dinleniyor.",
+    "Her şey yolunda, ben de yolundayım.",
+    "Kendi iç sesime güveniyorum.",
+    "Zihnimi sevgiyle sakinleştiriyorum.",
+    "Hafiflemeye kendime izin veriyorum.",
+    "Akşamları günün yükünü bırakıyorum.",
+    "Huzur benim doğal halim.",
+    "Sükûnet içimde büyüyor.",
+    "Bugün dingin ve dengedeyim.",
+    "Yolumu kaybetsem de yıldızım beni bulur."
+  ],
+  "Başarı": [
+    "Her küçük adım beni hedefime yaklaştırıyor.",
+    "Başarı benim için mümkün ve yakın.",
+    "Hayallerim planlarımla gerçekleşiyor.",
+    "Hedeflerime odaklanıyorum.",
+    "Disiplinim kendime verdiğim bir hediye.",
+    "Bugün kendimle gurur duyacağım bir şey yapacağım.",
+    "Zorluklar beni güçlendiriyor.",
+    "Emeklerimin karşılığını alacağıma inanıyorum.",
+    "Küçük alışkanlıklar büyük değişimler yaratır.",
+    "Yeni başlangıçlar için hiçbir zaman geç değil.",
+    "Fırsatlar beni buluyor, ben de hazırım.",
+    "Her gün bir öncekinden daha iyiyim.",
+    "Vazgeçmeden devam ediyorum.",
+    "Başarıyı kendi tanımımla yaşıyorum.",
+    "Odaklandığım şey büyüyor.",
+    "Kararlılığım beni ileri taşıyor.",
+    "Öğrenmeye ve gelişmeye açığım.",
+    "Bugün merakla öğreniyorum.",
+    "Planlarım bir bir gerçeğe dönüşüyor.",
+    "Başarısızlık, başarıya giden yolun bir parçası.",
+    "Yapabileceğimin en iyisini yapıyorum.",
+    "Hedeflerim beni heyecanlandırıyor.",
+    "Zamanımı akıllıca kullanıyorum.",
+    "Her deneme beni biraz daha ustalaştırıyor.",
+    "Başkalarının başarısı bana ilham veriyor.",
+    "Yeteneklerimi dünyayla paylaşıyorum.",
+    "Sabırla ve istikrarla ilerliyorum.",
+    "Önümdeki engelleri birer basamağa çeviriyorum.",
+    "Büyük hayaller kurmaya cesaretim var.",
+    "İşimi tutkuyla yapıyorum.",
+    "Bugün ertelemeden başlıyorum.",
+    "Kendi potansiyelimin farkındayım.",
+    "Başarı emeğimin doğal bir sonucu.",
+    "Bitirdiğim her iş beni güçlendiriyor.",
+    "Doğru insanlar ve fırsatlar yolumda.",
+    "Hedefime giden yolu adım adım yürüyorum.",
+    "Kendime koyduğum hedeflere ulaşıyorum.",
+    "Çalışkanlığım meyvesini veriyor.",
+    "Geri adım atsam da yolumdan dönmüyorum.",
+    "Yaratıcılığım beni farklı kılıyor.",
+    "Kariyerimde istediğim yere doğru ilerliyorum.",
+    "Kazandığım her küçük zafer önemli.",
+    "İlerlememi kutlamayı unutmuyorum.",
+    "Yeni beceriler öğrenmek bana keyif veriyor.",
+    "Bugün bir adım daha atıyorum.",
+    "Hayallerimi ertelemiyorum.",
+    "Başarıyı hak ediyorum.",
+    "Hedeflerime kendi hızımda ulaşıyorum.",
+    "Odak, sabır ve inançla ilerliyorum.",
+    "Başlamak bitirmenin yarısıdır, başlıyorum.",
+    "Her sabah hedeflerime yeniden bağlanıyorum.",
+    "Yaptığım işle fark yaratıyorum.",
+    "Gelecekteki ben, bugünkü emeğim için bana teşekkür edecek."
+  ]
+};
 const SOFT_NOTES = [
   "Küçük mutluluklar büyük farklar yaratır ♡",
   "Kendine iyi bak, her şey yolunda olacak ♡",
@@ -449,7 +828,6 @@ const SOFT_NOTES = [
 ];
 const MOODS = [["Harika", "🌞"], ["İyi", "🙂"], ["Normal", "😐"], ["Yorgun", "😴"], ["Zor bir gün", "🌧️"]];
 const AREAS = ["Kişisel", "Sağlık", "Kariyer", "İlişkiler", "Finans", "Seyahat"];
-const RECIPE_CATS = ["Kahvaltı", "Ana Yemek", "Çorba", "Salata", "Tatlı", "İçecek", "Diğer"];
 const BOOK_STATUSES = ["Okunacak", "Okunuyor", "Bitti"];
 const WEATHER = { 0: "Güneşli", 1: "Çoğunlukla açık", 2: "Parçalı bulutlu", 3: "Kapalı", 45: "Sisli", 48: "Sisli", 51: "Çisenti", 53: "Çisenti", 55: "Çisenti", 61: "Hafif yağmurlu", 63: "Yağmurlu", 65: "Kuvvetli yağmur", 71: "Hafif kar", 73: "Karlı", 75: "Yoğun kar", 80: "Sağanak", 81: "Sağanak", 82: "Kuvvetli sağanak", 95: "Gök gürültülü", 96: "Dolu", 99: "Dolu" };
 
@@ -473,7 +851,7 @@ let todayKey = keyOf(today);
 const $ = id => document.getElementById(id);
 
 function defaults() {
-  return { name: "", city: "", plan: {}, notes: [], goals: [], habits: [], journal: {}, recipes: [], shopping: [], books: [] };
+  return { name: "", city: "", plan: {}, notes: [], goals: [], habits: [], journal: {}, shopping: [], books: [], affStart: todayKey, favAff: [], myAff: [] };
 }
 function migrate(old) {
   const d = defaults();
@@ -496,6 +874,7 @@ function load() {
   return defaults();
 }
 const data = load();
+save();
 function save() {
   try { localStorage.setItem(STORE, JSON.stringify(data)); } catch (e) {}
 }
@@ -515,13 +894,45 @@ function h(tag, attrs, ...kids) {
   return n;
 }
 
-const state = { view: "home", calMonth: firstOfMonth(today), sel: todayKey, noteId: null, recipeId: null, jDate: todayKey, focus: null };
+const state = { view: "home", calMonth: firstOfMonth(today), sel: todayKey, noteId: null, jDate: todayKey, affFilter: "Tümü", focus: null };
 
 function dayIndex(d, len) {
   const n = Math.floor((d.getTime() - d.getTimezoneOffset() * 60000) / DAY_MS);
   return ((n % len) + len) % len;
 }
-const affirmation = () => AFFIRMATIONS[dayIndex(today, AFFIRMATIONS.length)];
+function rng(seed) {
+  return () => {
+    seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+const AFF_PER = Math.min(...AFF_CATS.map(c => AFF[c].length));
+const AFF_CYCLE = AFF_PER * AFF_CATS.length;
+const shuffleCache = {};
+function shuffled(cat, cycle) {
+  const key = cat + "|" + cycle;
+  if (shuffleCache[key]) return shuffleCache[key];
+  const a = AFF[cat].slice();
+  const r = rng(9157 + cycle * 7919 + AFF_CATS.indexOf(cat) * 131);
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return (shuffleCache[key] = a);
+}
+function affAt(i) {
+  const cycle = Math.floor(i / AFF_CYCLE), r = i % AFF_CYCLE;
+  const cat = AFF_CATS[r % AFF_CATS.length];
+  return { cat, text: shuffled(cat, cycle)[Math.floor(r / AFF_CATS.length)], date: addDays(fromKey(data.affStart), i) };
+}
+const affDay = () => Math.max(0, Math.round((today - fromKey(data.affStart)) / DAY_MS));
+const todayAff = () => affAt(affDay());
+const affirmation = () => todayAff().text;
+const catTag = c => h("span", { class: "cat", style: "--c:" + (CAT_COLORS[c] || "#8A7A86"), text: c });
+const isFav = t => data.favAff.includes(t);
+function toggleFav(t) {
+  data.favAff = isFav(t) ? data.favAff.filter(x => x !== t) : data.favAff.concat(t);
+  save(); render();
+}
 const softNote = () => SOFT_NOTES[dayIndex(today, SOFT_NOTES.length)];
 const planOf = k => data.plan[k] || (data.plan[k] = []);
 const journalOf = k => data.journal[k] || (data.journal[k] = { mood: "", gratitude: ["", "", ""], text: "" });
@@ -697,7 +1108,7 @@ function renderHome() {
 
   grid.append(h("section", { class: "hero span-9", html: HERO_SVG },
     h("div", { class: "hero-in" },
-      h("p", { class: "hero-label", html: ico("star", 14) + "<span>Günün olumlaması</span>" }),
+      h("p", { class: "hero-label", html: ico("star", 14) + "<span>Günün olumlaması</span>" }, catTag(todayAff().cat)),
       h("p", { class: "hero-text", text: affirmation() + " ♡" }),
       h("button", {
         class: "hero-copy", type: "button", text: "Kopyala",
@@ -741,12 +1152,15 @@ function renderHome() {
       : h("p", { class: "empty", text: "Her gün yapmak istediğin bir şey ekle." })]
   }));
 
-  const recipes = [...data.recipes].sort((a, b) => b.updated - a.updated).slice(0, 4);
+  const dIdx = affDay();
+  const past = [];
+  for (let i = dIdx - 1; i >= 0 && past.length < 4; i--) past.push(affAt(i));
   grid.append(card({
-    title: "Tariflerim", icon: "chef", tint: "t-lilac", span: "span-3", onAdd: newRecipe, more: ["Tüm tarifler", "recipes"], doodle: "whisk",
-    body: [recipes.length
-      ? h("ul", { class: "links" }, recipes.map(r => h("li", {}, h("button", { type: "button", onclick: () => go("recipes", { recipeId: r.id }) }, h("span", { text: r.name || "İsimsiz tarif" })))))
-      : h("p", { class: "empty", text: "Kahvaltılıklar, ana yemekler, tatlılar… İlk tarifini ekle." })]
+    title: "Olumlamalarım", icon: "star", tint: "t-lilac", span: "span-3", more: ["Tüm olumlamalar", "affirm"], doodle: "moon",
+    onAdd: () => go("affirm", { focus: "#myAffText" }),
+    body: [past.length
+      ? h("ul", { class: "links" }, past.map(x => h("li", {}, h("button", { type: "button", onclick: () => go("affirm") }, h("span", { text: x.text })))))
+      : h("p", { class: "empty", text: "Her gün yeni bir olumlama açılır. Önceki günlerin olumlamaları burada birikecek." })]
   }));
 
   grid.append(h("section", { class: "art span-3", html: ART_SVG }, h("p", { text: softNote() })));
@@ -874,54 +1288,76 @@ function renderNotes() {
   return h("div", {}, pageHead("Notlar", "Fikirlerin, listelerin, aklına gelen her şey."), h("div", { class: "split" }, list, editor));
 }
 
-function newRecipe() {
-  const r = { id: uid(), name: "", category: RECIPE_CATS[0], ingredients: "", steps: "", updated: Date.now() };
-  data.recipes.push(r);
-  save();
-  go("recipes", { recipeId: r.id, focus: ".big-title" });
-}
-
-function renderRecipes() {
-  const list = [...data.recipes].sort((a, b) => a.category.localeCompare(b.category, "tr") || (a.name || "").localeCompare(b.name || "", "tr"));
-  if (!data.recipes.some(r => r.id === state.recipeId)) state.recipeId = list[0] ? list[0].id : null;
-  const cur = data.recipes.find(r => r.id === state.recipeId);
-  let activeName = null;
-
-  const side = h("section", { class: "card t-lilac" },
-    h("button", { class: "btn primary", type: "button", text: "Yeni tarif", onclick: newRecipe, style: "margin-bottom:.75rem" }),
-    list.length ? list.map(r => {
-      const strong = h("strong", { text: r.name || "İsimsiz tarif" });
-      if (r.id === state.recipeId) activeName = strong;
-      return h("button", { type: "button", class: "item-btn", style: r.id === state.recipeId ? "background:#fff" : null, onclick: () => { state.recipeId = r.id; render(); } },
-        strong, h("span", { text: r.category }));
-    }) : h("p", { class: "empty", text: "Henüz tarif yok." })
+function renderAffirm() {
+  const d = affDay();
+  const t = todayAff();
+  const fav = isFav(t.text);
+  const top = h("section", { class: "aff-hero" },
+    h("div", { class: "aff-top" }, catTag(t.cat), h("span", { class: "aff-count", text: fmtLong.format(today) })),
+    h("p", { class: "aff-big", text: t.text }),
+    h("div", { class: "row", style: "position:relative" },
+      h("button", { class: "btn light", type: "button", text: "Kopyala", onclick: async e => {
+        const b = e.currentTarget;
+        try { await navigator.clipboard.writeText(t.text); b.textContent = "Kopyalandı"; } catch (err) { b.textContent = "Kopyalanamadı"; }
+      } }),
+      h("button", { class: "btn light", type: "button", "aria-pressed": fav ? "true" : "false", onclick: () => toggleFav(t.text) },
+        h("span", { html: ico("heart", 16), style: "display:grid" }), fav ? "Favorilerimde" : "Favorilere ekle")
+    ),
+    h("p", { class: "aff-note", text: "Yolculuğunun " + (d + 1) + ". günü. Her gün yeni bir olumlama açılır ve " + AFF_CYCLE + " gün boyunca hiçbiri tekrar etmez." })
   );
 
-  let editor;
-  if (cur) {
-    const status = h("span", { class: "status" });
-    const touch = () => { cur.updated = Date.now(); save(); status.textContent = "Kaydedildi"; };
-    editor = h("section", { class: "card" },
-      h("input", { class: "big-title", type: "text", value: cur.name, placeholder: "Tarifin adı", "aria-label": "Tarif adı",
-        oninput: e => { cur.name = e.target.value; if (activeName) activeName.textContent = cur.name || "İsimsiz tarif"; touch(); } }),
-      h("select", { "aria-label": "Kategori", style: "align-self:flex-start", onchange: e => { cur.category = e.target.value; touch(); render(); } },
-        RECIPE_CATS.map(c => h("option", { text: c, selected: c === cur.category }))),
-      h("label", { class: "lbl", for: "rIng", text: "Malzemeler" }),
-      h("textarea", { id: "rIng", rows: "6", placeholder: "Her satıra bir malzeme yaz", oninput: e => { cur.ingredients = e.target.value; touch(); } }, cur.ingredients),
-      h("label", { class: "lbl", for: "rSteps", text: "Yapılışı" }),
-      h("textarea", { id: "rSteps", rows: "9", placeholder: "Adım adım anlat", oninput: e => { cur.steps = e.target.value; touch(); } }, cur.steps),
-      h("div", { class: "row", style: "justify-content:space-between;margin-top:1rem" },
-        status,
-        h("button", { class: "btn danger", type: "button", text: "Tarifi sil", onclick: () => {
-          if (!confirm("Bu tarif silinsin mi?")) return;
-          data.recipes = data.recipes.filter(r => r.id !== cur.id); state.recipeId = null; save(); render();
-        } })
-      )
-    );
-  } else {
-    editor = h("section", { class: "card" }, h("p", { class: "empty", text: "Bir tarif seç ya da yeni bir tarif ekle." }));
-  }
-  return h("div", {}, pageHead("Tarifler", "Sevdiğin tarifler, malzemeleri ve yapılışlarıyla."), h("div", { class: "split" }, side, editor));
+  const items = [];
+  for (let i = d; i >= 0; i--) items.push(affAt(i));
+  data.myAff.forEach(m => items.push({ cat: m.cat, text: m.text, date: fromKey(m.date), mine: m }));
+  items.sort((a, b) => b.date - a.date || (b.mine ? 1 : 0) - (a.mine ? 1 : 0));
+
+  const filters = ["Tümü"].concat(AFF_CATS, ["Favoriler", "Benim yazdıklarım"]);
+  const match = (f, x) => f === "Tümü" || (f === "Favoriler" ? isFav(x.text) : f === "Benim yazdıklarım" ? !!x.mine : x.cat === f);
+  const f = filters.includes(state.affFilter) ? state.affFilter : "Tümü";
+  const shown = items.filter(x => match(f, x));
+
+  const chips = h("div", { class: "chips" }, filters.map(x =>
+    h("button", { type: "button", "aria-pressed": x === f ? "true" : "false", onclick: () => { state.affFilter = x; render(); } },
+      x, h("small", { text: String(items.filter(y => match(x, y)).length) }))
+  ));
+
+  const list = shown.length ? h("ul", { class: "aff-list" }, shown.map(x => h("li", {},
+    h("div", { style: "flex:1;min-width:0" },
+      h("p", { text: x.text }),
+      h("div", { class: "aff-meta" }, catTag(x.cat), h("span", { text: fmtDate.format(x.date) }), x.mine ? h("span", { text: "Benim yazdığım" }) : null)
+    ),
+    h("button", { class: "fav" + (isFav(x.text) ? " on" : ""), type: "button", "aria-pressed": isFav(x.text) ? "true" : "false",
+      "aria-label": isFav(x.text) ? "Favorilerden çıkar" : "Favorilere ekle", html: ico("heart", 19), onclick: () => toggleFav(x.text) }),
+    x.mine ? h("button", { class: "fav", type: "button", "aria-label": "Sil", html: ico("trash", 18), onclick: () => {
+      if (!confirm("Bu olumlama silinsin mi?")) return;
+      removeFrom(data.myAff, x.mine); data.favAff = data.favAff.filter(y => y !== x.text); save(); render();
+    } }) : null
+  ))) : h("p", { class: "empty", text: f === "Favoriler" ? "Kalp simgesine dokunduğun olumlamalar burada toplanır."
+    : f === "Benim yazdıklarım" ? "Sağdaki alandan kendi olumlamanı yazabilirsin."
+    : "Bu kategoride henüz açılmış olumlama yok. Her gün yenisi geliyor." });
+
+  const form = h("form", { onsubmit: e => {
+    e.preventDefault();
+    const text = $("myAffText").value.trim();
+    if (!text) return;
+    data.myAff.push({ id: uid(), text, cat: $("myAffCat").value, date: todayKey });
+    save(); state.affFilter = "Benim yazdıklarım"; render();
+  } },
+    h("textarea", { id: "myAffText", rows: "4", placeholder: "Örn. Bugün kendime güveniyorum.", "aria-label": "Olumlama" }),
+    h("div", { class: "row", style: "margin-top:.75rem" },
+      h("select", { id: "myAffCat", "aria-label": "Kategori" }, AFF_CATS.map(c => h("option", { text: c }))),
+      h("button", { class: "btn primary", type: "submit", text: "Ekle" })
+    )
+  );
+
+  return h("div", {},
+    pageHead("Olumlamalar", "Aşk, bolluk, şükür, özgüven, sağlık, huzur ve başarı üzerine her gün yeni bir olumlama."),
+    top,
+    h("div", { class: "grid" },
+      h("section", { class: "card span-8" }, h("div", { class: "card-head" }, h("h2", { text: "Açılan olumlamalar" })), chips, list),
+      card({ title: "Kendi olumlamanı yaz", span: "span-4", tint: "t-lilac", doodle: "moon", body: [form] })
+    )
+  );
 }
 
 function renderGoals() {
@@ -1142,7 +1578,7 @@ function renderSettings() {
             fileIn
           ),
           h("button", { class: "btn danger", type: "button", style: "margin-top:1.25rem;align-self:flex-start", text: "Tüm verileri sil", onclick: () => {
-            if (!confirm("Tüm notların, hedeflerin, planların, tariflerin ve günlüğün silinecek. Emin misin?")) return;
+            if (!confirm("Tüm notların, hedeflerin, planların, favori olumlamaların ve günlüğün silinecek. Emin misin?")) return;
             const base = defaults();
             Object.keys(base).forEach(k => { data[k] = base[k]; });
             weatherCache = null; save(); go("home");
@@ -1153,7 +1589,7 @@ function renderSettings() {
   );
 }
 
-const RENDER = { home: renderHome, notes: renderNotes, goals: renderGoals, habits: renderHabits, calendar: renderCalendar, journal: renderJournal, recipes: renderRecipes, shopping: renderShopping, books: renderBooks, settings: renderSettings };
+const RENDER = { home: renderHome, notes: renderNotes, goals: renderGoals, habits: renderHabits, calendar: renderCalendar, journal: renderJournal, affirm: renderAffirm, shopping: renderShopping, books: renderBooks, settings: renderSettings };
 
 function greeting() {
   const hr = new Date().getHours();
@@ -1193,7 +1629,9 @@ function searchAll(q) {
   const has = s => s && s.toLocaleLowerCase("tr").includes(q);
   const out = [];
   data.notes.forEach(n => { if (has(n.title) || has(n.body)) out.push([n.title || "Başlıksız not", "Not", () => go("notes", { noteId: n.id })]); });
-  data.recipes.forEach(r => { if (has(r.name) || has(r.ingredients) || has(r.steps)) out.push([r.name || "İsimsiz tarif", "Tarif, " + r.category, () => go("recipes", { recipeId: r.id })]); });
+  const dAll = affDay();
+  for (let i = dAll; i >= 0; i--) { const x = affAt(i); if (has(x.text)) out.push([x.text, "Olumlama, " + x.cat, () => go("affirm", { affFilter: x.cat })]); }
+  data.myAff.forEach(m => { if (has(m.text)) out.push([m.text, "Benim olumlamam", () => go("affirm", { affFilter: "Benim yazdıklarım" })]); });
   data.goals.forEach(g => { if (has(g.text)) out.push([g.text, "Hedef", () => go("goals")]); });
   data.habits.forEach(hb => { if (has(hb.name)) out.push([hb.name, "Alışkanlık", () => go("habits")]); });
   Object.entries(data.plan).forEach(([k, arr]) => arr.forEach(it => {
