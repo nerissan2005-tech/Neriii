@@ -1,0 +1,367 @@
+function formField(id, label, type, extra) {
+  return [h("label", { class: "lbl", for: id, text: label }), h("input", Object.assign({ class: "field", id, type, style: "width:100%" }, extra || {}))];
+}
+
+function shrinkImage(file, size) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement("canvas");
+      c.width = c.height = size;
+      const s = Math.min(img.naturalWidth, img.naturalHeight);
+      c.getContext("2d").drawImage(img, (img.naturalWidth - s) / 2, (img.naturalHeight - s) / 2, s, s, 0, 0, size, size);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL("image/jpeg", 0.82));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("img")); };
+    img.src = url;
+  });
+}
+
+function renderSettings() {
+  const cityMsg = h("p", { class: "ok" });
+  const nameMsg = h("p", { class: "err" });
+  const passMsg = h("p", { class: "err" });
+  return h("div", {},
+    pageHead("Ayarlar", "Giriş yaptığın profil: " + me.name + (me.isAdmin ? " (yönetici)" : "")),
+    h("div", { class: "grid" },
+      card({
+        title: "Kullanıcı adım", icon: "users", span: "span-6",
+        body: [h("form", { onsubmit: async e => {
+          e.preventDefault();
+          nameMsg.className = "err"; nameMsg.textContent = "";
+          const v = $("myName").value.trim();
+          const mine = allProfiles.find(x => x.uid === me.uid) || { uid: me.uid, name: me.name, slug: slugOf(me.name), email: me.email };
+          if (v === mine.name) { nameMsg.textContent = "Bu zaten şu anki adın."; return; }
+          try {
+            await renameProfile(mine, v);
+            nameMsg.className = "ok"; nameMsg.textContent = "Adın değiştirildi. Bundan sonra girişte \"" + v + "\" yaz.";
+          } catch (ex) { nameMsg.textContent = ex.message && !ex.code ? ex.message : "Ad değiştirilemedi. Firestore kurallarının güncel olduğundan emin ol."; }
+        } },
+          h("p", { class: "empty", text: "Sitede görünen ve girişte yazdığın ad. Şifren değişmez." }),
+          ...formField("myName", "Kullanıcı adın", "text", { value: me.name, autocomplete: "off" }),
+          h("div", { class: "row", style: "margin-top:1.1rem" }, h("button", { class: "btn primary", type: "submit", text: "Adımı değiştir" })),
+          nameMsg
+        )]
+      }),
+      card({
+        title: "Profil resmim", icon: "heart", span: "span-6", tint: "t-peach",
+        body: [(() => {
+          const mine = profileOf(me.uid) || { name: me.name, photo: me.photo };
+          const msg = h("p", { class: "ok" });
+          const fileIn = h("input", { type: "file", accept: "image/*", hidden: true, onchange: async e => {
+            const f = e.target.files[0];
+            e.target.value = "";
+            if (!f) return;
+            msg.className = "ok"; msg.textContent = "Yükleniyor…";
+            try {
+              const photo = await shrinkImage(f, 192);
+              await db.collection("profiles").doc(me.uid).update({ photo });
+              msg.textContent = "Profil resmin güncellendi.";
+            } catch (ex) { msg.className = "err"; msg.textContent = "Resim yüklenemedi. Başka bir fotoğraf dene."; }
+          } });
+          return h("div", { class: "photo-row" },
+            avatar(mine, "xl"),
+            h("div", {},
+              h("p", { class: "empty", text: "Bu resim mesajlarda, menüde ve profil listesinde görünür." }),
+              h("div", { class: "row", style: "margin-top:.8rem" },
+                h("button", { class: "btn primary", type: "button", text: mine.photo ? "Resmi değiştir" : "Resim seç", onclick: () => fileIn.click() }),
+                mine.photo ? h("button", { class: "btn", type: "button", text: "Kaldır", onclick: () => db.collection("profiles").doc(me.uid).update({ photo: "" }).then(() => { msg.textContent = "Profil resmin kaldırıldı."; }) }) : null,
+                fileIn),
+              msg));
+        })()]
+      }),
+      card({
+        title: "Hava durumu", icon: "sun", span: "span-6",
+        body: [h("form", { onsubmit: e => {
+          e.preventDefault();
+          const city = $("setCity").value.trim();
+          if (city !== data.city) weatherCache = null;
+          data.city = city;
+          save(); cityMsg.textContent = "Kaydedildi";
+        } },
+          ...formField("setCity", "Şehrin (hava durumu için)", "text", { value: data.city, placeholder: "Örn. İstanbul" }),
+          h("div", { class: "row", style: "margin-top:1.1rem" }, h("button", { class: "btn primary", type: "submit", text: "Kaydet" })),
+          cityMsg
+        )]
+      }),
+      card({
+        title: "Şifremi değiştir", icon: "lock", span: "span-6",
+        body: [h("form", { onsubmit: async e => {
+          e.preventDefault();
+          passMsg.className = "err"; passMsg.textContent = "";
+          const cur = $("pwCur").value, nw = $("pwNew").value, nw2 = $("pwNew2").value;
+          if (nw.length < 6) { passMsg.textContent = "Yeni şifre en az 6 karakter olmalı."; return; }
+          if (nw !== nw2) { passMsg.textContent = "Yeni şifreler birbiriyle aynı değil."; return; }
+          try {
+            const user = auth.currentUser;
+            await user.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(user.email, cur));
+            await user.updatePassword(nw);
+            e.target.reset();
+            passMsg.className = "ok"; passMsg.textContent = "Şifren değiştirildi.";
+          } catch (err) { passMsg.textContent = err && (err.code === "auth/invalid-credential" || err.code === "auth/wrong-password") ? "Şu anki şifren hatalı." : authError(err); }
+        } },
+          ...formField("pwCur", "Şu anki şifren", "password", { autocomplete: "current-password" }),
+          ...formField("pwNew", "Yeni şifre", "password", { autocomplete: "new-password" }),
+          ...formField("pwNew2", "Yeni şifre (tekrar)", "password", { autocomplete: "new-password" }),
+          h("div", { class: "row", style: "margin-top:1.1rem" }, h("button", { class: "btn primary", type: "submit", text: "Şifreyi değiştir" })),
+          passMsg
+        )]
+      }),
+      card({
+        title: "Verilerim", icon: "book", span: "span-6",
+        body: [
+          h("p", { class: "empty", style: "margin-bottom:1rem", text: "Verilerin hesabında saklanır, hangi cihazdan girersen gir aynısını görürsün. Sadece ben olarak kaydettiklerini diğer profiller göremez, yönetici görebilir." }),
+          h("div", { class: "row" },
+            h("button", { class: "btn", type: "button", text: "Verilerimi indir", onclick: () => {
+              const mine = [...allItems().values()].filter(isMine);
+              const url = URL.createObjectURL(new Blob([JSON.stringify({ profil: me.name, ayarlar: data, kayitlar: mine }, null, 2)], { type: "application/json" }));
+              const a = h("a", { href: url, download: "nerii-" + slugOf(me.name) + "-" + todayKey + ".json" });
+              document.body.append(a); a.click(); a.remove();
+              setTimeout(() => URL.revokeObjectURL(url), 1000);
+            } }),
+            h("button", { class: "btn primary", type: "button", text: "Çıkış yap", onclick: logout })
+          )
+        ]
+      }),
+      me.isAdmin ? card({
+        title: "Yönetici", icon: "shield", span: "span-12", tint: "t-blush",
+        body: [h("p", { class: "empty", text: "Profilleri, duyuruları ve paylaşılan içerikleri yönetici panelinden yönetebilirsin." }),
+          h("button", { class: "btn primary", type: "button", style: "align-self:flex-start;margin-top:1rem", text: "Yönetici paneline git", onclick: () => go("admin") })]
+      }) : null
+    )
+  );
+}
+
+function renderAdminLock() {
+  const err = h("p", { class: "err" });
+  return h("div", {},
+    pageHead("Yönetici paneli", "Bu bölüm yönetici şifresiyle korunuyor."),
+    h("section", { class: "card t-blush", style: "max-width:26rem" },
+      h("div", { class: "card-head" }, h("span", { class: "ci", html: ico("lock", 22) }), h("h2", { text: "Yönetici girişi" })),
+      h("form", { onsubmit: async e => {
+        e.preventDefault();
+        const v = $("adminPass").value;
+        if (!v) { err.textContent = "Yönetici şifresini yaz."; return; }
+        let ok = false;
+        try { ok = (await sha256(v)) === (await currentAdminHash()); }
+        catch (ex) { err.textContent = "Şifre kontrol edilemedi. Firestore kurallarının güncel olduğundan emin ol."; return; }
+        if (!ok) { err.textContent = "Yönetici şifresi hatalı."; $("adminPass").value = ""; return; }
+        adminUnlocked = true;
+        try { sessionStorage.setItem("nerii-admin", "1"); } catch (ex) {}
+        render();
+      } },
+        ...formField("adminPass", "Yönetici şifresi", "password", { autocomplete: "off" }),
+        h("div", { class: "row", style: "margin-top:1.1rem" }, h("button", { class: "btn primary", type: "submit", text: "Kilidi aç" })),
+        err
+      )
+    )
+  );
+}
+
+function lockAdmin() {
+  adminUnlocked = false;
+  try { sessionStorage.removeItem("nerii-admin"); } catch (e) {}
+}
+
+const KIND_NAMES = { note: "Not", goal: "Hedef", habit: "Alışkanlık", plan: "Plan", shop: "Alışveriş", book: "Kitap", aff: "Olumlama", journal: "Günlük" };
+function itemSummary(i) {
+  if (i.kind === "note") return (i.title || "Başlıksız not") + (i.body ? ": " + i.body : "");
+  if (i.kind === "habit") return i.name;
+  if (i.kind === "book") return i.title + (i.author ? ", " + i.author : "");
+  if (i.kind === "journal") return fmtDate.format(fromKey(i.date)) + (i.mood ? ", " + i.mood : "") + ((i.text || "").trim() ? ": " + i.text : "");
+  if (i.kind === "plan") return i.text + ", " + fmtShort.format(fromKey(i.date));
+  return i.text || "";
+}
+
+async function loadAllItems() {
+  state.allItemsLoading = true;
+  if (state.view === "admin") render();
+  try {
+    const snap = await itemsCol().get();
+    state.allItemsAdmin = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+  } catch (e) { state.allItemsAdmin = null; showToast("Kayıtlar yüklenemedi", "Firestore kurallarının güncel olduğundan emin ol."); }
+  state.allItemsLoading = false;
+  if (state.view === "admin") render();
+}
+
+function allItemsCard() {
+  const all = state.allItemsAdmin;
+  if (!all) {
+    return card({ title: "Tüm kayıtlar", icon: "book", span: "span-12", body: [
+      h("p", { class: "empty", text: "Herkesin eklediği tüm kayıtları, sadece kendine özel kaydettikleri dahil, buradan görebilir ve silebilirsin." }),
+      h("button", { class: "btn primary", type: "button", style: "align-self:flex-start;margin-top:.9rem", text: state.allItemsLoading ? "Yükleniyor…" : "Kayıtları göster", onclick: loadAllItems })
+    ] });
+  }
+  const fp = state.aiProfile || "", fk = state.aiKind || "", fv = state.aiVis || "";
+  const rows = all.filter(i => (!fp || i.owner === fp) && (!fk || i.kind === fk) && (!fv || i.vis === fv)).sort((a, b) => (b.upd || b.at) - (a.upd || a.at));
+  const owners = [...new Map(all.map(i => [i.owner, (profileOf(i.owner) || {}).name || i.ownerName])).entries()];
+  const sel = (id, val, opts, set) => h("select", { id, "aria-label": "Filtre", onchange: e => { state[set] = e.target.value; render(); } }, opts.map(([v, l]) => h("option", { value: v, text: l, selected: v === val })));
+  return card({ title: "Tüm kayıtlar (" + all.length + ")", icon: "book", span: "span-12", body: [
+    h("div", { class: "row", style: "margin-bottom:.8rem" },
+      sel("aiP", fp, [["", "Tüm profiller"]].concat(owners), "aiProfile"),
+      sel("aiK", fk, [["", "Tüm türler"]].concat(Object.entries(KIND_NAMES)), "aiKind"),
+      sel("aiV", fv, [["", "Herkese açık ve özel"], ["private", "Sadece kendine özel"], ["public", "Herkese açık"]], "aiVis"),
+      h("button", { class: "btn small", type: "button", text: "Yenile", onclick: loadAllItems })),
+    rows.length ? h("ul", { class: "aff-list all-items" }, rows.slice(0, 300).map(i => h("li", {},
+      h("div", { style: "flex:1;min-width:0" },
+        h("p", { class: "clip", text: itemSummary(i) }),
+        h("div", { class: "aff-meta" },
+          h("span", { class: "who mine", text: KIND_NAMES[i.kind] || i.kind }),
+          h("span", { text: (profileOf(i.owner) || {}).name || i.ownerName }),
+          h("span", { class: "who" + (i.vis === "public" ? "" : " priv"), text: i.vis === "public" ? "Herkese açık" : "Sadece kendine özel" }),
+          h("span", { text: fmtShort.format(new Date(i.upd || i.at)) }))
+      ),
+      h("button", { class: "icon-btn", type: "button", "aria-label": "Sil", html: ico("trash", 17), onclick: async () => {
+        if (!(await ask({ title: "Bu kayıt silinsin mi?", text: itemSummary(i).slice(0, 120), ok: "Sil", danger: true }))) return;
+        try { await itemsCol().doc(i.id).delete(); state.allItemsAdmin = state.allItemsAdmin.filter(x => x.id !== i.id); render(); }
+        catch (e) { showToast("Silinemedi", "Firestore kurallarının güncel olduğundan emin ol."); }
+      } })
+    ))) : h("p", { class: "empty", text: "Bu filtreye uyan kayıt yok." }),
+    rows.length > 300 ? h("p", { class: "empty", text: "İlk 300 kayıt gösteriliyor, filtreleri kullanarak daraltabilirsin." }) : null
+  ] });
+}
+
+function renderAdmin() {
+  if (!adminUnlocked) { state.focus = state.focus || "#adminPass"; return renderAdminLock(); }
+  const newMsg = h("p", { class: "err" });
+  const annMsg = h("p", { class: "ok" });
+  const apMsg = h("p", { class: "err" });
+  const sorted = allProfiles.slice().sort((a, b) => (isRootProfile(b) ? 1 : 0) - (isRootProfile(a) ? 1 : 0) || (a.at || 0) - (b.at || 0));
+  const fail = () => showToast("Değişiklik kaydedilemedi", "Firestore kurallarının güncel olduğundan emin ol.");
+  const profUpdate = (p, patch, okText) => db.collection("profiles").doc(p.uid).update(patch)
+    .then(() => okText && showToast(okText)).catch(fail);
+
+  const rows = sorted.map(p => {
+    const self = p.uid === me.uid;
+    const root = isRootProfile(p);
+    const locked = self || (root && !me.isRoot);
+    const role = p.disabled ? ["off", "Devre dışı"] : root ? ["admin", "Ana yönetici"] : p.role === "admin" ? ["admin", "Yönetici"] : ["", "Üye"];
+    return h("div", { class: "admin-row" },
+      avatar(p),
+      h("div", { style: "min-width:0" },
+        h("div", { class: "row", style: "gap:.5rem" },
+          h("input", { class: "field name-edit", id: "pn-" + p.uid, type: "text", value: p.name, "aria-label": "Kullanıcı adı", disabled: root && !me.isRoot,
+            onchange: async e => {
+              const v = e.target.value.trim();
+              if (!v || v === p.name) return;
+              try { await renameProfile(p, v); showToast("Kullanıcı adı güncellendi", p.name + " artık girişte \"" + v + "\" yazacak."); }
+              catch (ex) { e.target.value = p.name; showToast("Ad değiştirilemedi", ex.message && !ex.code ? ex.message : "Firestore kurallarının güncel olduğundan emin ol."); }
+            } }),
+          h("span", { class: "role " + role[0], text: role[1] })
+        ),
+        h("div", { class: "tag", style: "margin-top:.3rem", text: "Girişte yazacağı ad: " + p.name + (self ? " (sen)" : "") })
+      ),
+      locked ? h("span") : h("div", { class: "row", style: "gap:.4rem;justify-content:flex-end" },
+        h("button", { class: "btn small", type: "button", text: p.role === "admin" ? "Yöneticilikten çıkar" : "Yönetici yap",
+          onclick: () => profUpdate(p, { role: p.role === "admin" ? "user" : "admin" }, p.role === "admin" ? p.name + " artık üye" : p.name + " artık yönetici") }),
+        h("button", { class: "btn small", type: "button", text: p.disabled ? "Etkinleştir" : "Devre dışı bırak",
+          onclick: async () => { if (p.disabled || await ask({ title: p.name + " devre dışı bırakılsın mı?", text: "Bu kişi sen tekrar etkinleştirene kadar giriş yapamaz. Verileri silinmez.", ok: "Devre dışı bırak", danger: true, icon: "lock" })) profUpdate(p, { disabled: !p.disabled }); } }),
+        h("button", { class: "btn small danger", type: "button", text: "Sil",
+          onclick: async () => {
+            if (!(await ask({ title: p.name + " profili silinsin mi?", text: "Bu kişi bir daha giriş yapamaz. Bu işlem geri alınamaz.", ok: "Profili sil", danger: true }))) return;
+            try {
+              const batch = db.batch();
+              batch.delete(db.collection("profiles").doc(p.uid));
+              if (p.slug) {
+                const lg = await db.collection("logins").doc(p.slug).get();
+                if (lg.exists && lg.data().uid === p.uid) batch.delete(db.collection("logins").doc(p.slug));
+              }
+              await batch.commit();
+              showToast(p.name + " profili silindi");
+            } catch (ex) { fail(); }
+          } })
+      )
+    );
+  });
+
+
+  return h("div", {},
+    h("div", { class: "row", style: "justify-content:space-between;align-items:flex-start" },
+      pageHead("Yönetici paneli", "Profilleri, duyuruları ve paylaşılan içerikleri buradan yönet."),
+      h("button", { class: "btn", type: "button", onclick: () => { lockAdmin(); render(); } }, h("span", { html: ico("lock", 16), style: "display:inline-grid;vertical-align:-3px;margin-right:.35rem" }), "Kilitle")),
+    h("div", { class: "grid" },
+      card({ title: "Profiller (" + sorted.length + ")", icon: "users", span: "span-8", body: [h("div", {}, rows)] }),
+      card({
+        title: "Yeni profil ekle", icon: "plus", span: "span-4", tint: "t-blush",
+        body: [h("form", { onsubmit: async e => {
+          e.preventDefault();
+          newMsg.className = "err"; newMsg.textContent = "";
+          const name = $("npName").value.trim(), pw = $("npPass").value, pw2 = $("npPass2").value;
+          if (!slugOf(name) || name.includes("@")) { newMsg.textContent = "Geçerli bir kullanıcı adı yaz."; return; }
+          if (allProfiles.some(x => x.slug === slugOf(name))) { newMsg.textContent = "Bu kullanıcı adı başka bir profilde kullanılıyor."; return; }
+          if (pw.length < 6) { newMsg.textContent = "Şifre en az 6 karakter olmalı."; return; }
+          if (pw !== pw2) { newMsg.textContent = "Şifreler birbiriyle aynı değil."; return; }
+          const btn = e.target.querySelector("button[type=submit]");
+          btn.disabled = true;
+          try {
+            const sec = firebase.apps.find(x => x.name === "ikincil") || firebase.initializeApp(firebaseConfig, "ikincil");
+            const taken = await db.collection("logins").doc(slugOf(name)).get();
+            if (taken.exists) { newMsg.textContent = "Bu kullanıcı adı daha önce alınmış."; btn.disabled = false; return; }
+            const email = slugOf(name) + "@nerii.app";
+            const cred = await sec.auth().createUserWithEmailAndPassword(email, pw);
+            const batch = db.batch();
+            batch.set(db.collection("profiles").doc(cred.user.uid), { name, slug: slugOf(name), role: "user", email, at: Date.now() });
+            batch.set(db.collection("logins").doc(slugOf(name)), { uid: cred.user.uid, email, at: Date.now() });
+            await batch.commit();
+            await sec.auth().signOut();
+            e.target.reset();
+            newMsg.className = "ok"; newMsg.textContent = name + " profili oluşturuldu. Giriş ekranında \"" + name + "\" ve bu şifreyle girebilir.";
+          } catch (err) { newMsg.textContent = authError(err); }
+          btn.disabled = false;
+        } },
+          ...formField("npName", "Kullanıcı adı", "text", { autocomplete: "off" }),
+          ...formField("npPass", "Şifre", "password", { autocomplete: "new-password" }),
+          ...formField("npPass2", "Şifre (tekrar)", "password", { autocomplete: "new-password" }),
+          h("div", { class: "row", style: "margin-top:1.1rem" }, h("button", { class: "btn primary", type: "submit", text: "Profili oluştur" })),
+          newMsg
+        )]
+      }),
+      card({
+        title: "Duyuru", icon: "bell", span: "span-6", tint: "t-peach",
+        body: [
+          h("p", { class: "empty", text: "Yazdığın duyuru herkesin ana sayfasında en üstte görünür." }),
+          h("textarea", { id: "annText", rows: "4", style: "margin-top:.75rem", placeholder: "Örn. Bu hafta herkes 3 kitap hedefini eklesin ♡" }, site.announcement || ""),
+          h("div", { class: "row", style: "margin-top:.75rem" },
+            h("button", { class: "btn primary", type: "button", text: "Yayınla", onclick: () => {
+              const text = $("annText").value.trim();
+              db.collection("config").doc("site").set({ announcement: text, byName: me.name, at: Date.now() }, { merge: true })
+                .then(() => { annMsg.textContent = text ? "Duyuru yayında." : "Duyuru kaldırıldı."; })
+                .catch(() => showToast("Duyuru kaydedilemedi", "Firestore kurallarının güncel olduğundan emin ol."));
+            } }),
+            site.announcement ? h("button", { class: "btn", type: "button", text: "Duyuruyu kaldır", onclick: () => {
+              db.collection("config").doc("site").set({ announcement: "", at: Date.now() }, { merge: true }).then(() => { annMsg.textContent = "Duyuru kaldırıldı."; });
+            } }) : null
+          ),
+          annMsg
+        ]
+      }),
+      adminChatsCard(),
+      card({
+        title: "Yönetici şifresi", icon: "lock", span: "span-6",
+        body: [h("form", { onsubmit: async e => {
+          e.preventDefault();
+          apMsg.className = "err"; apMsg.textContent = "";
+          const cur = $("apCur").value, nw = $("apNew").value, nw2 = $("apNew2").value;
+          if (nw.length < 4) { apMsg.textContent = "Yeni şifre en az 4 karakter olmalı."; return; }
+          if (nw !== nw2) { apMsg.textContent = "Yeni şifreler birbiriyle aynı değil."; return; }
+          try {
+            if ((await sha256(cur)) !== (await currentAdminHash())) { apMsg.textContent = "Şu anki yönetici şifresi hatalı."; return; }
+            await db.collection("config").doc("admin").set({ passHash: await sha256(nw), at: Date.now() });
+            e.target.reset();
+            apMsg.className = "ok"; apMsg.textContent = "Yönetici şifresi değiştirildi. Bundan sonra yeni şifreyle açılır.";
+          } catch (ex) { apMsg.textContent = "Şifre kaydedilemedi. Firestore kurallarının güncel olduğundan emin ol."; }
+        } },
+          h("p", { class: "empty", text: "Yönetici panelini açarken sorulan şifre. Giriş şifrenden ayrıdır." }),
+          ...formField("apCur", "Şu anki yönetici şifresi", "password", { autocomplete: "off" }),
+          ...formField("apNew", "Yeni yönetici şifresi", "password", { autocomplete: "off" }),
+          ...formField("apNew2", "Yeni yönetici şifresi (tekrar)", "password", { autocomplete: "off" }),
+          h("div", { class: "row", style: "margin-top:1.1rem" }, h("button", { class: "btn primary", type: "submit", text: "Yönetici şifresini değiştir" })),
+          apMsg
+        )]
+      }),
+      allItemsCard()
+    )
+  );
+}
