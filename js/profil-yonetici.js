@@ -132,6 +132,13 @@ function themeCard() {
   );
 }
 
+function timeRow(id, label, value, onSave, msg) {
+  return h("div", { class: "row time-row" },
+    h("label", { class: "lbl", for: id, style: "margin:0", text: label }),
+    h("input", { class: "field", id, type: "time", value, style: "flex:none;width:8rem",
+      onchange: async e => { if (!e.target.value) return; try { await onSave(e.target.value); msg.className = "ok"; msg.textContent = label + ": her gün " + e.target.value; } catch (ex) { msg.className = "err"; msg.textContent = "Kaydedilemedi, tekrar dene."; } } }));
+}
+
 function notifyCard() {
   const supported = "Notification" in window && "serviceWorker" in navigator;
   const perm = supported ? Notification.permission : "denied";
@@ -159,7 +166,7 @@ function notifyCard() {
         let r = "error";
         try { r = await registerPush(true); } catch (ex) {}
         if (r === "ok" || r === "local") {
-          await saveNotif({ msgOn: notifSettings.msgOn !== false, affOn: notifSettings.affOn !== false, affTime: notifSettings.affTime || "09:00" }).catch(() => {});
+          await saveNotif({ msgOn: notifSettings.msgOn !== false, affOn: notifSettings.affOn !== false, affTime: notifSettings.affTime || "07:45", prayOn: notifSettings.prayOn !== false, prayTime: notifSettings.prayTime || "21:00" }).catch(() => {});
           notify("Bildirimler açık ♡", "Artık Neriii'den bildirim alacaksın.", "test");
         } else if (r !== "granted") showToast("Bildirimler açılamadı", r === "denied" ? "İzin verilmedi. Ayarlardan izin verip tekrar dene." : "Biraz sonra tekrar dene.");
         render();
@@ -169,10 +176,9 @@ function notifyCard() {
   return h("div", {},
     sw("Mesaj bildirimleri", "Biri sana yazınca bildirim gelsin", notifSettings.msgOn !== false, v => saveNotif({ msgOn: v })),
     sw("Günün olumlaması", "Her gün seçtiğin saatte", notifSettings.affOn !== false, v => saveNotif({ affOn: v })),
-    h("div", { class: "row", style: "margin-top:.4rem" },
-      h("label", { class: "lbl", for: "affTime", style: "margin:0", text: "Olumlama saati" }),
-      h("input", { class: "field", id: "affTime", type: "time", value: notifSettings.affTime || "09:00", style: "flex:none;width:8rem",
-        onchange: async e => { if (!e.target.value) return; try { await saveNotif({ affTime: e.target.value, lastAff: "" }); msg.className = "ok"; msg.textContent = "Her gün " + e.target.value + "'da gelecek."; } catch (ex) {} } })),
+    timeRow("affTime", "Olumlama saati", notifSettings.affTime || "07:45", v => saveNotif({ affTime: v, lastAff: "" }), msg),
+    sw("Dua hatırlatması", "Her gün \"Duanı okumayı unutma\" bildirimi", notifSettings.prayOn !== false, v => saveNotif({ prayOn: v, prayTime: notifSettings.prayTime || "21:00" })),
+    timeRow("prayTime", "Dua saati", notifSettings.prayTime || "21:00", v => saveNotif({ prayTime: v, prayOn: notifSettings.prayOn !== false, lastPray: "" }), msg),
     !PUSH_API ? h("p", { class: "empty", style: "margin-top:.8rem", text: "Bildirim sunucusu bağlanınca uygulama kapalıyken de bildirimler gelmeye başlayacak." }) : null,
     h("div", { class: "row", style: "margin-top:1rem" },
       h("button", { class: "btn", type: "button", text: "Deneme bildirimi", onclick: () => notify("Neriii ♡", "Bildirimler bu cihazda çalışıyor.", "test") }),
@@ -335,11 +341,12 @@ function lockAdmin() {
   try { sessionStorage.removeItem("nerii-admin"); } catch (e) {}
 }
 
-const KIND_NAMES = { note: "Not", goal: "Hedef", habit: "Alışkanlık", plan: "Plan", shop: "Alışveriş", book: "Kitap", prayer: "Dua", aff: "Olumlama", journal: "Günlük" };
+const KIND_NAMES = { note: "Not", goal: "Hedef", habit: "Alışkanlık", plan: "Plan", shop: "Alışveriş", book: "Kitap", prayer: "Dua", memory: "Anı", magic: "Sihirli söz", aff: "Olumlama", journal: "Günlük" };
 function itemSummary(i) {
   if (i.kind === "note") return (i.title || "Başlıksız not") + (i.body ? ": " + i.body : "");
   if (i.kind === "habit") return i.name;
   if (i.kind === "book") return i.title + (i.author ? ", " + i.author : "");
+  if (i.kind === "memory") return (i.title || "Anı") + ((i.photos || []).length ? " (" + i.photos.length + " fotoğraf)" : "") + (i.text ? ": " + i.text : "");
   if (i.kind === "prayer") return (i.title || "Dua") + (i.text ? ": " + i.text : "");
   if (i.kind === "journal") return fmtDate.format(fromKey(i.date)) + (i.mood ? ", " + i.mood : "") + ((i.text || "").trim() ? ": " + i.text : "");
   if (i.kind === "plan") return i.text + ", " + fmtShort.format(fromKey(i.date));

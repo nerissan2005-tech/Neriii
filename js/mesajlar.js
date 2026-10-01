@@ -27,7 +27,67 @@ const STICKERS = [
   ["cry", "🥺", "wiggle", "Özledim"], ["sleep", "😴", "float", "Uykulu"], ["letter", "💌", "wiggle", "Mektup"], ["clap", "👏", "shake", "Alkış"]
 ];
 const stickerOf = k => STICKERS.find(s => s[0] === k);
-const msgPreview = m => m.unsent ? "Mesaj geri çekildi" : m.sticker ? (stickerOf(m.sticker) || ["", "✨"])[1] + " çıkartma" : m.text;
+const msgPreview = m => m.unsent ? "Mesaj geri çekildi" : m.sticker ? (stickerOf(m.sticker) || ["", "✨"])[1] + " çıkartma" : m.photo ? "📷 Fotoğraf" + (m.text ? ": " + m.text : "") : m.audio ? "🎤 Sesli mesaj" : m.text;
+const fmtDur = s => Math.floor(s / 60) + ":" + String(Math.floor(s % 60)).padStart(2, "0");
+
+async function sendQuickMessage(to, fields) {
+  const p = profileOf(to);
+  const ref = await db.collection("messages").add(Object.assign({ from: me.uid, fromName: me.name, to, toName: p ? p.name : "", text: "", at: Date.now(), read: false, hidden: [] }, fields));
+  pushApi("/notify-message", { id: ref.id }).catch(() => {});
+  return ref;
+}
+
+let recorder = null;
+function pickAudioType() {
+  if (typeof MediaRecorder === "undefined") return null;
+  for (const t of ["audio/mp4", "audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus"]) { try { if (MediaRecorder.isTypeSupported(t)) return t; } catch (e) {} }
+  return "";
+}
+async function startRecording(onDone) {
+  const type = pickAudioType();
+  if (type === null || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { showToast("Ses kaydı desteklenmiyor", "Bu tarayıcı ses kaydını desteklemiyor."); return; }
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+  catch (e) { showToast("Mikrofona izin verilmedi", "Sesli mesaj için mikrofon iznini açman gerekiyor."); return; }
+  const opts = { audioBitsPerSecond: 24000 };
+  if (type) opts.mimeType = type;
+  let mr;
+  try { mr = new MediaRecorder(stream, opts); } catch (e) { mr = new MediaRecorder(stream); }
+  const chunks = [];
+  const start = Date.now();
+  recorder = { mr, stream, start, send: false, timer: null };
+  mr.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+  mr.onstop = () => {
+    stream.getTracks().forEach(t => t.stop());
+    const rec = recorder;
+    recorder = null;
+    clearInterval(rec.timer);
+    const dur = (Date.now() - start) / 1000;
+    if (rec.send && dur >= 1 && chunks.length) {
+      const blob = new Blob(chunks, { type: mr.mimeType || type || "audio/webm" });
+      const fr = new FileReader();
+      fr.onload = () => {
+        if (fr.result.length > 950000) { showToast("Sesli mesaj çok uzun", "En fazla 2 dakikalık sesli mesaj gönderebilirsin."); return; }
+        onDone({ audio: fr.result, dur: Math.round(dur) });
+      };
+      fr.readAsDataURL(blob);
+    }
+    render();
+  };
+  mr.start();
+  recorder.timer = setInterval(() => {
+    const el = $("recTime");
+    const s = (Date.now() - start) / 1000;
+    if (el) el.textContent = fmtDur(s);
+    if (s >= 120) stopRecording(true);
+  }, 250);
+  render();
+}
+function stopRecording(send) {
+  if (!recorder) return;
+  recorder.send = send;
+  try { recorder.mr.stop(); } catch (e) {}
+}
 
 function insertAtCaret(el, text) {
   const focused = document.activeElement === el;
@@ -70,6 +130,11 @@ function bubbleNode(m, opts) {
   const content = m.unsent
     ? h("span", { class: "unsent", text: mine && !opts.admin ? "Bu mesajı geri çektin" : "Bu mesaj geri çekildi" })
     : m.sticker ? (st => h("span", { class: "sticker s-" + (st ? st[2] : "float"), title: st ? st[3] : "", text: st ? st[1] : "✨" }))(stickerOf(m.sticker))
+    : m.photo ? h("span", { class: "msg-media" },
+        h("img", { class: "msg-photo", src: m.photo, alt: "Fotoğraf", loading: "lazy", onclick: () => openViewer([m.photo], 0) }),
+        m.text ? h("span", { class: "msg-cap", text: m.text }) : null)
+    : m.audio ? h("span", { class: "msg-audio" }, h("span", { html: ico("mic", 16), style: "display:grid" }),
+        h("audio", { controls: true, preload: "none", src: m.audio }), m.dur ? h("small", { text: fmtDur(m.dur) }) : null)
     : document.createTextNode(m.text);
   const actions = [];
   const reacts = Object.entries(m.reactions || {});
@@ -80,7 +145,7 @@ function bubbleNode(m, opts) {
     if (mine && !m.unsent) actions.push(h("button", { type: "button", text: "Geri çek", onclick: async () => {
       if (!(await ask({ title: "Mesaj geri çekilsin mi?", text: "Mesaj iki taraftan da kaldırılır, yerine geri çekildiği yazar.", ok: "Geri çek", icon: "chat" }))) return;
       state.msgMenu = null;
-      db.collection("messages").doc(m.id).update({ unsent: true, text: "", sticker: null }).catch(() => showToast("Geri çekilemedi", "İnternet bağlantını kontrol et."));
+      db.collection("messages").doc(m.id).update({ unsent: true, text: "", sticker: null, photo: null, audio: null }).catch(() => showToast("Geri çekilemedi", "İnternet bağlantını kontrol et."));
     } }));
     actions.push(h("button", { type: "button", text: "Benden sil", onclick: () => {
       state.msgMenu = null;
@@ -146,7 +211,7 @@ async function unsendAll(mine, other) {
   state.chatMenu = false;
   if (!(await ask({ title: "Gönderdiğin mesajlar geri çekilsin mi?", text: other.name + " ile sohbette gönderdiğin " + mine.length + " mesaj iki taraftan da geri çekilir.", ok: "Geri çek", danger: true, icon: "chat" }))) { render(); return; }
   try {
-    await runInBatches(mine, (b, ref) => b.update(ref, { unsent: true, text: "", sticker: null }));
+    await runInBatches(mine, (b, ref) => b.update(ref, { unsent: true, text: "", sticker: null, photo: null, audio: null }));
     showToast("Mesajların geri çekildi");
   } catch (e) { showToast("Geri çekilemedi", "İnternet bağlantını kontrol edip tekrar dene."); }
   render();
@@ -282,9 +347,32 @@ function renderMessages() {
       })(),
       other.gone ? h("p", { class: "empty", text: "Bu profile artık mesaj gönderilemiyor." }) : h("div", {},
         panel,
+        recorder ? h("div", { class: "composer recording" },
+          h("span", { class: "rec-dot" }),
+          h("span", { class: "rec-label" }, "Kaydediliyor ", h("b", { id: "recTime", text: fmtDur((Date.now() - recorder.start) / 1000) })),
+          h("button", { class: "btn", type: "button", text: "İptal", onclick: () => stopRecording(false) }),
+          h("button", { class: "btn primary", type: "button", "aria-label": "Sesli mesajı gönder", html: ico("send", 18), onclick: () => stopRecording(true) })
+        ) :
         h("form", { class: "composer", onsubmit: e => { e.preventDefault(); send(); } },
           h("button", { class: "icon-btn emoji-btn", type: "button", "aria-label": "Emoji ve çıkartmalar", "aria-pressed": state.emojiOpen ? "true" : "false", text: "😊",
             onclick: () => { state.emojiOpen = !state.emojiOpen; render(); } }),
+          h("label", { class: "icon-btn media-btn", "aria-label": "Fotoğraf gönder", title: "Fotoğraf gönder" },
+            h("span", { html: ico("image", 20), style: "display:grid" }),
+            h("input", { type: "file", accept: "image/*", hidden: true, onchange: async e => {
+              const f = e.target.files[0];
+              e.target.value = "";
+              if (!f) return;
+              showToast("Fotoğraf gönderiliyor…");
+              try {
+                let photo = await resizeImage(f, 1100, 0.72);
+                if (photo.length > 900000) photo = await resizeImage(f, 800, 0.6);
+                const cap = $("msgInput") ? $("msgInput").value.trim() : "";
+                if (await sendMsg({ photo, text: cap }) && cap) { $("msgInput").value = ""; state.msgDraft = ""; }
+                $("toast").hidden = true;
+              } catch (ex) { showToast("Fotoğraf gönderilemedi", "Başka bir fotoğraf dene."); }
+            } })),
+          h("button", { class: "icon-btn media-btn", type: "button", "aria-label": "Sesli mesaj kaydet", title: "Sesli mesaj", html: ico("mic", 20),
+            onclick: () => startRecording(fields => sendMsg(fields)) }),
           h("textarea", { id: "msgInput", class: "field", rows: "1", placeholder: other.name + " için bir mesaj yaz…", "aria-label": "Mesaj",
             oninput: e => { state.msgDraft = e.target.value; sendTyping(other.uid, !!e.target.value.trim()); },
             onblur: () => sendTyping(other.uid, false),

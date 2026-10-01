@@ -288,7 +288,7 @@ function logout() {
   setTimeout(() => auth.signOut().then(() => { history.replaceState(null, "", location.pathname); location.reload(); }), 300);
 }
 
-const RENDER = { home: renderHome, notes: renderNotes, goals: renderGoals, habits: renderHabits, calendar: renderCalendar, journal: renderJournal, affirm: renderAffirm, messages: renderMessages, shopping: renderShopping, prayers: renderPrayers, settings: renderSettings, admin: renderAdmin };
+const RENDER = { home: renderHome, notes: renderNotes, goals: renderGoals, habits: renderHabits, calendar: renderCalendar, journal: renderJournal, affirm: renderAffirm, messages: renderMessages, shopping: renderShopping, prayers: renderPrayers, memories: renderMemories, magic: renderMagic, settings: renderSettings, admin: renderAdmin };
 
 
 function greeting() {
@@ -350,8 +350,10 @@ function searchAll(q) {
     if (i.kind === "shop" && has(i.text)) out.push([i.text, "Alışveriş listesi", () => go("shopping")]);
     if (i.kind === "prayer" && (has(i.title) || has(i.text))) out.push([i.title || "Dua", "Dua, " + (i.cat || ""), () => go("prayers", { prayerOpen: i.id })]);
     if (i.kind === "journal" && (has(i.text) || (i.gratitude || []).some(has))) out.push([fmtDate.format(fromKey(i.date)) + (isMine(i) ? "" : ", " + i.ownerName), "Günlük", () => go("journal", isMine(i) ? { jDate: i.date, jOther: null } : { jOther: i.id })]);
+    if (i.kind === "memory" && (has(i.title) || has(i.text) || has(i.place))) out.push([i.title || "Anı", "Anı, " + fmtShort.format(fromKey(i.date || todayKey)), () => { go("memories"); setTimeout(() => memoryDialog(i), 250); }]);
     if (i.kind === "aff" && has(i.text)) out.push([i.text, "Olumlama", () => go("affirm", { affFilter: "Eklenenler" })]);
   });
+  BUILTIN_PRAYERS.forEach(p => { if (has(p.title) || p.lines.some(has) || has(p.meal)) out.push([p.title, p.sub, () => go("prayers")]); });
   const dAll = affDay();
   for (let i = dAll; i >= 0; i--) { const x = affAt(i); if (has(x.text)) out.push([x.text, "Olumlama, " + x.cat, () => go("affirm", { affFilter: x.cat })]); }
 

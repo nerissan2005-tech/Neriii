@@ -23,8 +23,15 @@ const ICONS = {
   shield: "M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z",
   bell: "M6 9a6 6 0 0 1 12 0c0 6 2.5 8 2.5 8h-17S6 15 6 9zM10 20.5a2 2 0 0 0 4 0",
   star: "M12 3l1.8 6.2L20 11l-6.2 1.8L12 19l-1.8-6.2L4 11l6.2-1.8z",
+  camera: "M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
+  gift: "M4 11h16v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1zM3 7h18v4H3zM12 7v14M12 7S10.5 3 8 3a2 2 0 0 0 0 4M12 7s1.5-4 4-4a2 2 0 0 1 0 4",
+  mic: "M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zM6 11a6 6 0 0 0 12 0M12 17v4M9 21h6",
+  image: "M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM3 16l5-5 4 4 3-3 6 6M15.5 9.5h.01",
+  stop: "M7 7h10v10H7z",
   download: "M12 4v11M7 10l5 5 5-5M5 20h14",
   check: "M5 12.5l4.5 4.5L19 7.5",
+  mic: "M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM5 11a7 7 0 0 0 14 0M12 18v3M8.5 21h7",
+  image: "M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM8.5 10.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM21 15l-5-5L5 19",
   share: "M12 3v12M8 7l4-4 4 4M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1",
   moon: "M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5z",
   sun: "M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"
@@ -50,6 +57,8 @@ const VIEWS = [
   ["journal", "Günlük", "heart"],
   ["shopping", "Alışveriş Listesi", "cart"],
   ["prayers", "Dualarımız", "moon"],
+  ["memories", "Anı Defteri", "camera"],
+  ["magic", "Sihirli Kutu", "gift"],
   ["settings", "Ayarlar", "settings"],
   ["admin", "Yönetici", "shield"]
 ];
@@ -57,6 +66,8 @@ const TAB_MAIN = ["home", "messages", "affirm", "journal"];
 const TILES = [
   ["journal", "Duygu Günlüğü", "Bugünün ruh hali ve şükran listesi", "heart", "#C46A8A"],
   ["prayers", "Dualarımız", "Dualarını yaz, birlikte amin deyin", "moon", "#6F8F78"],
+  ["magic", "Sihirli Kutu", "Dokun, kalbine iyi gelen bir söz çıksın", "gift", "#E0975A"],
+  ["memories", "Anı Defteri", "Fotoğraflı güzel anılar biriktir", "camera", "#4F7FA3"],
   ["habits", "Alışkanlıklar", "Her gün küçük bir adım, uzun seriler", "repeat", "#E0975A"],
   ["affirm", "Olumlamalar", "Aşk, bolluk, şükür ve daha fazlası", "star", "#8C6BB1"],
   ["goals", "Hedefler", "Hayallerini adım adım takip et", "target", "#5B2E4F"],

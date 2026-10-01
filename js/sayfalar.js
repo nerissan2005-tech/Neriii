@@ -353,6 +353,44 @@ function toggleAmin(it) {
   itemsCol().doc(it.id).update(new F.FieldPath("amins", me.uid), on ? F.FieldValue.delete() : Date.now(), "upd", Date.now()).catch(writeFail);
 }
 
+function prayedToday() {
+  data.prayed = data.prayed || {};
+  return data.prayed[todayKey] || [];
+}
+function togglePrayed(id) {
+  const list = prayedToday().slice();
+  const i = list.indexOf(id);
+  if (i > -1) list.splice(i, 1); else list.push(id);
+  data.prayed = { [todayKey]: list };
+  save();
+  render();
+}
+
+function builtinPrayers() {
+  const done = prayedToday();
+  const open = state.mealOpen || {};
+  return h("section", { class: "builtin" },
+    h("div", { class: "builtin-head" },
+      h("h3", { text: "Sureler ve dualar" }),
+      h("span", { class: "tag", text: "Bugün " + done.filter(id => BUILTIN_PRAYERS.some(p => p.id === id)).length + " / " + BUILTIN_PRAYERS.length + " okundu" })),
+    h("div", { class: "prayer-list" }, BUILTIN_PRAYERS.map(p => {
+      const read = done.includes(p.id);
+      return h("article", { class: "prayer builtin-card" + (read ? " read" : ""), id: "dua-" + p.id },
+        h("div", { class: "prayer-head" },
+          h("span", { class: "prayer-ic", html: ico("moon", 18) }),
+          h("div", { style: "flex:1;min-width:0" }, h("h3", { text: p.title }), h("span", { class: "tag", text: p.sub })),
+          h("span", { class: "who mine", text: p.kind })),
+        h("div", { class: "okunus" }, p.lines.map(l => h("p", { text: l }))),
+        open[p.id] ? h("p", { class: "meal", text: p.meal }) : null,
+        h("div", { class: "prayer-foot" },
+          h("button", { class: "amin" + (read ? " on" : ""), type: "button", "aria-pressed": read ? "true" : "false", onclick: () => togglePrayed(p.id) }, read ? "✓ Bugün okudum" : "🤲 Okudum"),
+          h("button", { class: "more", type: "button", style: "margin:0;padding:0", text: open[p.id] ? "Anlamını gizle" : "Anlamını göster",
+            onclick: () => { state.mealOpen = Object.assign({}, open, { [p.id]: !open[p.id] }); render(); } }))
+      );
+    }))
+  );
+}
+
 function renderPrayers() {
   const all = listOf("prayer").sort((a, b) => (b.at || 0) - (a.at || 0));
   const f = state.prayerCat || "Tümü";
@@ -404,7 +442,9 @@ function renderPrayers() {
   })) : h("p", { class: "empty", text: all.length ? "Bu kategoride dua yok." : "Henüz dua eklenmedi. İlk duayı sen yaz ♡" });
 
   return h("div", {},
-    pageHead("Dualarımız", "Dualarını yaz, istersen sevdiklerinle paylaş ve birlikte amin deyin."),
+    pageHead("Dualarımız", "Sureleri ve duaları oku, kendi dualarını yaz, istersen sevdiklerinle paylaş ve birlikte amin deyin."),
+    builtinPrayers(),
+    h("h3", { class: "section-title", text: "Bizim dualarımız" }),
     h("div", { class: "grid" },
       h("section", { class: "card span-12 t-sage" }, doodle("moon"), form)),
     h("div", { style: "margin-top:1.25rem" }, chips, cardsEl)
