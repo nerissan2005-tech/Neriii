@@ -338,6 +338,26 @@ td input[type="checkbox"] { margin: 0 auto; }
 .composer textarea { min-height: 2.9rem; height: 2.9rem; max-height: 9rem; resize: none; }
 .side nav .logout { margin-top: .6rem; opacity: .75; }
 
+
+.add-wrap { margin-top: .6rem; position: relative; }
+.add-wrap .add { margin-top: 0; }
+.vis { display: inline-flex; background: rgba(91,46,79,.07); border-radius: 999px; padding: .2rem; gap: .15rem; margin-top: .5rem; }
+.vis button { border: 0; background: none; border-radius: 999px; padding: .28rem .7rem; font-size: .76rem; font-weight: 600; color: var(--muted); cursor: pointer; display: inline-flex; gap: .3rem; align-items: center; }
+.vis button[aria-pressed="true"] { background: #fff; color: var(--plum); box-shadow: 0 1px 3px rgba(43,27,46,.12); }
+.who { display: inline-flex; gap: .25rem; align-items: center; font-size: .72rem; font-weight: 600; color: #8459AE; background: rgba(132,89,174,.1); border-radius: 999px; padding: .12rem .5rem; white-space: nowrap; flex: none; }
+.who.mine { color: var(--plum); background: rgba(91,46,79,.08); }
+.item-sub { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; font-size: .78rem; color: var(--muted); }
+.announce { background: linear-gradient(135deg, #FFF4E3, #F8E4E7); border-color: #F0D8C8; }
+.announce-text { margin: 0; font-size: 1.02rem; white-space: pre-wrap; position: relative; }
+.admin-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: .9rem; align-items: center; padding: .9rem 0; border-bottom: 1px solid var(--line); }
+.admin-row:last-child { border-bottom: 0; }
+.name-edit { flex: 1; min-width: 8rem; max-width: 16rem; padding: .4rem .7rem; font-weight: 600; }
+.role { font-size: .72rem; font-weight: 700; padding: .14rem .6rem; border-radius: 999px; background: var(--sage); color: #3E7D5E; }
+.role.admin { background: var(--plum); color: #fff; }
+.role.off { background: #ECE6E6; color: #8A7A86; }
+.btn.small { padding: .38rem .75rem; font-size: .8rem; }
+@media (max-width: 700px) { .admin-row { grid-template-columns: auto minmax(0, 1fr); } .admin-row > :last-child { grid-column: 1 / -1; justify-content: flex-start; } }
+
 @media (max-width: 1300px) {
   .span-9 { grid-column: span 12; }
   .span-3 { grid-column: span 6; }
@@ -453,6 +473,9 @@ const ICONS = {
   logout: "M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 17l5-5-5-5M15 12H3",
   send: "M4 12l16-8-6 16-2.5-6.5z",
   x: "M6 6l12 12M18 6L6 18",
+  lock: "M7 11V8a5 5 0 0 1 10 0v3M6 11h12v9H6z",
+  users: "M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 4.5a3.5 3.5 0 0 1 0 6.5M18 14c2 .7 3 2.8 3 6",
+  shield: "M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z",
   bell: "M6 9a6 6 0 0 1 12 0c0 6 2.5 8 2.5 8h-17S6 15 6 9zM10 20.5a2 2 0 0 0 4 0",
   star: "M12 3l1.8 6.2L20 11l-6.2 1.8L12 19l-1.8-6.2L4 11l6.2-1.8z",
   sun: "M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"
@@ -478,7 +501,8 @@ const VIEWS = [
   ["journal", "Günlük", "heart"],
   ["shopping", "Alışveriş Listesi", "cart"],
   ["books", "Okuma Listesi", "book"],
-  ["settings", "Ayarlar", "settings"]
+  ["settings", "Ayarlar", "settings"],
+  ["admin", "Yönetici", "shield"]
 ];
 const TILES = [
   ["journal", "Duygu Günlüğü", "Bugünün ruh hali ve şükran listesi", "heart", "#C46A8A"],
@@ -909,36 +933,27 @@ let today = new Date(); today.setHours(0, 0, 0, 0);
 let todayKey = keyOf(today);
 const $ = id => document.getElementById(id);
 
+
+const ADMIN_EMAIL = "neriii@nerii.app";
+
 function defaults() {
-  return { name: "", city: "", plan: {}, notes: [], goals: [], habits: [], journal: {}, shopping: [], books: [], affStart: todayKey, favAff: [], myAff: [] };
+  return { city: "", journal: {}, favAff: [], affStart: todayKey, visPref: {}, v3: true };
 }
-function migrate(old) {
-  const d = defaults();
-  d.habits = old.habits || [];
-  d.books = old.books || [];
-  d.goals = (old.goals || []).map(g => ({ id: g.id || uid(), text: g.text, area: g.area || "Kişisel", progress: g.done ? 100 : 0 }));
-  const keys = new Set([...Object.keys(old.journal || {}), ...Object.keys(old.mood || {}), ...Object.keys(old.gratitude || {})]);
-  keys.forEach(k => {
-    d.journal[k] = { mood: (old.mood || {})[k] || "", gratitude: (old.gratitude || {})[k] || ["", "", ""], text: (old.journal || {})[k] || "" };
-  });
-  return d;
-}
-function loadLocal() {
-  try {
-    const raw = localStorage.getItem(STORE);
-    if (raw) return Object.assign(defaults(), JSON.parse(raw));
-    const old = localStorage.getItem("nerii-data");
-    if (old) return migrate(JSON.parse(old));
-  } catch (e) {}
-  return null;
-}
+
 let data = defaults();
 let me = null;
 let auth = null, db = null;
+let allProfiles = [];
 let profiles = [];
 let msgsIn = [], msgsOut = [];
+let pubItems = new Map(), myItems = new Map();
+let itemsCache = null;
+let site = {};
 let unsubs = [];
 let saveTimer = null;
+let pendingRender = false;
+let loginNotice = "";
+
 function pushData() {
   clearTimeout(saveTimer); saveTimer = null;
   if (!me || !db) return;
@@ -947,12 +962,12 @@ function pushData() {
 }
 function save() {
   if (!me) return;
-  try { localStorage.setItem("nerii-cache-" + me.uid, JSON.stringify(data)); } catch (e) {}
   clearTimeout(saveTimer);
   saveTimer = setTimeout(pushData, 800);
 }
-document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden" && saveTimer) pushData(); });
-window.addEventListener("pagehide", () => { if (saveTimer) pushData(); });
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") { if (saveTimer) pushData(); flushItems(); } });
+window.addEventListener("pagehide", () => { if (saveTimer) pushData(); flushItems(); });
+
 
 function h(tag, attrs, ...kids) {
   const n = document.createElement(tag);
@@ -969,7 +984,9 @@ function h(tag, attrs, ...kids) {
   return n;
 }
 
+
 const state = { view: "home", calMonth: firstOfMonth(today), sel: todayKey, noteId: null, jDate: todayKey, affFilter: "Tümü", focus: null };
+
 
 function dayIndex(d, len) {
   const n = Math.floor((d.getTime() - d.getTimezoneOffset() * 60000) / DAY_MS);
@@ -1009,32 +1026,100 @@ function toggleFav(t) {
   save(); render();
 }
 const softNote = () => SOFT_NOTES[dayIndex(today, SOFT_NOTES.length)];
-const planOf = k => data.plan[k] || (data.plan[k] = []);
 const journalOf = k => data.journal[k] || (data.journal[k] = { mood: "", gratitude: ["", "", ""], text: "" });
-const removeFrom = (arr, it) => { const i = arr.indexOf(it); if (i > -1) arr.splice(i, 1); };
+
+function allItems() {
+  if (!itemsCache) { itemsCache = new Map(pubItems); myItems.forEach((v, k) => itemsCache.set(k, v)); }
+  return itemsCache;
+}
+const listOf = kind => [...allItems().values()].filter(i => i.kind === kind).sort((a, b) => a.at - b.at);
+const isMine = i => i.owner === me.uid;
+const canDel = i => isMine(i) || (me.isAdmin && i.vis === "public");
+const plansOn = k => listOf("plan").filter(i => i.date === k);
+const doneOf = hb => ((hb.done || {})[me.uid]) || {};
+const getVis = kind => (data.visPref || {})[kind] || "private";
+const itemsCol = () => db.collection("items");
+const writeFail = () => showToast("Kaydedilemedi", "İnternet bağlantını kontrol edip tekrar dene.");
+
+function addItem(kind, fields, vis) {
+  const ref = itemsCol().doc();
+  ref.set(Object.assign({ kind, owner: me.uid, ownerName: me.name, vis: vis || "private", at: Date.now(), upd: Date.now(), updName: me.name }, fields)).catch(writeFail);
+  return ref.id;
+}
+const pendingPatch = new Map();
+function flushItem(id) {
+  const x = pendingPatch.get(id);
+  if (!x) return;
+  clearTimeout(x.t);
+  pendingPatch.delete(id);
+  itemsCol().doc(id).update(x.patch).catch(writeFail);
+}
+function flushItems() { [...pendingPatch.keys()].forEach(flushItem); }
+function updItem(it, patch, lazy) {
+  Object.assign(it, patch);
+  const prev = pendingPatch.get(it.id);
+  const p = Object.assign(prev ? prev.patch : {}, patch, { upd: Date.now(), updName: me.name });
+  if (prev) clearTimeout(prev.t);
+  if (!lazy) { pendingPatch.delete(it.id); itemsCol().doc(it.id).update(p).catch(writeFail); return; }
+  pendingPatch.set(it.id, { patch: p, t: setTimeout(() => flushItem(it.id), 600) });
+}
+function delItem(it, ask) {
+  if (ask && !confirm(ask)) return;
+  pendingPatch.delete(it.id);
+  itemsCol().doc(it.id).delete().catch(writeFail);
+}
+function toggleHabit(hb, k, on) {
+  const F = firebase.firestore;
+  itemsCol().doc(hb.id).update(new F.FieldPath("done", me.uid, k), on ? true : F.FieldValue.delete(), "upd", Date.now()).catch(writeFail);
+}
+
+function scheduleRender() {
+  if (!me) return;
+  const a = document.activeElement;
+  if (a && a.classList && a.classList.contains("live") && $("view").contains(a)) { pendingRender = true; updateHeader(); return; }
+  pendingRender = false;
+  render();
+}
+document.addEventListener("focusout", e => {
+  if (!e.target.classList || !e.target.classList.contains("live")) return;
+  setTimeout(() => {
+    const a = document.activeElement;
+    if (a && a.classList && a.classList.contains("live")) return;
+    flushItems();
+    if (pendingRender) { pendingRender = false; render(); }
+  }, 60);
+});
 
 function go(view, opts) {
-  if (!VIEWS.some(v => v[0] === view)) view = "home";
+  if (!VIEWS.some(v => v[0] === view) || (view === "admin" && !(me && me.isAdmin))) view = "home";
   state.view = view;
   Object.assign(state, opts || {});
   if (view === "messages") $("toast").hidden = true;
   if (location.hash.slice(1) !== view) history.replaceState(null, "", "#" + view);
+  flushItems();
+  pendingRender = false;
   render();
   window.scrollTo(0, 0);
 }
 
 function render() {
+  if (!me) return;
   document.querySelectorAll("#nav button").forEach(b => {
     if (b.dataset.view === state.view) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
   });
   const act = document.activeElement;
   const keepId = act && act.id && $("view").contains(act) ? act.id : null;
+  const keepVal = keepId && act.type !== "checkbox" && act.type !== "range" && "value" in act ? act.value : null;
   const caret = keepId && typeof act.selectionStart === "number" ? act.selectionStart : null;
   $("view").replaceChildren(RENDER[state.view]());
   updateHeader();
   if (keepId && !state.focus) {
     const f = $(keepId);
-    if (f) { f.focus(); if (caret != null && typeof f.setSelectionRange === "function") try { f.setSelectionRange(caret, caret); } catch (e) {} }
+    if (f) {
+      if (keepVal != null && f.value !== keepVal) f.value = keepVal;
+      f.focus();
+      if (caret != null && typeof f.setSelectionRange === "function") try { f.setSelectionRange(caret, caret); } catch (e) {}
+    }
   }
   if (state.focus) {
     const f = document.querySelector(state.focus);
@@ -1057,44 +1142,79 @@ function card(o) {
   );
 }
 
+const VIS_OPTS = [["private", "Sadece ben", "lock"], ["public", "Herkes", "users"]];
+function visSwitch(cur, onPick, label) {
+  const wrap = h("div", { class: "vis", role: "group", "aria-label": label || "Kimler görsün" });
+  VIS_OPTS.forEach(([v, l, ic]) => wrap.append(h("button", {
+    type: "button", "data-v": v, "aria-pressed": v === cur ? "true" : "false",
+    onclick: () => {
+      wrap.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === v ? "true" : "false"));
+      onPick(v);
+    }
+  }, h("span", { html: ico(ic, 14), style: "display:grid" }), l)));
+  return wrap;
+}
+const visPicker = kind => visSwitch(getVis(kind), v => { data.visPref = Object.assign({}, data.visPref, { [kind]: v }); save(); }, "Yeni eklenenleri kimler görsün");
+const itemVis = it => visSwitch(it.vis, v => { if (v !== it.vis) updItem(it, { vis: v }); }, "Bunu kimler görsün");
+
+function whoTag(it) {
+  if (!isMine(it)) return h("span", { class: "who", title: it.ownerName + " paylaştı" }, h("span", { html: ico("users", 12), style: "display:grid" }), it.ownerName);
+  if (it.vis === "public") return h("span", { class: "who mine", title: "Herkes görebiliyor" }, h("span", { html: ico("users", 12), style: "display:grid" }), "Herkes");
+  return null;
+}
+function visBtn(it) {
+  if (!isMine(it)) return null;
+  const pub = it.vis === "public";
+  return h("button", { class: "icon-btn sm", type: "button", title: pub ? "Sadece bana özel yap" : "Herkesle paylaş", "aria-label": pub ? "Sadece bana özel yap" : "Herkesle paylaş",
+    html: ico(pub ? "users" : "lock", 16), onclick: () => updItem(it, { vis: pub ? "private" : "public" }) });
+}
+function delBtn(it, label, ask) {
+  if (!canDel(it)) return null;
+  return h("button", { class: "icon-btn sm", type: "button", "aria-label": (label || "") + " sil", html: ico("trash", 16), onclick: () => delItem(it, ask) });
+}
+
 function checklist(items, o) {
   if (!items.length) return h("p", { class: "empty", text: o.empty });
   return h("ul", { class: "checks" }, items.map(it =>
     h("li", { class: it.done ? "done" : "" },
       h("label", {},
-        h("input", { type: "checkbox", checked: !!it.done, onchange: e => { it.done = e.target.checked; save(); render(); } }),
+        h("input", { type: "checkbox", checked: !!it.done, onchange: e => updItem(it, { done: e.target.checked }) }),
         h("span", { text: it.text })
       ),
-      o.del ? h("button", { class: "icon-btn sm", type: "button", "aria-label": it.text + " sil", html: ico("trash", 18), onclick: () => { o.del(it); save(); render(); } }) : null
+      whoTag(it), visBtn(it), delBtn(it, it.text)
     )
   ));
 }
 
-function addForm(key, placeholder, onAdd) {
-  return h("form", {
-    class: "add", "data-add": key,
-    onsubmit: e => {
-      e.preventDefault();
-      const v = e.target.elements.t.value.trim();
-      if (!v) return;
-      onAdd(v);
-      save();
-      state.focus = '[data-add="' + key + '"] input';
-      render();
-    }
-  },
-    h("input", { name: "t", type: "text", placeholder, "aria-label": placeholder }),
-    h("button", { class: "icon-btn", type: "submit", "aria-label": "Ekle", html: ico("plus") })
+function addForm(key, placeholder, kind, onAdd) {
+  return h("div", { class: "add-wrap" },
+    h("form", {
+      class: "add", "data-add": key,
+      onsubmit: e => {
+        e.preventDefault();
+        const input = e.target.elements.t;
+        const v = input.value.trim();
+        if (!v) return;
+        onAdd(v, getVis(kind));
+        input.value = "";
+        input.focus();
+      }
+    },
+      h("input", { name: "t", id: "add-" + key, type: "text", placeholder, "aria-label": placeholder, autocomplete: "off" }),
+      h("button", { class: "icon-btn", type: "submit", "aria-label": "Ekle", html: ico("plus") })
+    ),
+    visPicker(kind)
   );
 }
-const focusAdd = key => () => { const i = document.querySelector('[data-add="' + key + '"] input'); if (i) i.focus(); };
+const focusAdd = key => () => { const i = $("add-" + key); if (i) i.focus(); };
 const pageHead = (title, hint) => h("div", { class: "page-head" }, h("h2", { text: title }), hint ? h("p", { text: hint }) : null);
 
 function streakOf(hb) {
+  const done = doneOf(hb);
   let d = today;
-  if (!hb.done[keyOf(d)]) d = addDays(d, -1);
+  if (!done[keyOf(d)]) d = addDays(d, -1);
   let n = 0;
-  while (hb.done[keyOf(d)]) { n++; d = addDays(d, -1); }
+  while (done[keyOf(d)]) { n++; d = addDays(d, -1); }
   return n;
 }
 
@@ -1105,13 +1225,14 @@ function monthGrid(big) {
   const offset = (m.getDay() + 6) % 7;
   for (let i = 0; i < offset; i++) cells.push(h("div"));
   const days = new Date(m.getFullYear(), m.getMonth() + 1, 0).getDate();
+  const withPlans = new Set(listOf("plan").map(p => p.date));
   for (let d = 1; d <= days; d++) {
     const date = new Date(m.getFullYear(), m.getMonth(), d);
     const k = keyOf(date);
     const cls = ["cal-day"];
     if (k === todayKey) cls.push("today");
     if (big && k === state.sel) cls.push("sel");
-    if ((data.plan[k] || []).length) cls.push("dot");
+    if (withPlans.has(k)) cls.push("dot");
     cells.push(h("button", {
       type: "button", class: cls.join(" "), text: String(d), "aria-label": fmtLong.format(date),
       onclick: () => big ? (state.sel = k, render()) : go("calendar", { sel: k })
@@ -1126,6 +1247,7 @@ function monthGrid(big) {
     h("div", { class: "cal-grid" }, cells)
   );
 }
+
 
 function moodPicker(k) {
   const j = journalOf(k);
@@ -1189,6 +1311,14 @@ const ART_SVG = '<svg viewBox="0 0 300 340" preserveAspectRatio="xMidYMax slice"
 function renderHome() {
   const grid = h("div", { class: "grid" });
 
+  if (site.announcement) {
+    grid.append(h("section", { class: "card announce span-12" },
+      h("div", { class: "card-head" }, h("span", { class: "ci", html: ico("shield", 22) }), h("h2", { text: "Duyuru" }),
+        h("span", { class: "tag", text: (site.byName || "Yönetici") + (site.at ? ", " + fmtShort.format(new Date(site.at)) : "") })),
+      h("p", { class: "announce-text", text: site.announcement })
+    ));
+  }
+
   grid.append(h("section", { class: "hero span-9", html: HERO_SVG },
     h("div", { class: "hero-in" },
       h("p", { class: "hero-label", html: ico("star", 14) + "<span>Günün olumlaması</span>" }, catTag(todayAff().cat)),
@@ -1208,12 +1338,12 @@ function renderHome() {
     title: "Bugünün Planı", icon: "calendar", span: "span-3",
     extra: h("span", { class: "tag", text: fmtShort.format(today) }),
     body: [
-      checklist(planOf(todayKey), { del: it => removeFrom(planOf(todayKey), it), empty: "Bugün için henüz plan yok." }),
-      addForm("plan-home", "Plana ekle", t => planOf(todayKey).push({ id: uid(), text: t, done: false }))
+      checklist(plansOn(todayKey), { empty: "Bugün için henüz plan yok." }),
+      addForm("plan-home", "Plana ekle", "plan", (t, v) => addItem("plan", { text: t, date: todayKey, done: false }, v))
     ]
   }));
 
-  const notes = [...data.notes].sort((a, b) => b.updated - a.updated).slice(0, 4);
+  const notes = listOf("note").sort((a, b) => b.upd - a.upd).slice(0, 4);
   grid.append(card({
     title: "Notlarım", icon: "note", tint: "t-peach", span: "span-3", onAdd: newNote, more: ["Tüm notlar", "notes"], doodle: "leaf",
     body: [notes.length
@@ -1221,17 +1351,22 @@ function renderHome() {
       : h("p", { class: "empty", text: "Aklına geleni yazmak için + simgesine dokun." })]
   }));
 
+  const habits = listOf("habit").slice(0, 5);
   grid.append(card({
     title: "Alışkanlıklar", icon: "repeat", tint: "t-sage", span: "span-3", more: ["Tüm alışkanlıklar", "habits"], doodle: "sprout",
-    onAdd: () => go("habits", { focus: '[data-add="habit"] input' }),
-    body: [data.habits.length
-      ? h("ul", { class: "checks" }, data.habits.slice(0, 5).map(hb => h("li", { class: hb.done[todayKey] ? "done" : "" },
-          h("label", {},
-            h("input", { type: "checkbox", checked: !!hb.done[todayKey], onchange: e => toggleHabit(hb, todayKey, e.target.checked) }),
-            h("span", { text: hb.name })
-          ),
-          streakOf(hb) ? h("span", { class: "streak", text: streakOf(hb) + " gün" }) : null
-        )))
+    onAdd: () => go("habits", { focus: "#add-habit" }),
+    body: [habits.length
+      ? h("ul", { class: "checks" }, habits.map(hb => {
+          const on = !!doneOf(hb)[todayKey];
+          const st = streakOf(hb);
+          return h("li", { class: on ? "done" : "" },
+            h("label", {},
+              h("input", { type: "checkbox", checked: on, onchange: e => toggleHabit(hb, todayKey, e.target.checked) }),
+              h("span", { text: hb.name })
+            ),
+            st ? h("span", { class: "streak", text: st + " gün" }) : null
+          );
+        }))
       : h("p", { class: "empty", text: "Her gün yapmak istediğin bir şey ekle." })]
   }));
 
@@ -1248,14 +1383,14 @@ function renderHome() {
 
   grid.append(h("section", { class: "art span-3", html: ART_SVG }, h("p", { text: softNote() })));
 
-  const goals = data.goals.slice(0, 4);
+  const goals = listOf("goal").slice(0, 4);
   grid.append(card({
     title: "Hedeflerim", icon: "target", tint: "t-blush", span: "span-3", more: ["Tüm hedefler", "goals"], doodle: "flag",
     onAdd: () => go("goals", { focus: "#goalText" }),
     body: [goals.length
       ? h("div", {}, goals.map(g => h("div", { class: "goal" },
-          h("div", { class: "goal-top" }, h("span", { text: g.text }), h("span", { text: "%" + g.progress })),
-          h("div", { class: "bar" }, h("i", { style: "width:" + g.progress + "%" }))
+          h("div", { class: "goal-top" }, h("span", { text: g.text }), h("span", { text: "%" + (g.progress || 0) })),
+          h("div", { class: "bar" }, h("i", { style: "width:" + (g.progress || 0) + "%" }))
         )))
       : h("p", { class: "empty", text: "Ulaşmak istediğin ilk hedefi ekle." })]
   }));
@@ -1266,8 +1401,8 @@ function renderHome() {
     title: "Alışveriş Listesi", icon: "cart", span: "span-3", more: ["Tüm liste", "shopping"], doodle: "basket",
     onAdd: focusAdd("shop-home"),
     body: [
-      checklist(data.shopping.slice(0, 6), { del: it => removeFrom(data.shopping, it), empty: "Liste boş." }),
-      addForm("shop-home", "Listeye ekle", t => data.shopping.push({ id: uid(), text: t, done: false }))
+      checklist(listOf("shop").slice(0, 6), { empty: "Liste boş." }),
+      addForm("shop-home", "Listeye ekle", "shop", (t, v) => addItem("shop", { text: t, done: false }, v))
     ]
   }));
 
@@ -1293,6 +1428,253 @@ function renderHome() {
   );
   return h("div", {}, grid, ideas);
 }
+
+function newNote() {
+  const id = addItem("note", { title: "", body: "" }, getVis("note"));
+  go("notes", { noteId: id, focus: "#noteTitle" });
+}
+
+function renderNotes() {
+  const notes = listOf("note").sort((a, b) => b.upd - a.upd);
+  if (!notes.some(n => n.id === state.noteId)) state.noteId = notes[0] ? notes[0].id : null;
+  const cur = notes.find(n => n.id === state.noteId);
+  let activeTitle = null;
+
+  const list = h("section", { class: "card t-peach" },
+    h("button", { class: "btn primary", type: "button", text: "Yeni not", onclick: newNote }),
+    h("div", { style: "margin:.4rem 0 .9rem" }, visPicker("note")),
+    notes.length ? notes.map(n => {
+      const strong = h("strong", { text: n.title || "Başlıksız not" });
+      if (n.id === state.noteId) activeTitle = strong;
+      return h("button", { type: "button", class: "item-btn", style: n.id === state.noteId ? "background:#fff" : null, onclick: () => { state.noteId = n.id; render(); } },
+        strong, h("span", { class: "item-sub" }, fmtShort.format(new Date(n.upd || n.at)), whoTag(n)));
+    }) : h("p", { class: "empty", text: "Henüz not yok." })
+  );
+
+  let editor;
+  if (cur) {
+    const status = h("span", { class: "status", text: "Son düzenleme: " + fmtShort.format(new Date(cur.upd || cur.at)) + " " + fmtTime.format(new Date(cur.upd || cur.at)) + (cur.updName && cur.updName !== me.name ? ", " + cur.updName : "") });
+    let st;
+    const saving = () => { status.textContent = "Kaydediliyor…"; clearTimeout(st); st = setTimeout(() => { status.textContent = "Kaydedildi"; }, 900); };
+    editor = h("section", { class: "card" },
+      h("div", { class: "row", style: "justify-content:space-between;margin-bottom:.4rem" },
+        isMine(cur) ? itemVis(cur) : h("span", { class: "who" }, h("span", { html: ico("users", 12), style: "display:grid" }), cur.ownerName + " paylaştı"),
+        status),
+      h("input", { class: "big-title live", id: "noteTitle", type: "text", value: cur.title || "", placeholder: "Başlık", "aria-label": "Not başlığı",
+        oninput: e => { updItem(cur, { title: e.target.value }, true); if (activeTitle) activeTitle.textContent = e.target.value || "Başlıksız not"; saving(); } }),
+      h("textarea", { class: "bare live", id: "noteBody", placeholder: "Yazmaya başla…", "aria-label": "Not içeriği",
+        oninput: e => { updItem(cur, { body: e.target.value }, true); saving(); } }, cur.body || ""),
+      canDel(cur) ? h("div", { class: "row", style: "justify-content:flex-end;margin-top:1rem" },
+        h("button", { class: "btn danger", type: "button", text: "Notu sil", onclick: () => { delItem(cur, "Bu not silinsin mi?"); state.noteId = null; } })) : null
+    );
+  } else {
+    editor = h("section", { class: "card" }, h("p", { class: "empty", text: "Bir not seç ya da yeni bir not oluştur." }));
+  }
+  return h("div", {}, pageHead("Notlar", "Fikirlerin, listelerin, aklına gelen her şey. Herkesle paylaştıkların tüm profillerde görünür."), h("div", { class: "split" }, list, editor));
+}
+
+function renderAffirm() {
+  const d = affDay();
+  const t = todayAff();
+  const fav = isFav(t.text);
+  const top = h("section", { class: "aff-hero" },
+    h("div", { class: "aff-top" }, catTag(t.cat), h("span", { class: "aff-count", text: fmtLong.format(today) })),
+    h("p", { class: "aff-big", text: t.text }),
+    h("div", { class: "row", style: "position:relative" },
+      h("button", { class: "btn light", type: "button", text: "Kopyala", onclick: async e => {
+        const b = e.currentTarget;
+        try { await navigator.clipboard.writeText(t.text); b.textContent = "Kopyalandı"; } catch (err) { b.textContent = "Kopyalanamadı"; }
+      } }),
+      h("button", { class: "btn light", type: "button", "aria-pressed": fav ? "true" : "false", onclick: () => toggleFav(t.text) },
+        h("span", { html: ico("heart", 16), style: "display:grid" }), fav ? "Favorilerimde" : "Favorilere ekle")
+    ),
+    h("p", { class: "aff-note", text: "Yolculuğunun " + (d + 1) + ". günü. Her gün yeni bir olumlama açılır ve " + AFF_CYCLE + " gün boyunca hiçbiri tekrar etmez." })
+  );
+
+  const items = [];
+  for (let i = d; i >= 0; i--) items.push(affAt(i));
+  listOf("aff").forEach(m => items.push({ cat: m.cat, text: m.text, date: fromKey(m.date), item: m }));
+  items.sort((a, b) => b.date - a.date || (b.item ? 1 : 0) - (a.item ? 1 : 0));
+
+  const filters = ["Tümü"].concat(AFF_CATS, ["Favoriler", "Eklenenler"]);
+  const match = (f, x) => f === "Tümü" || (f === "Favoriler" ? isFav(x.text) : f === "Eklenenler" ? !!x.item : x.cat === f);
+  const f = filters.includes(state.affFilter) ? state.affFilter : "Tümü";
+  const shown = items.filter(x => match(f, x));
+
+  const chips = h("div", { class: "chips" }, filters.map(x =>
+    h("button", { type: "button", "aria-pressed": x === f ? "true" : "false", onclick: () => { state.affFilter = x; render(); } },
+      x, h("small", { text: String(items.filter(y => match(x, y)).length) }))
+  ));
+
+  const list = shown.length ? h("ul", { class: "aff-list" }, shown.map(x => h("li", {},
+    h("div", { style: "flex:1;min-width:0" },
+      h("p", { text: x.text }),
+      h("div", { class: "aff-meta" }, catTag(x.cat), h("span", { text: fmtDate.format(x.date) }), x.item ? (whoTag(x.item) || h("span", { text: "Sadece sen" })) : null)
+    ),
+    h("button", { class: "fav" + (isFav(x.text) ? " on" : ""), type: "button", "aria-pressed": isFav(x.text) ? "true" : "false",
+      "aria-label": isFav(x.text) ? "Favorilerden çıkar" : "Favorilere ekle", html: ico("heart", 19), onclick: () => toggleFav(x.text) }),
+    x.item ? visBtn(x.item) : null,
+    x.item ? delBtn(x.item, "Olumlama", "Bu olumlama silinsin mi?") : null
+  ))) : h("p", { class: "empty", text: f === "Favoriler" ? "Kalp simgesine dokunduğun olumlamalar burada toplanır."
+    : f === "Eklenenler" ? "Sağdaki alandan kendi olumlamanı yazabilirsin."
+    : "Bu kategoride henüz açılmış olumlama yok. Her gün yenisi geliyor." });
+
+  const form = h("form", { onsubmit: e => {
+    e.preventDefault();
+    const text = $("myAffText").value.trim();
+    if (!text) return;
+    addItem("aff", { text, cat: $("myAffCat").value, date: todayKey }, getVis("aff"));
+    $("myAffText").value = "";
+    state.affFilter = "Eklenenler";
+  } },
+    h("textarea", { id: "myAffText", rows: "4", placeholder: "Örn. Bugün kendime güveniyorum.", "aria-label": "Olumlama" }),
+    h("div", { class: "row", style: "margin-top:.75rem" },
+      h("select", { id: "myAffCat", "aria-label": "Kategori" }, AFF_CATS.map(c => h("option", { text: c }))),
+      h("button", { class: "btn primary", type: "submit", text: "Ekle" })
+    ),
+    visPicker("aff")
+  );
+
+  return h("div", {},
+    pageHead("Olumlamalar", "Aşk, bolluk, şükür, özgüven, sağlık, huzur ve başarı üzerine her gün yeni bir olumlama."),
+    top,
+    h("div", { class: "grid" },
+      h("section", { class: "card span-8" }, h("div", { class: "card-head" }, h("h2", { text: "Açılan olumlamalar" })), chips, list),
+      card({ title: "Kendi olumlamanı yaz", span: "span-4", tint: "t-lilac", doodle: "moon", body: [form] })
+    )
+  );
+}
+
+function renderGoals() {
+  const goals = listOf("goal");
+  const done = goals.filter(g => (g.progress || 0) >= 100).length;
+  const form = h("form", { onsubmit: e => {
+    e.preventDefault();
+    const t = $("goalText").value.trim();
+    if (!t) return;
+    addItem("goal", { text: t, area: $("goalArea").value, progress: 0 }, getVis("goal"));
+    $("goalText").value = "";
+  } },
+    h("div", { class: "row" },
+      h("input", { class: "field", id: "goalText", type: "text", placeholder: "Yeni bir hedef yaz", "aria-label": "Hedef", autocomplete: "off" }),
+      h("select", { id: "goalArea", "aria-label": "Alan" }, AREAS.map(a => h("option", { text: a }))),
+      h("button", { class: "btn primary", type: "submit", text: "Ekle" })
+    ),
+    visPicker("goal")
+  );
+  const rows = goals.map(g => {
+    const pct = h("span", { class: "pct", text: "%" + (g.progress || 0) });
+    return h("div", { class: "goal-row" },
+      h("div", { class: "row", style: "gap:.5rem" }, h("strong", { text: g.text }), h("span", { class: "tag", text: g.area }), whoTag(g)),
+      h("div", { class: "row", style: "gap:.1rem" }, visBtn(g), delBtn(g, g.text, "\"" + g.text + "\" silinsin mi?")),
+      h("input", { class: "live", id: "gp-" + g.id, type: "range", min: "0", max: "100", step: "5", value: String(g.progress || 0), "aria-label": g.text + " ilerleme",
+        oninput: e => { pct.textContent = "%" + e.target.value; updItem(g, { progress: Number(e.target.value) }, true); },
+        onchange: () => flushItem(g.id) }),
+      pct
+    );
+  });
+  return h("div", {},
+    pageHead("Hedefler", goals.length ? goals.length + " hedef var, " + done + " tanesi tamamlandı." : "Ulaşmak istediğin şeyleri yaz, ilerledikçe çubuğu kaydır."),
+    h("section", { class: "card t-blush" }, doodle("flag"), form, rows.length ? h("div", { style: "margin-top:.75rem;position:relative" }, rows) : h("p", { class: "empty", style: "margin-top:1rem", text: "Henüz hedef yok." }))
+  );
+}
+
+function renderHabits() {
+  const habits = listOf("habit");
+  const days = [];
+  for (let i = 6; i >= 0; i--) days.push(addDays(today, -i));
+  const body = !habits.length
+    ? h("p", { class: "empty", style: "margin-top:1rem", text: "Henüz alışkanlık yok. Yukarıdan ilkini ekle." })
+    : h("div", { class: "table-wrap", style: "margin-top:1rem" }, h("table", {},
+      h("thead", {}, h("tr", {}, h("th", { text: "Alışkanlık" }), days.map(d => h("th", { text: fmtWd.format(d) })), h("th", { text: "Seri" }), h("th"))),
+      h("tbody", {}, habits.map(hb => {
+        const done = doneOf(hb);
+        return h("tr", {},
+          h("td", {}, h("div", { class: "row", style: "gap:.4rem" }, h("span", { text: hb.name }), whoTag(hb))),
+          days.map(d => {
+            const k = keyOf(d);
+            return h("td", {}, h("input", { type: "checkbox", checked: !!done[k], "aria-label": hb.name + ", " + fmtLong.format(d), onchange: e => toggleHabit(hb, k, e.target.checked) }));
+          }),
+          h("td", {}, h("span", { class: "streak", text: streakOf(hb) + " gün" })),
+          h("td", {}, h("div", { class: "row", style: "gap:.1rem;flex-wrap:nowrap" }, visBtn(hb), delBtn(hb, hb.name, "\"" + hb.name + "\" silinsin mi?")))
+        );
+      }))
+    ));
+  return h("div", {},
+    pageHead("Alışkanlıklar", "Her gün yapmak istediklerin. Paylaşılan alışkanlıklarda herkes kendi günlerini işaretler."),
+    h("section", { class: "card t-sage" }, addForm("habit", "Örn. 10 dakika meditasyon", "habit", (t, v) => addItem("habit", { name: t, done: {} }, v)), body)
+  );
+}
+
+function renderCalendar() {
+  const sel = fromKey(state.sel);
+  return h("div", {},
+    pageHead("Takvim", "Bir güne dokun, o günün planını gör ve düzenle."),
+    h("div", { class: "grid" },
+      h("section", { class: "card span-7" }, monthGrid(true)),
+      card({
+        title: fmtLong.format(sel), span: "span-5", tint: "t-peach", doodle: "leaf",
+        body: [
+          checklist(plansOn(state.sel), { empty: "Bu gün için plan yok." }),
+          addForm("plan-day", "Bu güne ekle", "plan", (t, v) => addItem("plan", { text: t, date: state.sel, done: false }, v))
+        ]
+      })
+    )
+  );
+}
+
+function renderShopping() {
+  const items = listOf("shop");
+  const doneMine = items.filter(i => i.done && canDel(i));
+  return h("div", {},
+    pageHead("Alışveriş Listesi", "Aldıklarını işaretle, bitince temizle."),
+    h("section", { class: "card t-lilac", style: "max-width:42rem" },
+      doodle("basket"),
+      addForm("shop", "Listeye ekle", "shop", (t, v) => addItem("shop", { text: t, done: false }, v)),
+      h("div", { style: "margin-top:.75rem;position:relative" }, checklist(items, { empty: "Liste boş." })),
+      doneMine.length ? h("button", { class: "btn", type: "button", style: "margin-top:1rem;align-self:flex-start;position:relative", text: "Alınanları temizle (" + doneMine.length + ")",
+        onclick: () => { if (confirm("İşaretlenen ürünler listeden silinsin mi?")) doneMine.forEach(i => delItem(i)); } }) : null
+    )
+  );
+}
+
+function renderBooks() {
+  const books = listOf("book");
+  const form = h("form", { onsubmit: e => {
+    e.preventDefault();
+    const t = $("bookTitle").value.trim();
+    if (!t) return;
+    addItem("book", { title: t, author: $("bookAuthor").value.trim(), status: "Okunacak" }, getVis("book"));
+    $("bookTitle").value = ""; $("bookAuthor").value = "";
+    $("bookTitle").focus();
+  } },
+    h("div", { class: "row" },
+      h("input", { class: "field", id: "bookTitle", type: "text", placeholder: "Kitap adı", "aria-label": "Kitap adı", autocomplete: "off" }),
+      h("input", { class: "field", id: "bookAuthor", type: "text", placeholder: "Yazar", "aria-label": "Yazar", autocomplete: "off" }),
+      h("button", { class: "btn primary", type: "submit", text: "Ekle" })
+    ),
+    visPicker("book")
+  );
+  const tints = { "Okunacak": "t-peach", "Okunuyor": "t-sage", "Bitti": "t-lilac" };
+  const cols = BOOK_STATUSES.map(s => {
+    const items = books.filter(b => b.status === s);
+    return card({
+      title: s + " (" + items.length + ")", span: "span-4", tint: tints[s],
+      body: [items.length ? h("ul", { class: "checks" }, items.map(b => h("li", {},
+        h("div", { style: "flex:1;min-width:0;padding:.4rem 0" }, h("div", { text: b.title }), h("div", { class: "row", style: "gap:.4rem" }, b.author ? h("span", { class: "tag", text: b.author }) : null, whoTag(b))),
+        h("select", { "aria-label": b.title + " durumu", style: "padding:.3rem .5rem;font-size:.8rem", onchange: e => updItem(b, { status: e.target.value }) },
+          BOOK_STATUSES.map(x => h("option", { text: x, selected: x === b.status }))),
+        visBtn(b), delBtn(b, b.title)
+      ))) : h("p", { class: "empty", text: "Boş." })]
+    });
+  });
+  return h("div", {},
+    pageHead("Okuma Listesi", "Okumak istediklerin, okuduğun ve bitirdiklerin."),
+    h("section", { class: "card", style: "margin-bottom:1.25rem" }, form),
+    h("div", { class: "grid" }, cols)
+  );
+}
+
 
 let weatherCache = null;
 async function loadWeather(box) {
@@ -1326,203 +1708,6 @@ async function loadWeather(box) {
   }
 }
 
-function newNote() {
-  const n = { id: uid(), title: "", body: "", updated: Date.now() };
-  data.notes.push(n);
-  save();
-  go("notes", { noteId: n.id, focus: ".big-title" });
-}
-
-function renderNotes() {
-  const notes = [...data.notes].sort((a, b) => b.updated - a.updated);
-  if (!data.notes.some(n => n.id === state.noteId)) state.noteId = notes[0] ? notes[0].id : null;
-  const cur = data.notes.find(n => n.id === state.noteId);
-  let activeTitle = null;
-
-  const list = h("section", { class: "card t-peach" },
-    h("button", { class: "btn primary", type: "button", text: "Yeni not", onclick: newNote, style: "margin-bottom:.75rem" }),
-    notes.length ? notes.map(n => {
-      const strong = h("strong", { text: n.title || "Başlıksız not" });
-      if (n.id === state.noteId) activeTitle = strong;
-      return h("button", { type: "button", class: "item-btn" + (n.id === state.noteId ? " active" : ""), style: n.id === state.noteId ? "background:#fff" : null, onclick: () => { state.noteId = n.id; render(); } },
-        strong, h("span", { text: fmtShort.format(new Date(n.updated)) }));
-    }) : h("p", { class: "empty", text: "Henüz not yok." })
-  );
-
-  let editor;
-  if (cur) {
-    const status = h("span", { class: "status", text: "Son düzenleme: " + fmtShort.format(new Date(cur.updated)) + " " + fmtTime.format(new Date(cur.updated)) });
-    const touch = () => { cur.updated = Date.now(); save(); status.textContent = "Kaydedildi"; };
-    editor = h("section", { class: "card" },
-      h("input", { class: "big-title", type: "text", value: cur.title, placeholder: "Başlık", "aria-label": "Not başlığı",
-        oninput: e => { cur.title = e.target.value; if (activeTitle) activeTitle.textContent = cur.title || "Başlıksız not"; touch(); } }),
-      h("textarea", { class: "bare", placeholder: "Yazmaya başla…", "aria-label": "Not içeriği", oninput: e => { cur.body = e.target.value; touch(); } }, cur.body),
-      h("div", { class: "row", style: "justify-content:space-between;margin-top:1rem" },
-        status,
-        h("button", { class: "btn danger", type: "button", text: "Notu sil", onclick: () => {
-          if (!confirm("Bu not silinsin mi?")) return;
-          data.notes = data.notes.filter(n => n.id !== cur.id); state.noteId = null; save(); render();
-        } })
-      )
-    );
-  } else {
-    editor = h("section", { class: "card" }, h("p", { class: "empty", text: "Bir not seç ya da yeni bir not oluştur." }));
-  }
-  return h("div", {}, pageHead("Notlar", "Fikirlerin, listelerin, aklına gelen her şey."), h("div", { class: "split" }, list, editor));
-}
-
-function renderAffirm() {
-  const d = affDay();
-  const t = todayAff();
-  const fav = isFav(t.text);
-  const top = h("section", { class: "aff-hero" },
-    h("div", { class: "aff-top" }, catTag(t.cat), h("span", { class: "aff-count", text: fmtLong.format(today) })),
-    h("p", { class: "aff-big", text: t.text }),
-    h("div", { class: "row", style: "position:relative" },
-      h("button", { class: "btn light", type: "button", text: "Kopyala", onclick: async e => {
-        const b = e.currentTarget;
-        try { await navigator.clipboard.writeText(t.text); b.textContent = "Kopyalandı"; } catch (err) { b.textContent = "Kopyalanamadı"; }
-      } }),
-      h("button", { class: "btn light", type: "button", "aria-pressed": fav ? "true" : "false", onclick: () => toggleFav(t.text) },
-        h("span", { html: ico("heart", 16), style: "display:grid" }), fav ? "Favorilerimde" : "Favorilere ekle")
-    ),
-    h("p", { class: "aff-note", text: "Yolculuğunun " + (d + 1) + ". günü. Her gün yeni bir olumlama açılır ve " + AFF_CYCLE + " gün boyunca hiçbiri tekrar etmez." })
-  );
-
-  const items = [];
-  for (let i = d; i >= 0; i--) items.push(affAt(i));
-  data.myAff.forEach(m => items.push({ cat: m.cat, text: m.text, date: fromKey(m.date), mine: m }));
-  items.sort((a, b) => b.date - a.date || (b.mine ? 1 : 0) - (a.mine ? 1 : 0));
-
-  const filters = ["Tümü"].concat(AFF_CATS, ["Favoriler", "Benim yazdıklarım"]);
-  const match = (f, x) => f === "Tümü" || (f === "Favoriler" ? isFav(x.text) : f === "Benim yazdıklarım" ? !!x.mine : x.cat === f);
-  const f = filters.includes(state.affFilter) ? state.affFilter : "Tümü";
-  const shown = items.filter(x => match(f, x));
-
-  const chips = h("div", { class: "chips" }, filters.map(x =>
-    h("button", { type: "button", "aria-pressed": x === f ? "true" : "false", onclick: () => { state.affFilter = x; render(); } },
-      x, h("small", { text: String(items.filter(y => match(x, y)).length) }))
-  ));
-
-  const list = shown.length ? h("ul", { class: "aff-list" }, shown.map(x => h("li", {},
-    h("div", { style: "flex:1;min-width:0" },
-      h("p", { text: x.text }),
-      h("div", { class: "aff-meta" }, catTag(x.cat), h("span", { text: fmtDate.format(x.date) }), x.mine ? h("span", { text: "Benim yazdığım" }) : null)
-    ),
-    h("button", { class: "fav" + (isFav(x.text) ? " on" : ""), type: "button", "aria-pressed": isFav(x.text) ? "true" : "false",
-      "aria-label": isFav(x.text) ? "Favorilerden çıkar" : "Favorilere ekle", html: ico("heart", 19), onclick: () => toggleFav(x.text) }),
-    x.mine ? h("button", { class: "fav", type: "button", "aria-label": "Sil", html: ico("trash", 18), onclick: () => {
-      if (!confirm("Bu olumlama silinsin mi?")) return;
-      removeFrom(data.myAff, x.mine); data.favAff = data.favAff.filter(y => y !== x.text); save(); render();
-    } }) : null
-  ))) : h("p", { class: "empty", text: f === "Favoriler" ? "Kalp simgesine dokunduğun olumlamalar burada toplanır."
-    : f === "Benim yazdıklarım" ? "Sağdaki alandan kendi olumlamanı yazabilirsin."
-    : "Bu kategoride henüz açılmış olumlama yok. Her gün yenisi geliyor." });
-
-  const form = h("form", { onsubmit: e => {
-    e.preventDefault();
-    const text = $("myAffText").value.trim();
-    if (!text) return;
-    data.myAff.push({ id: uid(), text, cat: $("myAffCat").value, date: todayKey });
-    save(); state.affFilter = "Benim yazdıklarım"; render();
-  } },
-    h("textarea", { id: "myAffText", rows: "4", placeholder: "Örn. Bugün kendime güveniyorum.", "aria-label": "Olumlama" }),
-    h("div", { class: "row", style: "margin-top:.75rem" },
-      h("select", { id: "myAffCat", "aria-label": "Kategori" }, AFF_CATS.map(c => h("option", { text: c }))),
-      h("button", { class: "btn primary", type: "submit", text: "Ekle" })
-    )
-  );
-
-  return h("div", {},
-    pageHead("Olumlamalar", "Aşk, bolluk, şükür, özgüven, sağlık, huzur ve başarı üzerine her gün yeni bir olumlama."),
-    top,
-    h("div", { class: "grid" },
-      h("section", { class: "card span-8" }, h("div", { class: "card-head" }, h("h2", { text: "Açılan olumlamalar" })), chips, list),
-      card({ title: "Kendi olumlamanı yaz", span: "span-4", tint: "t-lilac", doodle: "moon", body: [form] })
-    )
-  );
-}
-
-function renderGoals() {
-  const done = data.goals.filter(g => g.progress >= 100).length;
-  const form = h("form", { class: "row", onsubmit: e => {
-    e.preventDefault();
-    const t = $("goalText").value.trim();
-    if (!t) return;
-    data.goals.push({ id: uid(), text: t, area: $("goalArea").value, progress: 0 });
-    save(); state.focus = "#goalText"; render();
-  } },
-    h("input", { class: "field", id: "goalText", type: "text", placeholder: "Yeni bir hedef yaz", "aria-label": "Hedef" }),
-    h("select", { id: "goalArea", "aria-label": "Alan" }, AREAS.map(a => h("option", { text: a }))),
-    h("button", { class: "btn primary", type: "submit", text: "Ekle" })
-  );
-  const rows = data.goals.map(g => {
-    const pct = h("span", { class: "pct", text: "%" + g.progress });
-    return h("div", { class: "goal-row" },
-      h("div", {}, h("strong", { text: g.text }), " ", h("span", { class: "tag", text: g.area })),
-      h("button", { class: "icon-btn", type: "button", "aria-label": g.text + " sil", html: ico("trash", 18), onclick: () => {
-        if (!confirm("\"" + g.text + "\" silinsin mi?")) return;
-        removeFrom(data.goals, g); save(); render();
-      } }),
-      h("input", { type: "range", min: "0", max: "100", step: "5", value: String(g.progress), "aria-label": g.text + " ilerleme",
-        oninput: e => { g.progress = Number(e.target.value); pct.textContent = "%" + g.progress; save(); } }),
-      pct
-    );
-  });
-  return h("div", {},
-    pageHead("Hedefler", data.goals.length ? data.goals.length + " hedefin var, " + done + " tanesini tamamladın." : "Ulaşmak istediğin şeyleri yaz, ilerledikçe çubuğu kaydır."),
-    h("section", { class: "card t-blush" }, doodle("flag"), form, rows.length ? h("div", { style: "margin-top:.75rem;position:relative" }, rows) : h("p", { class: "empty", style: "margin-top:1rem", text: "Henüz hedef yok." }))
-  );
-}
-
-function toggleHabit(hb, k, on) {
-  if (on) hb.done[k] = true; else delete hb.done[k];
-  save(); render();
-}
-
-function renderHabits() {
-  const days = [];
-  for (let i = 6; i >= 0; i--) days.push(addDays(today, -i));
-  const body = !data.habits.length
-    ? h("p", { class: "empty", style: "margin-top:1rem", text: "Henüz alışkanlık yok. Yukarıdan ilkini ekle." })
-    : h("div", { class: "table-wrap", style: "margin-top:1rem" }, h("table", {},
-      h("thead", {}, h("tr", {}, h("th", { text: "Alışkanlık" }), days.map(d => h("th", { text: fmtWd.format(d) })), h("th", { text: "Seri" }), h("th"))),
-      h("tbody", {}, data.habits.map(hb => h("tr", {},
-        h("td", { text: hb.name }),
-        days.map(d => {
-          const k = keyOf(d);
-          return h("td", {}, h("input", { type: "checkbox", checked: !!hb.done[k], "aria-label": hb.name + ", " + fmtLong.format(d), onchange: e => toggleHabit(hb, k, e.target.checked) }));
-        }),
-        h("td", {}, h("span", { class: "streak", text: streakOf(hb) + " gün" })),
-        h("td", {}, h("button", { class: "icon-btn", type: "button", "aria-label": hb.name + " sil", html: ico("trash", 18), onclick: () => {
-          if (!confirm("\"" + hb.name + "\" silinsin mi?")) return;
-          removeFrom(data.habits, hb); save(); render();
-        } }))
-      )))
-    ));
-  return h("div", {},
-    pageHead("Alışkanlıklar", "Her gün yapmak istediklerin. Son 7 günü işaretle, serini koru."),
-    h("section", { class: "card t-sage" }, addForm("habit", "Örn. 10 dakika meditasyon", t => data.habits.push({ id: uid(), name: t, done: {} })), body)
-  );
-}
-
-function renderCalendar() {
-  const sel = fromKey(state.sel);
-  return h("div", {},
-    pageHead("Takvim", "Bir güne dokun, o günün planını gör ve düzenle."),
-    h("div", { class: "grid" },
-      h("section", { class: "card span-7" }, monthGrid(true)),
-      card({
-        title: fmtLong.format(sel), span: "span-5", tint: "t-peach", doodle: "leaf",
-        body: [
-          checklist(planOf(state.sel), { del: it => removeFrom(planOf(state.sel), it), empty: "Bu gün için plan yok." }),
-          addForm("plan-day", "Bu güne ekle", t => planOf(state.sel).push({ id: uid(), text: t, done: false }))
-        ]
-      })
-    )
-  );
-}
-
 function renderJournal() {
   const k = state.jDate;
   const j = journalOf(k);
@@ -1534,7 +1719,7 @@ function renderJournal() {
     .sort().reverse();
 
   return h("div", {},
-    pageHead("Günlük", "Ruh halin, şükrettiklerin ve aklından geçenler."),
+    pageHead("Günlük", "Ruh halin, şükrettiklerin ve aklından geçenler. Günlüğün sadece sana özel."),
     h("div", { class: "grid" },
       h("section", { class: "card span-8" },
         h("div", { class: "row", style: "justify-content:space-between;margin-bottom:1rem" },
@@ -1567,72 +1752,15 @@ function renderJournal() {
   );
 }
 
-function renderShopping() {
-  const doneCount = data.shopping.filter(i => i.done).length;
-  return h("div", {},
-    pageHead("Alışveriş Listesi", "Aldıklarını işaretle, bitince temizle."),
-    h("section", { class: "card t-lilac", style: "max-width:40rem" },
-      doodle("basket"),
-      addForm("shop", "Listeye ekle", t => data.shopping.push({ id: uid(), text: t, done: false })),
-      h("div", { style: "margin-top:.75rem;position:relative" }, checklist(data.shopping, { del: it => removeFrom(data.shopping, it), empty: "Liste boş." })),
-      doneCount ? h("button", { class: "btn", type: "button", style: "margin-top:1rem;align-self:flex-start;position:relative", text: "Alınanları temizle (" + doneCount + ")",
-        onclick: () => { data.shopping = data.shopping.filter(i => !i.done); save(); render(); } }) : null
-    )
-  );
-}
-
-function renderBooks() {
-  const form = h("form", { class: "row", onsubmit: e => {
-    e.preventDefault();
-    const t = $("bookTitle").value.trim();
-    if (!t) return;
-    data.books.push({ id: uid(), title: t, author: $("bookAuthor").value.trim(), status: "Okunacak" });
-    save(); state.focus = "#bookTitle"; render();
-  } },
-    h("input", { class: "field", id: "bookTitle", type: "text", placeholder: "Kitap adı", "aria-label": "Kitap adı" }),
-    h("input", { class: "field", id: "bookAuthor", type: "text", placeholder: "Yazar", "aria-label": "Yazar" }),
-    h("button", { class: "btn primary", type: "submit", text: "Ekle" })
-  );
-  const tints = { "Okunacak": "t-peach", "Okunuyor": "t-sage", "Bitti": "t-lilac" };
-  const cols = BOOK_STATUSES.map(s => {
-    const items = data.books.filter(b => b.status === s);
-    return card({
-      title: s + " (" + items.length + ")", span: "span-4", tint: tints[s],
-      body: [items.length ? h("ul", { class: "checks" }, items.map(b => h("li", {},
-        h("div", { style: "flex:1;min-width:0;padding:.4rem 0" }, h("div", { text: b.title }), b.author ? h("div", { class: "tag", text: b.author }) : null),
-        h("select", { "aria-label": b.title + " durumu", style: "padding:.3rem .5rem;font-size:.8rem", onchange: e => { b.status = e.target.value; save(); render(); } },
-          BOOK_STATUSES.map(x => h("option", { text: x, selected: x === b.status }))),
-        h("button", { class: "icon-btn sm", type: "button", "aria-label": b.title + " sil", html: ico("trash", 18), onclick: () => { removeFrom(data.books, b); save(); render(); } })
-      ))) : h("p", { class: "empty", text: "Boş." })]
-    });
-  });
-  return h("div", {},
-    pageHead("Okuma Listesi", "Okumak istediklerin, okuduğun ve bitirdiklerin."),
-    h("section", { class: "card", style: "margin-bottom:1.25rem" }, form),
-    h("div", { class: "grid" }, cols)
-  );
+function formField(id, label, type, extra) {
+  return [h("label", { class: "lbl", for: id, text: label }), h("input", Object.assign({ class: "field", id, type, style: "width:100%" }, extra || {}))];
 }
 
 function renderSettings() {
-  const fileIn = h("input", { type: "file", accept: "application/json", hidden: true, onchange: async e => {
-    const f = e.target.files[0];
-    if (!f) return;
-    try {
-      const parsed = JSON.parse(await f.text());
-      if (!confirm("Yedek yüklenecek ve bu profildeki verilerin yerine geçecek. Devam edilsin mi?")) return;
-      const base = defaults();
-      Object.keys(base).forEach(k => { data[k] = parsed[k] != null ? parsed[k] : base[k]; });
-      weatherCache = null; save(); go("home");
-    } catch (err) { alert("Dosya okunamadı. Nerii'den indirilmiş bir yedek dosyası seç."); }
-  } });
-
   const cityMsg = h("p", { class: "ok" });
   const passMsg = h("p", { class: "err" });
-  const newMsg = h("p", { class: "err" });
-  const field = (id, label, type, extra) => [h("label", { class: "lbl", for: id, text: label }), h("input", Object.assign({ class: "field", id, type, style: "width:100%" }, extra || {}))];
-
   return h("div", {},
-    pageHead("Ayarlar", "Giriş yaptığın profil: " + me.name),
+    pageHead("Ayarlar", "Giriş yaptığın profil: " + me.name + (me.isAdmin ? " (yönetici)" : "")),
     h("div", { class: "grid" },
       card({
         title: "Profil", icon: "heart", span: "span-6",
@@ -1643,14 +1771,14 @@ function renderSettings() {
           data.city = city;
           save(); cityMsg.textContent = "Kaydedildi";
         } },
-          h("p", { class: "empty", text: "Profil adın giriş adın olarak kullanılır: " + me.name }),
-          ...field("setCity", "Şehrin (hava durumu için)", "text", { value: data.city, placeholder: "Örn. İstanbul" }),
+          h("p", { class: "empty", text: "Kullanıcı adın: " + me.name }),
+          ...formField("setCity", "Şehrin (hava durumu için)", "text", { value: data.city, placeholder: "Örn. İstanbul" }),
           h("div", { class: "row", style: "margin-top:1.1rem" }, h("button", { class: "btn primary", type: "submit", text: "Kaydet" })),
           cityMsg
         )]
       }),
       card({
-        title: "Şifremi değiştir", icon: "settings", span: "span-6",
+        title: "Şifremi değiştir", icon: "lock", span: "span-6",
         body: [h("form", { onsubmit: async e => {
           e.preventDefault();
           passMsg.className = "err"; passMsg.textContent = "";
@@ -1663,22 +1791,86 @@ function renderSettings() {
             await user.updatePassword(nw);
             e.target.reset();
             passMsg.className = "ok"; passMsg.textContent = "Şifren değiştirildi.";
-          } catch (err) { passMsg.textContent = authError(err); }
+          } catch (err) { passMsg.textContent = err && (err.code === "auth/invalid-credential" || err.code === "auth/wrong-password") ? "Şu anki şifren hatalı." : authError(err); }
         } },
-          ...field("pwCur", "Şu anki şifren", "password", { autocomplete: "current-password" }),
-          ...field("pwNew", "Yeni şifre", "password", { autocomplete: "new-password" }),
-          ...field("pwNew2", "Yeni şifre (tekrar)", "password", { autocomplete: "new-password" }),
+          ...formField("pwCur", "Şu anki şifren", "password", { autocomplete: "current-password" }),
+          ...formField("pwNew", "Yeni şifre", "password", { autocomplete: "new-password" }),
+          ...formField("pwNew2", "Yeni şifre (tekrar)", "password", { autocomplete: "new-password" }),
           h("div", { class: "row", style: "margin-top:1.1rem" }, h("button", { class: "btn primary", type: "submit", text: "Şifreyi değiştir" })),
           passMsg
         )]
       }),
       card({
-        title: "Yeni profil ekle", icon: "plus", span: "span-6", tint: "t-blush",
+        title: "Verilerim", icon: "book", span: "span-6",
+        body: [
+          h("p", { class: "empty", style: "margin-bottom:1rem", text: "Verilerin hesabında saklanır, hangi cihazdan girersen gir aynısını görürsün. Günlüğün her zaman sadece sana özeldir." }),
+          h("div", { class: "row" },
+            h("button", { class: "btn", type: "button", text: "Verilerimi indir", onclick: () => {
+              const mine = [...allItems().values()].filter(isMine);
+              const url = URL.createObjectURL(new Blob([JSON.stringify({ profil: me.name, ayarlar: data, kayitlar: mine }, null, 2)], { type: "application/json" }));
+              const a = h("a", { href: url, download: "nerii-" + slugOf(me.name) + "-" + todayKey + ".json" });
+              document.body.append(a); a.click(); a.remove();
+              setTimeout(() => URL.revokeObjectURL(url), 1000);
+            } }),
+            h("button", { class: "btn primary", type: "button", text: "Çıkış yap", onclick: logout })
+          )
+        ]
+      }),
+      me.isAdmin ? card({
+        title: "Yönetici", icon: "shield", span: "span-6", tint: "t-blush",
+        body: [h("p", { class: "empty", text: "Profilleri, duyuruları ve paylaşılan içerikleri yönetici panelinden yönetebilirsin." }),
+          h("button", { class: "btn primary", type: "button", style: "align-self:flex-start;margin-top:1rem", text: "Yönetici paneline git", onclick: () => go("admin") })]
+      }) : null
+    )
+  );
+}
+
+function renderAdmin() {
+  const newMsg = h("p", { class: "err" });
+  const annMsg = h("p", { class: "ok" });
+  const sorted = allProfiles.slice().sort((a, b) => (a.at || 0) - (b.at || 0));
+  const isRootProfile = p => p.slug === ADMIN_EMAIL.split("@")[0];
+  const profUpdate = (p, patch, okText) => db.collection("profiles").doc(p.uid).update(patch)
+    .then(() => okText && showToast(okText))
+    .catch(() => showToast("Değişiklik kaydedilemedi", "Firestore kurallarının güncel olduğundan emin ol."));
+
+  const rows = sorted.map(p => {
+    const self = p.uid === me.uid;
+    const role = p.disabled ? ["off", "Devre dışı"] : (p.role === "admin" || isRootProfile(p)) ? ["admin", "Yönetici"] : ["", "Üye"];
+    return h("div", { class: "admin-row" },
+      h("span", { class: "pav", text: initial(p.name) }),
+      h("div", { style: "min-width:0" },
+        h("div", { class: "row", style: "gap:.5rem" },
+          h("input", { class: "field name-edit", id: "pn-" + p.uid, type: "text", value: p.name, "aria-label": "Görünen ad",
+            onchange: e => { const v = e.target.value.trim(); if (v && v !== p.name) profUpdate(p, { name: v }, "Görünen ad güncellendi"); } }),
+          h("span", { class: "role " + role[0], text: role[1] })
+        ),
+        h("div", { class: "tag", style: "margin-top:.3rem", text: "Kullanıcı adı: " + (p.slug || "") + (self ? " (sen)" : "") })
+      ),
+      h("div", { class: "row", style: "gap:.4rem;justify-content:flex-end" },
+        !self && !isRootProfile(p) ? h("button", { class: "btn small", type: "button", text: p.role === "admin" ? "Yöneticilikten çıkar" : "Yönetici yap",
+          onclick: () => profUpdate(p, { role: p.role === "admin" ? "user" : "admin" }) }) : null,
+        !self && !isRootProfile(p) ? h("button", { class: "btn small " + (p.disabled ? "" : "danger"), type: "button", text: p.disabled ? "Etkinleştir" : "Devre dışı bırak",
+          onclick: () => { if (p.disabled || confirm(p.name + " artık giriş yapamayacak. Devam edilsin mi?")) profUpdate(p, { disabled: !p.disabled }); } }) : null
+      )
+    );
+  });
+
+  const items = [...allItems().values()];
+  const shared = items.filter(i => i.vis === "public");
+  const kinds = { note: "Not", goal: "Hedef", habit: "Alışkanlık", plan: "Plan", shop: "Alışveriş", book: "Kitap", aff: "Olumlama" };
+
+  return h("div", {},
+    pageHead("Yönetici paneli", "Profilleri, duyuruları ve paylaşılan içerikleri buradan yönet."),
+    h("div", { class: "grid" },
+      card({ title: "Profiller (" + sorted.length + ")", icon: "users", span: "span-8", body: [h("div", {}, rows)] }),
+      card({
+        title: "Yeni profil ekle", icon: "plus", span: "span-4", tint: "t-blush",
         body: [h("form", { onsubmit: async e => {
           e.preventDefault();
           newMsg.className = "err"; newMsg.textContent = "";
           const name = $("npName").value.trim(), pw = $("npPass").value, pw2 = $("npPass2").value;
-          if (!slugOf(name)) { newMsg.textContent = "Bir profil adı yaz."; return; }
+          if (!slugOf(name) || name.includes("@")) { newMsg.textContent = "Geçerli bir kullanıcı adı yaz."; return; }
           if (pw.length < 6) { newMsg.textContent = "Şifre en az 6 karakter olmalı."; return; }
           if (pw !== pw2) { newMsg.textContent = "Şifreler birbiriyle aynı değil."; return; }
           const btn = e.target.querySelector("button[type=submit]");
@@ -1686,49 +1878,54 @@ function renderSettings() {
           try {
             const sec = firebase.apps.find(x => x.name === "ikincil") || firebase.initializeApp(firebaseConfig, "ikincil");
             const cred = await sec.auth().createUserWithEmailAndPassword(emailOf(name), pw);
-            await sec.firestore().collection("profiles").doc(cred.user.uid).set({ name, slug: slugOf(name), at: Date.now() });
+            await db.collection("profiles").doc(cred.user.uid).set({ name, slug: slugOf(name), role: "user", at: Date.now() });
             await sec.auth().signOut();
             e.target.reset();
-            newMsg.className = "ok"; newMsg.textContent = name + " profili oluşturuldu. Artık bu ad ve şifreyle giriş yapabilir.";
+            newMsg.className = "ok"; newMsg.textContent = name + " profili oluşturuldu. Giriş ekranında \"" + name + "\" ve bu şifreyle girebilir.";
           } catch (err) { newMsg.textContent = authError(err); }
           btn.disabled = false;
         } },
-          h("p", { class: "empty", text: "Eklediğin profil kendi adı ve şifresiyle giriş yapar, kendi verilerini görür ve seninle mesajlaşabilir." }),
-          ...field("npName", "Profil adı", "text", { autocomplete: "off" }),
-          ...field("npPass", "Şifre", "password", { autocomplete: "new-password" }),
-          ...field("npPass2", "Şifre (tekrar)", "password", { autocomplete: "new-password" }),
+          ...formField("npName", "Kullanıcı adı", "text", { autocomplete: "off" }),
+          ...formField("npPass", "Şifre", "password", { autocomplete: "new-password" }),
+          ...formField("npPass2", "Şifre (tekrar)", "password", { autocomplete: "new-password" }),
           h("div", { class: "row", style: "margin-top:1.1rem" }, h("button", { class: "btn primary", type: "submit", text: "Profili oluştur" })),
           newMsg
         )]
       }),
       card({
-        title: "Yedekleme ve çıkış", icon: "book", span: "span-6",
+        title: "Duyuru", icon: "bell", span: "span-6", tint: "t-peach",
         body: [
-          h("p", { class: "empty", style: "margin-bottom:1rem", text: "Verilerin hesabında saklanır, hangi cihazdan girersen gir aynısını görürsün. İstersen ayrıca bir yedek indirebilirsin." }),
-          h("div", { class: "row" },
-            h("button", { class: "btn", type: "button", text: "Yedeği indir", onclick: () => {
-              const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
-              const a = h("a", { href: url, download: "nerii-" + slugOf(me.name) + "-" + todayKey + ".json" });
-              document.body.append(a); a.click(); a.remove();
-              setTimeout(() => URL.revokeObjectURL(url), 1000);
+          h("p", { class: "empty", text: "Yazdığın duyuru herkesin ana sayfasında en üstte görünür." }),
+          h("textarea", { id: "annText", rows: "4", style: "margin-top:.75rem", placeholder: "Örn. Bu hafta herkes 3 kitap hedefini eklesin ♡" }, site.announcement || ""),
+          h("div", { class: "row", style: "margin-top:.75rem" },
+            h("button", { class: "btn primary", type: "button", text: "Yayınla", onclick: () => {
+              const text = $("annText").value.trim();
+              db.collection("config").doc("site").set({ announcement: text, byName: me.name, at: Date.now() }, { merge: true })
+                .then(() => { annMsg.textContent = text ? "Duyuru yayında." : "Duyuru kaldırıldı."; })
+                .catch(() => showToast("Duyuru kaydedilemedi", "Firestore kurallarının güncel olduğundan emin ol."));
             } }),
-            h("button", { class: "btn", type: "button", text: "Yedek yükle", onclick: () => fileIn.click() }),
-            fileIn
+            site.announcement ? h("button", { class: "btn", type: "button", text: "Duyuruyu kaldır", onclick: () => {
+              db.collection("config").doc("site").set({ announcement: "", at: Date.now() }, { merge: true }).then(() => { annMsg.textContent = "Duyuru kaldırıldı."; });
+            } }) : null
           ),
-          h("div", { class: "row", style: "margin-top:1.25rem" },
-            h("button", { class: "btn primary", type: "button", text: "Çıkış yap", onclick: logout }),
-            h("button", { class: "btn danger", type: "button", text: "Tüm verilerimi sil", onclick: () => {
-              if (!confirm("Bu profildeki tüm notların, hedeflerin, planların, favori olumlamaların ve günlüğün silinecek. Emin misin?")) return;
-              const base = defaults();
-              Object.keys(base).forEach(k => { data[k] = base[k]; });
-              weatherCache = null; save(); go("home");
-            } })
-          )
+          annMsg
+        ]
+      }),
+      card({
+        title: "Paylaşılan içerik", icon: "users", span: "span-6",
+        body: [
+          h("p", { class: "empty", text: "Herkesle paylaşılan " + shared.length + " kayıt var. Yönetici olarak paylaşılan her kaydı ilgili sayfadaki çöp kutusu simgesiyle silebilirsin. Kişilerin sadece kendine özel kayıtları kimseye, yöneticiye de görünmez." }),
+          h("div", { class: "row", style: "margin-top:.9rem;gap:.4rem" }, Object.keys(kinds).map(k => {
+            const n = shared.filter(i => i.kind === k).length;
+            return n ? h("span", { class: "who mine", text: kinds[k] + ": " + n }) : null;
+          })),
+          h("p", { class: "empty", style: "margin-top:1rem", text: "Şifresini unutan biri olursa Firebase'de Authentication bölümünden şifresini sıfırlayabilirsin." })
         ]
       })
     )
   );
 }
+
 
 const allMessages = () => {
   const m = new Map();
@@ -1750,8 +1947,8 @@ function renderMessages() {
   if (!people.length) {
     return h("div", {}, pageHead("Mesajlar", "Profiller arasında mesajlaş."),
       h("section", { class: "card t-blush", style: "max-width:36rem" },
-        h("p", { class: "empty", text: "Henüz başka profil yok. Ayarlar'dan yeni bir profil ekleyince burada onunla mesajlaşabilirsin." }),
-        h("button", { class: "more", type: "button", text: "Profil ekle", onclick: () => go("settings", { focus: "#npName" }) })));
+        h("p", { class: "empty", text: "Henüz başka profil yok. Yönetici yeni bir profil eklediğinde burada onunla mesajlaşabilirsin." }),
+        me.isAdmin ? h("button", { class: "more", type: "button", text: "Profil ekle", onclick: () => go("admin", { focus: "#npName" }) }) : null));
   }
   if (!people.some(p => p.uid === state.chatWith)) {
     const firstUnread = people.find(p => unreadFrom(p.uid));
@@ -1897,40 +2094,71 @@ function showLogin(message) {
   if (first) first.focus();
 }
 
+async function migrateBlob(blob) {
+  const rows = [];
+  const base = vis => ({ owner: me.uid, ownerName: me.name, vis: vis || "private", upd: Date.now(), updName: me.name });
+  (blob.notes || []).forEach(n => rows.push(Object.assign(base(), { kind: "note", title: n.title || "", body: n.body || "", at: n.updated || Date.now() })));
+  (blob.goals || []).forEach(g => rows.push(Object.assign(base(), { kind: "goal", text: g.text, area: g.area || "Kişisel", progress: g.progress || 0, at: Date.now() })));
+  (blob.habits || []).forEach(hb => rows.push(Object.assign(base(), { kind: "habit", name: hb.name, done: { [me.uid]: hb.done || {} }, at: Date.now() })));
+  Object.entries(blob.plan || {}).forEach(([k, arr]) => (arr || []).forEach(p => rows.push(Object.assign(base(), { kind: "plan", text: p.text, date: k, done: !!p.done, at: Date.now() }))));
+  (blob.shopping || []).forEach(s => rows.push(Object.assign(base(), { kind: "shop", text: s.text, done: !!s.done, at: Date.now() })));
+  (blob.books || []).forEach(b => rows.push(Object.assign(base(), { kind: "book", title: b.title, author: b.author || "", status: b.status || "Okunacak", at: Date.now() })));
+  (blob.myAff || []).forEach(a => rows.push(Object.assign(base(), { kind: "aff", text: a.text, cat: a.cat, date: a.date || todayKey, at: Date.now() })));
+  for (let i = 0; i < rows.length; i += 400) {
+    const batch = db.batch();
+    rows.slice(i, i + 400).forEach(r => batch.set(itemsCol().doc(), r));
+    await batch.commit();
+  }
+  ["notes", "goals", "habits", "plan", "shopping", "books", "myAff", "name", "recipes"].forEach(k => { delete data[k]; });
+  data.v3 = true;
+}
+
 async function startApp(user) {
+  const isRoot = (user.email || "").toLowerCase() === ADMIN_EMAIL;
   const pRef = db.collection("profiles").doc(user.uid);
   let pDoc = await pRef.get();
   if (!pDoc.exists) {
-    const prefix = user.email.split("@")[0];
-    const name = pendingName || prefix.charAt(0).toLocaleUpperCase("tr") + prefix.slice(1);
-    await pRef.set({ name, slug: slugOf(name), at: Date.now() });
+    if (!isRoot) { loginNotice = "Bu profil yönetici tarafından eklenmemiş."; await auth.signOut(); return; }
+    await pRef.set({ name: pendingName || "Neriii", slug: ADMIN_EMAIL.split("@")[0], role: "admin", at: Date.now() });
     pDoc = await pRef.get();
   }
+  const p = pDoc.data();
+  if (p.disabled && !isRoot) { loginNotice = "Bu profil devre dışı bırakılmış. Yöneticiyle görüş."; await auth.signOut(); return; }
   pendingName = "";
-  me = { uid: user.uid, name: pDoc.data().name };
+  me = { uid: user.uid, name: p.name, email: user.email, isAdmin: isRoot || p.role === "admin" };
 
   const uDoc = await db.collection("userdata").doc(user.uid).get();
-  if (uDoc.exists && uDoc.data().json) {
-    data = Object.assign(defaults(), JSON.parse(uDoc.data().json));
-  } else {
-    const local = loadLocal();
-    data = local && confirm("Bu tarayıcıda daha önce girdiğin veriler var. " + me.name + " profiline aktarılsın mı?") ? local : defaults();
-    pushData();
-  }
+  const blob = uDoc.exists && uDoc.data().json ? JSON.parse(uDoc.data().json) : null;
+  data = Object.assign(defaults(), blob || {});
+  if (blob && !blob.v3) { await migrateBlob(blob); pushData(); }
+  else if (!blob) pushData();
 
   $("login").hidden = true;
   $("login").replaceChildren();
   $("appRoot").hidden = false;
   $("band").hidden = false;
-  $("logoName").textContent = me.name + " ♡";
-  $("logoShort").textContent = initial(me.name) + "♡";
-  document.title = "Nerii, " + me.name;
+  const paintMe = () => {
+    $("logoName").textContent = me.name + " ♡";
+    $("logoShort").textContent = initial(me.name) + "♡";
+    document.title = "Nerii, " + me.name;
+    const ab = document.querySelector('#nav button[data-view="admin"]');
+    if (ab) ab.hidden = !me.isAdmin;
+  };
+  paintMe();
 
   let firstIn = true;
   unsubs.push(db.collection("profiles").onSnapshot(snap => {
-    profiles = snap.docs.map(d => Object.assign({ uid: d.id }, d.data())).filter(p => p.uid !== me.uid);
-    if (state.view === "messages") render();
-  }));
+    allProfiles = snap.docs.map(d => Object.assign({ uid: d.id }, d.data()));
+    profiles = allProfiles.filter(x => x.uid !== me.uid && !x.disabled);
+    const mine = allProfiles.find(x => x.uid === me.uid);
+    if (mine) {
+      if (mine.disabled && !isRoot) { loginNotice = "Bu profil devre dışı bırakıldı."; logout(); return; }
+      me.name = mine.name;
+      me.isAdmin = isRoot || mine.role === "admin";
+      paintMe();
+    }
+    if (["messages", "admin"].includes(state.view)) scheduleRender(); else updateHeader();
+  }, () => {}));
   unsubs.push(db.collection("messages").where("to", "==", me.uid).onSnapshot(snap => {
     msgsIn = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
     if (firstIn) {
@@ -1950,24 +2178,43 @@ async function startApp(user) {
         }
       });
     }
-    if (state.view === "messages") render(); else updateHeader();
+    if (state.view === "messages") scheduleRender(); else updateHeader();
   }, () => {}));
   unsubs.push(db.collection("messages").where("from", "==", me.uid).onSnapshot(snap => {
     msgsOut = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
-    if (state.view === "messages") render();
+    if (state.view === "messages") scheduleRender();
   }, () => {}));
 
-  go(location.hash.slice(1) || "home");
+  let firstItems = 0;
+  const startItems = () => {
+    const onItems = (target, setter) => snap => {
+      const m = new Map();
+      snap.docs.forEach(d => m.set(d.id, Object.assign({ id: d.id }, d.data())));
+      setter(m);
+      itemsCache = null;
+      if (firstItems < 2) { firstItems++; if (firstItems === 2) go(location.hash.slice(1) || "home"); return; }
+      if (!["messages", "settings", "journal"].includes(state.view)) scheduleRender(); else updateHeader();
+    };
+    unsubs.push(itemsCol().where("vis", "==", "public").onSnapshot(onItems("pub", m => { pubItems = m; }), () => { if (firstItems < 2) { firstItems++; if (firstItems === 2) go(location.hash.slice(1) || "home"); } }));
+    unsubs.push(itemsCol().where("owner", "==", me.uid).onSnapshot(onItems("mine", m => { myItems = m; }), () => { if (firstItems < 2) { firstItems++; if (firstItems === 2) go(location.hash.slice(1) || "home"); } }));
+  };
+  startItems();
+  unsubs.push(db.collection("config").doc("site").onSnapshot(d => {
+    site = d.exists ? d.data() : {};
+    if (state.view === "home" && firstItems >= 2) scheduleRender();
+  }, () => {}));
 }
 
 function logout() {
   if (saveTimer) pushData();
+  flushItems();
   unsubs.forEach(u => u());
   unsubs = [];
-  setTimeout(() => auth.signOut().then(() => { location.hash = ""; location.reload(); }), 300);
+  setTimeout(() => auth.signOut().then(() => { history.replaceState(null, "", location.pathname); location.reload(); }), 300);
 }
 
-const RENDER = { home: renderHome, notes: renderNotes, goals: renderGoals, habits: renderHabits, calendar: renderCalendar, journal: renderJournal, affirm: renderAffirm, messages: renderMessages, shopping: renderShopping, books: renderBooks, settings: renderSettings };
+const RENDER = { home: renderHome, notes: renderNotes, goals: renderGoals, habits: renderHabits, calendar: renderCalendar, journal: renderJournal, affirm: renderAffirm, messages: renderMessages, shopping: renderShopping, books: renderBooks, settings: renderSettings, admin: renderAdmin };
+
 
 function greeting() {
   const hr = new Date().getHours();
@@ -1977,11 +2224,12 @@ function greeting() {
   return "İyi geceler";
 }
 
+
 function updateHeader() {
   if (!me) return;
   const unread = unreadCount();
   $("greetTitle").textContent = greeting() + " " + me.name + " ♡";
-  const p = data.plan[todayKey] || [];
+  const p = plansOn(todayKey);
   const done = p.filter(i => i.done).length;
   const left = p.length - done;
   $("greetSub").textContent = unread ? "Sana " + unread + " yeni mesaj var ♡"
@@ -2004,29 +2252,30 @@ function tick() {
   const now = new Date(); now.setHours(0, 0, 0, 0);
   if (now.getTime() !== today.getTime()) {
     today = now; todayKey = keyOf(today); state.calMonth = firstOfMonth(today);
-    if (state.view === "home") render();
+    if (state.view === "home") scheduleRender();
   }
   updateHeader();
 }
 
 function searchAll(q) {
   q = q.toLocaleLowerCase("tr");
-  const has = s => s && s.toLocaleLowerCase("tr").includes(q);
+  const has = s => s && String(s).toLocaleLowerCase("tr").includes(q);
   const out = [];
-  data.notes.forEach(n => { if (has(n.title) || has(n.body)) out.push([n.title || "Başlıksız not", "Not", () => go("notes", { noteId: n.id })]); });
+  allItems().forEach(i => {
+    if (i.kind === "note" && (has(i.title) || has(i.body))) out.push([i.title || "Başlıksız not", "Not", () => go("notes", { noteId: i.id })]);
+    if (i.kind === "goal" && has(i.text)) out.push([i.text, "Hedef", () => go("goals")]);
+    if (i.kind === "habit" && has(i.name)) out.push([i.name, "Alışkanlık", () => go("habits")]);
+    if (i.kind === "plan" && has(i.text)) out.push([i.text, "Plan, " + fmtShort.format(fromKey(i.date)), () => go("calendar", { sel: i.date, calMonth: firstOfMonth(fromKey(i.date)) })]);
+    if (i.kind === "shop" && has(i.text)) out.push([i.text, "Alışveriş listesi", () => go("shopping")]);
+    if (i.kind === "book" && (has(i.title) || has(i.author))) out.push([i.title, "Kitap, " + i.status, () => go("books")]);
+    if (i.kind === "aff" && has(i.text)) out.push([i.text, "Olumlama", () => go("affirm", { affFilter: "Eklenenler" })]);
+  });
   const dAll = affDay();
   for (let i = dAll; i >= 0; i--) { const x = affAt(i); if (has(x.text)) out.push([x.text, "Olumlama, " + x.cat, () => go("affirm", { affFilter: x.cat })]); }
-  data.myAff.forEach(m => { if (has(m.text)) out.push([m.text, "Benim olumlamam", () => go("affirm", { affFilter: "Benim yazdıklarım" })]); });
-  data.goals.forEach(g => { if (has(g.text)) out.push([g.text, "Hedef", () => go("goals")]); });
-  data.habits.forEach(hb => { if (has(hb.name)) out.push([hb.name, "Alışkanlık", () => go("habits")]); });
-  Object.entries(data.plan).forEach(([k, arr]) => arr.forEach(it => {
-    if (has(it.text)) out.push([it.text, "Plan, " + fmtShort.format(fromKey(k)), () => go("calendar", { sel: k, calMonth: firstOfMonth(fromKey(k)) })]);
-  }));
-  data.shopping.forEach(i => { if (has(i.text)) out.push([i.text, "Alışveriş listesi", () => go("shopping")]); });
-  data.books.forEach(b => { if (has(b.title) || has(b.author)) out.push([b.title, "Kitap, " + b.status, () => go("books")]); });
-  Object.entries(data.journal).forEach(([k, e]) => { if (has(e.text) || e.gratitude.some(has)) out.push([fmtDate.format(fromKey(k)), "Günlük", () => go("journal", { jDate: k })]); });
+  Object.entries(data.journal).forEach(([k, e]) => { if (has(e.text) || (e.gratitude || []).some(has)) out.push([fmtDate.format(fromKey(k)), "Günlük", () => go("journal", { jDate: k })]); });
   return out.slice(0, 8);
 }
+
 
 const searchIn = $("search");
 const resultsEl = $("results");
@@ -2051,10 +2300,10 @@ $("bellBtn").addEventListener("click", () => {
 });
 $("avatarBtn").addEventListener("click", () => go("settings"));
 
-$("nav").append(...VIEWS.map(([v, label, icon]) =>
-  h("button", { type: "button", "data-view": v, title: label, onclick: () => go(v) }, h("span", { html: ico(icon, 21), style: "display:grid" }), h("span", { class: "lbl", text: label }))
-));
 
+$("nav").append(...VIEWS.map(([v, label, icon]) =>
+  h("button", { type: "button", "data-view": v, title: label, hidden: v === "admin", onclick: () => go(v) }, h("span", { html: ico(icon, 21), style: "display:grid" }), h("span", { class: "lbl", text: label }))
+));
 $("nav").append(h("button", { type: "button", class: "logout", title: "Çıkış yap", onclick: logout }, h("span", { html: ico("logout", 21), style: "display:grid" }), h("span", { class: "lbl", text: "Çıkış yap" })));
 
 window.addEventListener("hashchange", () => { if (!me) return; const v = location.hash.slice(1); if (v !== state.view) go(v); });
@@ -2067,10 +2316,11 @@ if (!FB_READY || typeof firebase === "undefined") {
   auth = firebase.auth();
   db = firebase.firestore();
   auth.onAuthStateChanged(user => {
-    if (user) startApp(user).catch(() => { showLogin("Veriler yüklenemedi. İnternet bağlantını kontrol edip sayfayı yenile."); });
-    else { me = null; showLogin(); }
+    if (user) startApp(user).catch(() => { loginNotice = "Veriler yüklenemedi. Firestore kurallarını ve internet bağlantını kontrol edip tekrar dene."; auth.signOut(); });
+    else { me = null; showLogin(loginNotice); loginNotice = ""; }
   });
 }
+
 </script>
 </body>
 </html>
