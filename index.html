@@ -1,1 +1,1236 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2B1B2E">
+<meta name="description" content="Nerii, kişisel gelişim panom: günün olumlaması, planlar, hedefler, alışkanlıklar, günlük ve daha fazlası.">
+<title>Nerii</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%232B1B2E'/%3E%3Ccircle cx='32' cy='36' r='12' fill='%23F0A43A'/%3E%3Cpath d='M44 10l2 6 6 2-6 2-2 6-2-6-6-2 6-2z' fill='%23FFF4DC'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --side: #2B1B2E;
+  --side-ink: #E8DCE5;
+  --bg: #F6EFEC;
+  --card: #FFFCFA;
+  --ink: #2E2330;
+  --muted: #8A7A86;
+  --line: #EDE2DF;
+  --plum: #5B2E4F;
+  --rose: #C46A8A;
+  --sun: #F0A43A;
+  --peach: #FBEADF;
+  --lilac: #EEE8F6;
+  --sage: #E5EFE7;
+  --blush: #F8E4E7;
+  --shadow: 0 1px 2px rgba(43,27,46,.04), 0 10px 28px rgba(43,27,46,.05);
+  box-sizing: border-box;
+}
+*, *::before, *::after { box-sizing: inherit; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: .95rem;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--sun); outline-offset: 2px; }
+.hand { font-family: "Caveat", "Segoe Script", cursive; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
+.app { display: grid; grid-template-columns: 15.5rem minmax(0, 1fr); min-height: 100vh; background: linear-gradient(90deg, var(--side) 0 15.5rem, var(--bg) 15.5rem); }
+.side {
+  background: var(--side); color: var(--side-ink);
+  padding: calc(1.75rem + env(safe-area-inset-top, 0px)) 1rem 1.75rem;
+  position: sticky; top: 0; height: 100vh; height: 100dvh;
+  display: flex; flex-direction: column; overflow-y: auto; scrollbar-width: none;
+}
+.logo { font-family: "Caveat", cursive; font-size: 2.8rem; line-height: 1; color: #fff; margin: 0 .8rem 1.9rem; font-weight: 500; }
+.logo .short { display: none; }
+.side nav { display: grid; gap: .15rem; }
+.side nav button {
+  display: flex; gap: .85rem; align-items: center; width: 100%; padding: .62rem .8rem;
+  border-radius: .8rem; background: none; border: 0; cursor: pointer; text-align: left; color: var(--side-ink);
+  transition: background .15s;
+}
+.side nav button svg { width: 21px; height: 21px; flex: none; }
+.side nav button:hover { background: rgba(255,255,255,.06); }
+.side nav button[aria-current="page"] { background: rgba(255,255,255,.12); color: #fff; font-weight: 600; }
+.side-foot { margin-top: auto; padding: 2rem .8rem 0; color: #CDB8C7; }
+.side-foot p { margin: 0; font-family: "Caveat", cursive; font-size: 1.45rem; line-height: 1.3; }
+.side-foot svg { width: 3.4rem; height: 3.4rem; margin-top: .6rem; opacity: .7; }
+
+.main { padding: calc(1.6rem + env(safe-area-inset-top, 0px)) 2rem 0; min-width: 0; }
+.top { display: flex; align-items: center; gap: 1rem 1.75rem; flex-wrap: wrap; margin-bottom: 1.6rem; }
+.greet { flex: 1; min-width: 15rem; display: flex; gap: .9rem; align-items: center; }
+.gsun { color: var(--sun); display: grid; flex: none; }
+.gsun svg { width: 2.8rem; height: 2.8rem; }
+.greet h1 { font-size: 1.6rem; margin: 0; font-weight: 700; letter-spacing: -.015em; line-height: 1.25; }
+.greet p { margin: .1rem 0 0; color: var(--muted); font-size: .9rem; }
+.clock { text-align: right; font-size: .85rem; color: var(--muted); line-height: 1.3; }
+.clock strong { display: block; color: var(--ink); font-size: 1.05rem; }
+.search { position: relative; width: min(21rem, 100%); }
+.search input {
+  width: 100%; border: 1px solid transparent; background: #EFE4E1; border-radius: 999px;
+  padding: .7rem 1rem .7rem 2.7rem; -webkit-appearance: none;
+}
+.search input:focus { background: #fff; border-color: var(--line); }
+.search > span { position: absolute; left: .95rem; top: 50%; transform: translateY(-50%); color: var(--muted); display: grid; }
+.results {
+  position: absolute; z-index: 30; top: calc(100% + .4rem); left: 0; right: 0; list-style: none; margin: 0; padding: .4rem;
+  background: var(--card); border: 1px solid var(--line); border-radius: 1rem; box-shadow: 0 14px 34px rgba(43,27,46,.14);
+}
+.results[hidden] { display: none; }
+.results button { display: block; width: 100%; text-align: left; background: none; border: 0; padding: .55rem .7rem; border-radius: .6rem; cursor: pointer; }
+.results button:hover, .results button:focus-visible { background: var(--blush); }
+.results small { display: block; color: var(--muted); }
+.actions { display: flex; align-items: center; gap: .75rem; }
+.bell { position: relative; }
+.bell svg { width: 22px; height: 22px; }
+.badge {
+  position: absolute; top: .1rem; right: .05rem; min-width: 1.05rem; height: 1.05rem; padding: 0 .25rem;
+  border-radius: 999px; background: var(--rose); color: #fff; font-size: .65rem; font-weight: 700; display: grid; place-items: center;
+}
+.avatar {
+  width: 2.75rem; height: 2.75rem; border-radius: 50%; border: 2px solid #fff; cursor: pointer; padding: 0;
+  background: linear-gradient(160deg, #F6C99F, #C46A8A 60%, #5B2E4F); color: #fff; font-weight: 700; font-size: 1.05rem;
+  box-shadow: 0 4px 12px rgba(91,46,79,.25);
+}
+
+.grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 1.25rem; }
+.span-3 { grid-column: span 3; } .span-4 { grid-column: span 4; } .span-5 { grid-column: span 5; } .span-6 { grid-column: span 6; }
+.span-7 { grid-column: span 7; } .span-8 { grid-column: span 8; } .span-9 { grid-column: span 9; } .span-12 { grid-column: span 12; }
+.stack { display: grid; gap: 1.25rem; align-content: start; }
+
+.card {
+  position: relative; overflow: hidden;
+  background: var(--card); border: 1px solid var(--line); border-radius: 1.15rem; box-shadow: var(--shadow);
+  padding: 1.2rem 1.35rem; display: flex; flex-direction: column; min-width: 0;
+}
+.t-peach { background: var(--peach); border-color: #F3DCCD; }
+.t-lilac { background: var(--lilac); border-color: #E2DAF0; }
+.t-sage { background: var(--sage); border-color: #D6E5DA; }
+.t-blush { background: var(--blush); border-color: #F0D3D8; }
+.card-head { display: flex; align-items: center; gap: .6rem; margin-bottom: .85rem; }
+.card-head h2 { font-size: 1.05rem; margin: 0; flex: 1; font-weight: 700; min-width: 0; }
+.card-head .ci { display: grid; color: var(--plum); }
+.doodle { position: absolute; right: .9rem; bottom: .8rem; width: 3.6rem; height: 3.6rem; color: var(--plum); opacity: .25; pointer-events: none; }
+.tag { font-size: .8rem; color: var(--muted); }
+.icon-btn {
+  width: 2.1rem; height: 2.1rem; border-radius: .65rem; border: 0; background: none; cursor: pointer;
+  display: grid; place-items: center; color: var(--ink); flex: none;
+}
+.icon-btn:hover { background: rgba(43,27,46,.06); }
+.icon-btn.sm { width: 1.7rem; height: 1.7rem; color: var(--muted); opacity: 0; }
+li:hover .icon-btn.sm, .icon-btn.sm:focus-visible { opacity: 1; }
+@media (hover: none) { .icon-btn.sm { opacity: .6; } }
+.more { position: relative; margin-top: auto; padding-top: 1rem; font-size: .83rem; color: var(--muted); background: none; border: 0; cursor: pointer; text-align: left; align-self: flex-start; }
+.more:hover { color: var(--plum); }
+.more::after { content: " ›"; }
+.empty { color: var(--muted); font-size: .9rem; margin: .25rem 0; }
+.btn {
+  padding: .62rem 1.15rem; border-radius: .75rem; border: 1px solid var(--line); background: var(--card);
+  cursor: pointer; font-weight: 600;
+}
+.btn.primary { background: var(--plum); border-color: var(--plum); color: #fff; }
+.btn.danger { color: #A33D52; }
+.row { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; }
+.field, select, textarea { border: 1px solid var(--line); background: #fff; border-radius: .75rem; padding: .62rem .85rem; }
+.field { flex: 1; min-width: 10rem; }
+textarea { width: 100%; resize: vertical; line-height: 1.6; }
+label.lbl { display: block; font-size: .85rem; font-weight: 600; margin: 1.1rem 0 .4rem; }
+
+.page-head { margin-bottom: 1.5rem; }
+.page-head h2 { font-size: 1.45rem; margin: 0; letter-spacing: -.01em; }
+.page-head p { margin: .2rem 0 0; color: var(--muted); }
+
+.hero { position: relative; border-radius: 1.15rem; overflow: hidden; min-height: 17.5rem; color: #FFF6F1; box-shadow: var(--shadow); display: flex; align-items: center; }
+.hero > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.hero-in { position: relative; padding: 2rem 2.4rem; max-width: 27rem; }
+.hero-label { font-size: .8rem; opacity: .85; margin: 0 0 .5rem; display: flex; align-items: center; gap: .4rem; }
+.hero-text { font-family: "Caveat", cursive; font-weight: 500; font-size: clamp(2rem, 3.4vw, 2.75rem); line-height: 1.1; margin: 0; text-shadow: 0 2px 16px rgba(40,18,40,.45); }
+.hero-copy { margin-top: 1.1rem; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.35); color: #fff; padding: .42rem 1rem; border-radius: 999px; cursor: pointer; font-size: .82rem; backdrop-filter: blur(4px); }
+.hero-copy:hover { background: rgba(255,255,255,.26); }
+
+.art { position: relative; border-radius: 1.15rem; overflow: hidden; min-height: 16rem; box-shadow: var(--shadow); color: #FFF3EA; }
+.art > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.art p { position: relative; margin: 0; padding: 1.4rem 1.5rem; font-family: "Caveat", cursive; font-size: 1.75rem; line-height: 1.12; text-shadow: 0 2px 12px rgba(30,15,30,.5); max-width: 12rem; }
+
+.add { display: flex; gap: .4rem; margin-top: .6rem; position: relative; }
+.add input { flex: 1; min-width: 0; border: 1px dashed #D9C8C6; background: rgba(255,255,255,.5); border-radius: .65rem; padding: .48rem .75rem; }
+ul.checks { list-style: none; margin: 0; padding: 0; position: relative; }
+ul.checks li { display: flex; align-items: center; gap: .4rem; }
+ul.checks label { flex: 1; display: flex; gap: .75rem; align-items: center; padding: .42rem 0; cursor: pointer; min-width: 0; }
+ul.checks label span { overflow-wrap: anywhere; }
+ul.checks li.done label span { text-decoration: line-through; color: var(--muted); }
+input[type="checkbox"] {
+  appearance: none; -webkit-appearance: none; margin: 0; flex: none; cursor: pointer;
+  width: 1.25rem; height: 1.25rem; border: 1.5px solid #B9A8B4; border-radius: 50%; display: grid; place-items: center; background: #fff;
+  transition: background .15s, border-color .15s;
+}
+input[type="checkbox"]:checked { background: var(--plum); border-color: var(--plum); }
+input[type="checkbox"]:checked::after { content: ""; width: .32rem; height: .6rem; border: solid #fff; border-width: 0 2px 2px 0; transform: translateY(-1px) rotate(45deg); }
+.streak { font-size: .78rem; color: var(--rose); font-weight: 700; white-space: nowrap; }
+
+.links { list-style: none; margin: 0; padding: 0; position: relative; }
+.links button { background: none; border: 0; padding: .3rem 0; cursor: pointer; text-align: left; width: 100%; display: flex; gap: .55rem; overflow: hidden; }
+.links button span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.links button::before { content: "•"; color: var(--rose); }
+.links button:hover { color: var(--plum); }
+
+.goal { margin-bottom: .95rem; position: relative; }
+.goal-top { display: flex; justify-content: space-between; gap: .5rem; font-size: .88rem; font-weight: 600; margin-bottom: .35rem; }
+.goal-top span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.goal-top span:last-child { color: var(--muted); font-weight: 500; font-size: .78rem; flex: none; }
+.bar { height: .42rem; background: rgba(91,46,79,.1); border-radius: 99px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--rose), var(--plum)); border-radius: inherit; }
+
+.cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; }
+.cal-head h3 { margin: 0; font-size: .95rem; font-weight: 600; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .12rem; text-align: center; }
+.cal-grid .wd { font-size: .7rem; color: var(--muted); padding-bottom: .3rem; }
+.cal-day { border: 0; background: none; border-radius: 50%; aspect-ratio: 1; cursor: pointer; font-size: .8rem; position: relative; display: grid; place-items: center; padding: 0; }
+.cal-day:hover { background: var(--blush); }
+.cal-day.today { background: var(--plum); color: #fff; font-weight: 700; }
+.cal-day.sel { box-shadow: inset 0 0 0 2px var(--sun); }
+.cal-day.dot::after { content: ""; position: absolute; bottom: 8%; left: 50%; width: .26rem; height: .26rem; margin-left: -.13rem; border-radius: 50%; background: var(--rose); }
+.cal-day.today.dot::after { background: #fff; }
+.cal-big .cal-day { aspect-ratio: auto; height: 3.4rem; border-radius: .85rem; font-size: .92rem; }
+
+.weather { display: flex; gap: 1rem; align-items: center; }
+.weather .ws { color: var(--sun); display: grid; }
+.weather .ws svg { width: 3.2rem; height: 3.2rem; }
+.wcity { font-size: .85rem; color: var(--muted); }
+.wtemp { font-size: 1.7rem; font-weight: 700; line-height: 1.15; }
+
+.moods { display: flex; flex-wrap: wrap; gap: .4rem; }
+.moods button { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: .38rem .78rem; cursor: pointer; font-size: .84rem; }
+.moods button[aria-pressed="true"] { background: var(--plum); border-color: var(--plum); color: #fff; }
+
+.ideas { margin-top: 2.5rem; }
+.ideas h2 { font-size: 1.15rem; margin: 0 0 1.1rem; }
+.ideas-wrap { display: grid; grid-template-columns: 9.5rem minmax(0, 1fr); gap: 1.25rem; align-items: center; }
+.ideas-hand { font-family: "Caveat", cursive; font-size: 1.5rem; line-height: 1.15; color: var(--plum); transform: rotate(-6deg); margin: 0; text-align: center; }
+.ideas-hand svg { display: block; width: 3.4rem; height: 2.4rem; margin: .4rem auto 0; }
+.tiles { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 1rem; align-items: stretch; }
+.tile {
+  background: #F4E8E7; border: 1px solid #EDDDDC; border-radius: 1.1rem; padding: 1.3rem 1rem; text-align: center; cursor: pointer;
+  transition: transform .2s, box-shadow .2s;
+}
+.tile:hover { transform: translateY(-3px); box-shadow: 0 12px 26px rgba(91,46,79,.1); }
+.tile-ic { width: 2.9rem; height: 2.9rem; border-radius: 50%; display: grid; place-items: center; margin: 0 auto .8rem; color: #fff; }
+.tile h3 { margin: 0 0 .35rem; font-size: .98rem; }
+.tile p { margin: 0; font-size: .82rem; color: var(--muted); line-height: 1.45; }
+
+.split { display: grid; grid-template-columns: 17rem minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+.item-btn { display: block; width: 100%; text-align: left; border: 0; background: none; padding: .7rem .75rem; border-radius: .75rem; cursor: pointer; }
+.item-btn strong { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item-btn span { font-size: .78rem; color: var(--muted); }
+.item-btn.active { background: var(--peach); }
+.big-title { width: 100%; border: 0; background: none; font-size: 1.4rem; font-weight: 700; padding: .2rem 0 .6rem; }
+.big-title:focus-visible, .bare:focus-visible { outline: none; }
+.bare { border: 0; background: none; padding: 0; min-height: 22rem; }
+.status { color: var(--muted); font-size: .82rem; }
+
+.goal-row { padding: 1rem 0; border-bottom: 1px solid rgba(91,46,79,.1); display: grid; grid-template-columns: 1fr auto; gap: .4rem 1rem; align-items: center; }
+.goal-row:last-child { border-bottom: 0; }
+.goal-row input[type="range"] { width: 100%; accent-color: var(--plum); }
+.goal-row .pct { font-weight: 700; color: var(--plum); min-width: 3rem; text-align: right; }
+
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; min-width: 34rem; }
+th, td { padding: .65rem .4rem; border-bottom: 1px solid rgba(91,46,79,.1); text-align: center; }
+th { font-size: .78rem; font-weight: 600; color: var(--muted); }
+th:first-child, td:first-child { text-align: left; }
+td input[type="checkbox"] { margin: 0 auto; }
+
+.entry { display: block; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid rgba(91,46,79,.1); padding: .7rem 0; cursor: pointer; }
+.entry small { display: block; color: var(--muted); }
+.gratitude { display: grid; gap: .5rem; }
+
+.band { margin-top: 3.5rem; }
+.band svg { display: block; width: 100%; height: 48px; }
+.band div {
+  background: var(--side); color: var(--side-ink); text-align: center;
+  padding: .4rem 1rem calc(2rem + env(safe-area-inset-bottom, 0px));
+  display: flex; align-items: center; justify-content: center; gap: 1.25rem;
+}
+.band p { margin: 0; font-family: "Caveat", cursive; font-size: 1.75rem; }
+.band i { display: block; width: 5rem; height: 1px; background: rgba(232,220,229,.4); }
+
+@media (max-width: 1300px) {
+  .span-9 { grid-column: span 12; }
+  .span-3 { grid-column: span 6; }
+  .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 1100px) {
+  .span-4, .span-5, .span-6, .span-7, .span-8 { grid-column: span 12; }
+  .clock { display: none; }
+}
+@media (max-width: 900px) {
+  .app { grid-template-columns: 4.4rem minmax(0, 1fr); background: linear-gradient(90deg, var(--side) 0 4.4rem, var(--bg) 4.4rem); }
+  .side { padding: calc(1.1rem + env(safe-area-inset-top, 0px)) .45rem 1rem; }
+  .logo { font-size: 2.1rem; margin: 0 0 1.2rem; text-align: center; }
+  .logo .full { display: none; }
+  .logo .short { display: inline; }
+  .side nav button { justify-content: center; padding: .72rem 0; }
+  .side nav button .lbl { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .side-foot { display: none; }
+  .main { padding: calc(1rem + env(safe-area-inset-top, 0px)) 1rem 0; }
+  .top { gap: .9rem; }
+  .greet { order: 1; min-width: 0; }
+  .actions { order: 2; }
+  .search { order: 3; width: 100%; }
+  .greet h1 { font-size: 1.3rem; }
+  .gsun svg { width: 2.2rem; height: 2.2rem; }
+  .split { grid-template-columns: minmax(0, 1fr); }
+  .ideas-wrap { grid-template-columns: minmax(0, 1fr); }
+  .ideas-hand { display: none; }
+  .hero { align-items: flex-end; min-height: 19rem; }
+  .hero-in { padding: 1.6rem 1.5rem; }
+  .band div { gap: .75rem; }
+  .band i { width: 2rem; }
+  .band p { font-size: 1.4rem; }
+}
+@media (max-width: 700px) {
+  .grid > * { grid-column: span 12 !important; }
+  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .avatar { width: 2.4rem; height: 2.4rem; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <p class="logo"><span class="full">Nerii ♡</span><span class="short" aria-hidden="true">N♡</span></p>
+    <nav id="nav" aria-label="Bölümler"></nav>
+    <div class="side-foot">
+      <p>Daha iyi bir sen,<br>her gün mümkün ♡</p>
+      <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M12 60 C 24 44 34 30 52 6 M24 44 c -10 -2 -14 -10 -12 -18 c 8 2 12 8 12 18 M31 34 c 8 -6 16 -6 20 0 c -6 6 -14 6 -20 0 M39 23 c -8 -4 -10 -12 -6 -18 c 6 4 8 10 6 18 M18 52 c 8 -6 14 -4 18 1 c -6 4 -12 4 -18 -1"/></svg>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="top">
+      <div class="greet">
+        <span class="gsun" id="gsun"></span>
+        <div>
+          <h1 id="greetTitle"></h1>
+          <p id="greetSub"></p>
+        </div>
+      </div>
+      <div class="clock"><span id="clockDate"></span><strong id="clockTime"></strong></div>
+      <div class="search">
+        <span id="searchIco"></span>
+        <input type="search" id="search" placeholder="Aradığın her şey burada…" aria-label="Ara" autocomplete="off">
+        <ul class="results" id="results" hidden></ul>
+      </div>
+      <div class="actions">
+        <button class="icon-btn bell" id="bellBtn" type="button" aria-label="Bugünün planı"></button>
+        <button class="avatar" id="avatarBtn" type="button" aria-label="Ayarlar"></button>
+      </div>
+    </header>
+    <div id="view"></div>
+  </div>
+</div>
+<footer class="band">
+  <svg viewBox="0 0 1440 48" preserveAspectRatio="none" aria-hidden="true"><path d="M0 30 C 300 0 620 52 960 24 C 1180 6 1340 14 1440 22 V48 H0 Z" fill="#2B1B2E"/></svg>
+  <div><i></i><p>Küçük adımlar, büyük değişimler ♡</p><i></i></div>
+</footer>
+
+<script>
+const ICONS = {
+  home: "M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z",
+  note: "M7 3h7l5 5v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM14 3v5h5M9 13h6M9 17h4",
+  target: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM12 12h.01",
+  repeat: "M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3",
+  calendar: "M4 5h16a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM3 10h18M8 3v4M16 3v4",
+  heart: "M12 20s-7-4.5-9-9a4.5 4.5 0 0 1 9-2 4.5 4.5 0 0 1 9 2c-2 4.5-9 9-9 9z",
+  cart: "M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 8H6.2M9 20.5h.01M17 20.5h.01",
+  book: "M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 21V5M19 19v2H6",
+  chef: "M7 3v8a2 2 0 0 0 4 0V3M9 11v10M17 3c-2 0-3 2-3 6s1 5 3 5v7",
+  settings: "M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1M15 4v4M9 10v4M17 16v4",
+  plus: "M12 5v14M5 12h14",
+  search: "M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4",
+  trash: "M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3",
+  left: "M15 18l-6-6 6-6",
+  right: "M9 18l6-6-6-6",
+  bell: "M6 9a6 6 0 0 1 12 0c0 6 2.5 8 2.5 8h-17S6 15 6 9zM10 20.5a2 2 0 0 0 4 0",
+  star: "M12 3l1.8 6.2L20 11l-6.2 1.8L12 19l-1.8-6.2L4 11l6.2-1.8z",
+  sun: "M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"
+};
+const ico = (n, s) => '<svg viewBox="0 0 24 24" width="' + (s || 20) + '" height="' + (s || 20) + '" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + ICONS[n] + '"/></svg>';
+const DOODLES = {
+  leaf: "M12 60 C 24 44 34 30 52 6 M24 44 c -10 -2 -14 -10 -12 -18 c 8 2 12 8 12 18 M31 34 c 8 -6 16 -6 20 0 c -6 6 -14 6 -20 0 M39 23 c -8 -4 -10 -12 -6 -18 c 6 4 8 10 6 18",
+  whisk: "M40 60 L30 36 M30 36 C 12 30 10 8 22 4 C 34 0 44 22 30 36 M30 36 C 20 26 18 10 22 4 M30 36 C 34 24 32 8 22 4",
+  flag: "M2 60 L 22 28 L 31 40 L 42 22 L 62 60 M42 22 V 4 L 54 8 L 42 12 M14 60 c 6 -4 10 -4 14 0",
+  basket: "M6 28 H58 L52 58 H12 Z M18 28 L28 8 M46 28 L36 8 M20 36 V50 M32 36 V50 M44 36 V50",
+  sprout: "M32 60 V30 M32 40 C 20 40 12 32 12 20 C 24 20 32 28 32 40 M32 30 C 32 18 40 10 52 10 C 52 22 44 30 32 30",
+  moon: "M40 8 A 24 24 0 1 0 56 44 A 20 20 0 1 1 40 8 Z M14 14 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z"
+};
+const doodle = n => h("span", { class: "doodle", "aria-hidden": "true", html: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="' + DOODLES[n] + '"/></svg>' });
+
+const VIEWS = [
+  ["home", "Ana Sayfa", "home"],
+  ["notes", "Notlar", "note"],
+  ["goals", "Hedefler", "target"],
+  ["habits", "Alışkanlıklar", "repeat"],
+  ["calendar", "Takvim", "calendar"],
+  ["journal", "Günlük", "heart"],
+  ["recipes", "Tarifler", "chef"],
+  ["shopping", "Alışveriş Listesi", "cart"],
+  ["books", "Okuma Listesi", "book"],
+  ["settings", "Ayarlar", "settings"]
+];
+const TILES = [
+  ["journal", "Duygu Günlüğü", "Bugünün ruh hali ve şükran listesi", "heart", "#C46A8A"],
+  ["books", "Okuma Listesi", "Okunacaklar, okuduklarım ve bitenler", "book", "#6F8F78"],
+  ["habits", "Alışkanlıklar", "Her gün küçük bir adım, uzun seriler", "repeat", "#E0975A"],
+  ["recipes", "Tarifler", "Sevdiğin tarifler tek bir yerde", "chef", "#8C6BB1"],
+  ["goals", "Hedefler", "Hayallerini adım adım takip et", "target", "#5B2E4F"],
+  ["calendar", "Takvim", "Günlerini önceden planla", "calendar", "#4F7FA3"]
+];
+
+const AFFIRMATIONS = [
+  "Bugün kendime nazik davranmayı seçiyorum.",
+  "Yeterliyim, olduğum gibi değerliyim.",
+  "Her küçük adım beni hedefime yaklaştırıyor.",
+  "Hatalarım bana öğretir, beni tanımlamaz.",
+  "Kendime güveniyorum ve sezgilerimi dinliyorum.",
+  "Bugün enerjimi beni büyüten şeylere harcıyorum.",
+  "Değişime açığım ve her gün gelişiyorum.",
+  "Sınırlarımı korumak kendime duyduğum saygıdır.",
+  "Zorluklar beni güçlendiriyor.",
+  "Hayatımdaki güzelliklere şükrediyorum.",
+  "Kendi hızımda ilerlemek bana yeter.",
+  "Düşüncelerimi seçebilirim, bugün iyi olanı seçiyorum.",
+  "İçimde ihtiyacım olan gücü taşıyorum.",
+  "Dinlenmek de ilerlemenin bir parçası.",
+  "Kendimi dünkü halimle kıyaslıyorum, başkalarıyla değil.",
+  "Sevgiyi vermeyi ve almayı hak ediyorum.",
+  "Bugün elimden gelenin en iyisini yapıyorum ve bu yeterli.",
+  "Korkularım var ama onlardan büyüğüm.",
+  "Yeni başlangıçlar için hiçbir zaman geç değil.",
+  "Bedenime ve zihnime iyi bakıyorum.",
+  "Her gün biraz daha cesurum.",
+  "Hayallerim planlarımla gerçekleşiyor.",
+  "Kontrol edemediklerimi bırakıyorum.",
+  "Sesim önemli, onu kullanmaktan çekinmiyorum.",
+  "Bugün kendimle gurur duyacağım bir şey yapacağım.",
+  "Huzur içimde başlıyor.",
+  "Başarı benim için mümkün ve yakın.",
+  "Kendimi affediyorum ve yoluma devam ediyorum.",
+  "Disiplinim kendime verdiğim bir hediye.",
+  "Bugün merakla öğrenmeye açığım.",
+  "Hayatımın yazarı benim.",
+  "Güzel insanları ve fırsatları hayatıma çekiyorum.",
+  "Sakin kalabilirim, nefesim benim çapam.",
+  "Emeklerimin karşılığını alacağıma inanıyorum.",
+  "Bugün kendime zaman ayırıyorum.",
+  "Kusurlarımla birlikte bütünüm.",
+  "Her sabah yeni bir şans getiriyor.",
+  "Yolumu kaybetsem de yıldızım beni bulur.",
+  "Küçük alışkanlıklar büyük değişimler yaratır.",
+  "Bugün iyi ki varım."
+];
+const SOFT_NOTES = [
+  "Küçük mutluluklar büyük farklar yaratır ♡",
+  "Kendine iyi bak, her şey yolunda olacak ♡",
+  "Yavaş gitmek de ilerlemektir ♡",
+  "Bugün bir bardak su, bir derin nefes ♡",
+  "Kendine teşekkür etmeyi unutma ♡"
+];
+const MOODS = [["Harika", "🌞"], ["İyi", "🙂"], ["Normal", "😐"], ["Yorgun", "😴"], ["Zor bir gün", "🌧️"]];
+const AREAS = ["Kişisel", "Sağlık", "Kariyer", "İlişkiler", "Finans", "Seyahat"];
+const RECIPE_CATS = ["Kahvaltı", "Ana Yemek", "Çorba", "Salata", "Tatlı", "İçecek", "Diğer"];
+const BOOK_STATUSES = ["Okunacak", "Okunuyor", "Bitti"];
+const WEATHER = { 0: "Güneşli", 1: "Çoğunlukla açık", 2: "Parçalı bulutlu", 3: "Kapalı", 45: "Sisli", 48: "Sisli", 51: "Çisenti", 53: "Çisenti", 55: "Çisenti", 61: "Hafif yağmurlu", 63: "Yağmurlu", 65: "Kuvvetli yağmur", 71: "Hafif kar", 73: "Karlı", 75: "Yoğun kar", 80: "Sağanak", 81: "Sağanak", 82: "Kuvvetli sağanak", 95: "Gök gürültülü", 96: "Dolu", 99: "Dolu" };
+
+const DAY_MS = 86400000;
+const STORE = "nerii-v2";
+const pad = n => String(n).padStart(2, "0");
+const keyOf = d => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+const fromKey = k => { const [y, m, d] = k.split("-").map(Number); return new Date(y, m - 1, d); };
+const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const firstOfMonth = d => new Date(d.getFullYear(), d.getMonth(), 1);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const fmtLong = new Intl.DateTimeFormat("tr-TR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+const fmtDate = new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "long", year: "numeric" });
+const fmtShort = new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "long" });
+const fmtWd = new Intl.DateTimeFormat("tr-TR", { weekday: "short", day: "numeric" });
+const fmtMonth = new Intl.DateTimeFormat("tr-TR", { month: "long", year: "numeric" });
+const fmtTime = new Intl.DateTimeFormat("tr-TR", { hour: "2-digit", minute: "2-digit" });
+
+let today = new Date(); today.setHours(0, 0, 0, 0);
+let todayKey = keyOf(today);
+const $ = id => document.getElementById(id);
+
+function defaults() {
+  return { name: "", city: "", plan: {}, notes: [], goals: [], habits: [], journal: {}, recipes: [], shopping: [], books: [] };
+}
+function migrate(old) {
+  const d = defaults();
+  d.habits = old.habits || [];
+  d.books = old.books || [];
+  d.goals = (old.goals || []).map(g => ({ id: g.id || uid(), text: g.text, area: g.area || "Kişisel", progress: g.done ? 100 : 0 }));
+  const keys = new Set([...Object.keys(old.journal || {}), ...Object.keys(old.mood || {}), ...Object.keys(old.gratitude || {})]);
+  keys.forEach(k => {
+    d.journal[k] = { mood: (old.mood || {})[k] || "", gratitude: (old.gratitude || {})[k] || ["", "", ""], text: (old.journal || {})[k] || "" };
+  });
+  return d;
+}
+function load() {
+  try {
+    const raw = localStorage.getItem(STORE);
+    if (raw) return Object.assign(defaults(), JSON.parse(raw));
+    const old = localStorage.getItem("nerii-data");
+    if (old) return migrate(JSON.parse(old));
+  } catch (e) {}
+  return defaults();
+}
+const data = load();
+function save() {
+  try { localStorage.setItem(STORE, JSON.stringify(data)); } catch (e) {}
+}
+
+function h(tag, attrs, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k === "class") n.className = v;
+    else if (k === "text") n.textContent = v;
+    else if (k === "html") n.innerHTML = v;
+    else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+    else if (typeof v === "boolean") n[k] = v;
+    else n.setAttribute(k, v);
+  }
+  kids.flat().forEach(c => { if (c != null && c !== false) n.append(c.nodeType ? c : document.createTextNode(c)); });
+  return n;
+}
+
+const state = { view: "home", calMonth: firstOfMonth(today), sel: todayKey, noteId: null, recipeId: null, jDate: todayKey, focus: null };
+
+function dayIndex(d, len) {
+  const n = Math.floor((d.getTime() - d.getTimezoneOffset() * 60000) / DAY_MS);
+  return ((n % len) + len) % len;
+}
+const affirmation = () => AFFIRMATIONS[dayIndex(today, AFFIRMATIONS.length)];
+const softNote = () => SOFT_NOTES[dayIndex(today, SOFT_NOTES.length)];
+const planOf = k => data.plan[k] || (data.plan[k] = []);
+const journalOf = k => data.journal[k] || (data.journal[k] = { mood: "", gratitude: ["", "", ""], text: "" });
+const removeFrom = (arr, it) => { const i = arr.indexOf(it); if (i > -1) arr.splice(i, 1); };
+
+function go(view, opts) {
+  if (!VIEWS.some(v => v[0] === view)) view = "home";
+  state.view = view;
+  Object.assign(state, opts || {});
+  if (location.hash.slice(1) !== view) history.replaceState(null, "", "#" + view);
+  render();
+  window.scrollTo(0, 0);
+}
+
+function render() {
+  document.querySelectorAll("#nav button").forEach(b => {
+    if (b.dataset.view === state.view) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+  });
+  $("view").replaceChildren(RENDER[state.view]());
+  updateHeader();
+  if (state.focus) {
+    const f = document.querySelector(state.focus);
+    if (f) f.focus();
+    state.focus = null;
+  }
+}
+
+function card(o) {
+  return h("section", { class: "card " + (o.tint || "") + " " + (o.span || "") },
+    o.doodle ? doodle(o.doodle) : null,
+    h("div", { class: "card-head" },
+      o.icon ? h("span", { class: "ci", html: ico(o.icon, 22) }) : null,
+      h("h2", { text: o.title }),
+      o.extra || null,
+      o.onAdd ? h("button", { class: "icon-btn", type: "button", "aria-label": o.title + " ekle", html: ico("plus"), onclick: o.onAdd }) : null
+    ),
+    ...(o.body || []),
+    o.more ? h("button", { class: "more", type: "button", text: o.more[0], onclick: () => go(o.more[1]) }) : null
+  );
+}
+
+function checklist(items, o) {
+  if (!items.length) return h("p", { class: "empty", text: o.empty });
+  return h("ul", { class: "checks" }, items.map(it =>
+    h("li", { class: it.done ? "done" : "" },
+      h("label", {},
+        h("input", { type: "checkbox", checked: !!it.done, onchange: e => { it.done = e.target.checked; save(); render(); } }),
+        h("span", { text: it.text })
+      ),
+      o.del ? h("button", { class: "icon-btn sm", type: "button", "aria-label": it.text + " sil", html: ico("trash", 18), onclick: () => { o.del(it); save(); render(); } }) : null
+    )
+  ));
+}
+
+function addForm(key, placeholder, onAdd) {
+  return h("form", {
+    class: "add", "data-add": key,
+    onsubmit: e => {
+      e.preventDefault();
+      const v = e.target.elements.t.value.trim();
+      if (!v) return;
+      onAdd(v);
+      save();
+      state.focus = '[data-add="' + key + '"] input';
+      render();
+    }
+  },
+    h("input", { name: "t", type: "text", placeholder, "aria-label": placeholder }),
+    h("button", { class: "icon-btn", type: "submit", "aria-label": "Ekle", html: ico("plus") })
+  );
+}
+const focusAdd = key => () => { const i = document.querySelector('[data-add="' + key + '"] input'); if (i) i.focus(); };
+const pageHead = (title, hint) => h("div", { class: "page-head" }, h("h2", { text: title }), hint ? h("p", { text: hint }) : null);
+
+function streakOf(hb) {
+  let d = today;
+  if (!hb.done[keyOf(d)]) d = addDays(d, -1);
+  let n = 0;
+  while (hb.done[keyOf(d)]) { n++; d = addDays(d, -1); }
+  return n;
+}
+
+function monthGrid(big) {
+  const m = state.calMonth;
+  const shift = delta => () => { state.calMonth = new Date(m.getFullYear(), m.getMonth() + delta, 1); render(); };
+  const cells = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"].map(w => h("div", { class: "wd", text: w }));
+  const offset = (m.getDay() + 6) % 7;
+  for (let i = 0; i < offset; i++) cells.push(h("div"));
+  const days = new Date(m.getFullYear(), m.getMonth() + 1, 0).getDate();
+  for (let d = 1; d <= days; d++) {
+    const date = new Date(m.getFullYear(), m.getMonth(), d);
+    const k = keyOf(date);
+    const cls = ["cal-day"];
+    if (k === todayKey) cls.push("today");
+    if (big && k === state.sel) cls.push("sel");
+    if ((data.plan[k] || []).length) cls.push("dot");
+    cells.push(h("button", {
+      type: "button", class: cls.join(" "), text: String(d), "aria-label": fmtLong.format(date),
+      onclick: () => big ? (state.sel = k, render()) : go("calendar", { sel: k })
+    }));
+  }
+  return h("div", { class: big ? "cal cal-big" : "cal" },
+    h("div", { class: "cal-head" },
+      h("button", { class: "icon-btn", type: "button", "aria-label": "Önceki ay", html: ico("left", 18), onclick: shift(-1) }),
+      h("h3", { text: fmtMonth.format(m) }),
+      h("button", { class: "icon-btn", type: "button", "aria-label": "Sonraki ay", html: ico("right", 18), onclick: shift(1) })
+    ),
+    h("div", { class: "cal-grid" }, cells)
+  );
+}
+
+function moodPicker(k) {
+  const j = journalOf(k);
+  return h("div", { class: "moods" }, MOODS.map(([m, e]) =>
+    h("button", {
+      type: "button", "aria-pressed": j.mood === m ? "true" : "false", text: e + " " + m,
+      onclick: () => { j.mood = j.mood === m ? "" : m; save(); render(); }
+    })
+  ));
+}
+
+const HERO_SVG = '<svg viewBox="0 0 1000 380" preserveAspectRatio="xMaxYMid slice" aria-hidden="true"><defs>' +
+  '<linearGradient id="hSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A1E45"/><stop offset=".32" stop-color="#5E3F72"/><stop offset=".6" stop-color="#B9708A"/><stop offset=".82" stop-color="#EE9F7C"/><stop offset="1" stop-color="#FAD09A"/></linearGradient>' +
+  '<linearGradient id="hSea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C98C8C"/><stop offset=".35" stop-color="#7B4E72"/><stop offset="1" stop-color="#2B1B2E"/></linearGradient>' +
+  '<radialGradient id="hSun" cx="810" cy="236" r="230" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FFE9C4" stop-opacity=".95"/><stop offset=".25" stop-color="#FFC78E" stop-opacity=".55"/><stop offset="1" stop-color="#FFC78E" stop-opacity="0"/></radialGradient>' +
+  '<radialGradient id="hStar" cx="700" cy="74" r="60" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FFF6DE" stop-opacity=".9"/><stop offset=".3" stop-color="#FFF0D0" stop-opacity=".35"/><stop offset="1" stop-color="#FFF0D0" stop-opacity="0"/></radialGradient>' +
+  '</defs>' +
+  '<rect width="1000" height="250" fill="url(#hSky)"/>' +
+  '<g fill="#FFF" opacity=".75"><circle cx="420" cy="40" r="1.2"/><circle cx="470" cy="96" r=".9"/><circle cx="540" cy="30" r="1"/><circle cx="590" cy="120" r=".8"/><circle cx="640" cy="36" r="1.1"/><circle cx="760" cy="90" r=".9"/><circle cx="830" cy="28" r="1.3"/><circle cx="880" cy="70" r=".8"/><circle cx="940" cy="40" r="1"/><circle cx="975" cy="110" r=".8"/><circle cx="360" cy="80" r=".9"/><circle cx="300" cy="30" r="1"/><circle cx="690" cy="140" r=".7"/></g>' +
+  '<circle cx="700" cy="74" r="60" fill="url(#hStar)"/>' +
+  '<path d="M700 38 L704.5 69.5 L736 74 L704.5 78.5 L700 110 L695.5 78.5 L664 74 L695.5 69.5 Z" fill="#FFF8E6"/>' +
+  '<path d="M700 56 L702.4 71.6 L718 74 L702.4 76.4 L700 92 L697.6 76.4 L682 74 L697.6 71.6 Z" fill="#FFF8E6" opacity=".8" transform="rotate(45 700 74)"/>' +
+  '<circle cx="700" cy="74" r="3.2" fill="#FFF"/>' +
+  '<rect width="1000" height="380" fill="url(#hSun)"/>' +
+  '<circle cx="810" cy="232" r="38" fill="#FFEBC6"/>' +
+  '<path d="M0 240 L0 206 C 70 190 130 172 200 184 C 260 194 320 164 390 178 C 450 190 520 204 600 198 C 660 194 700 214 760 222 L1000 222 L1000 240 Z" fill="#8B5E80" opacity=".75"/>' +
+  '<path d="M560 242 C 620 222 680 214 740 226 C 790 236 820 236 860 226 C 910 210 960 206 1000 212 L1000 244 L560 244 Z" fill="#5A3A5E"/>' +
+  '<path d="M0 244 L0 214 C 60 214 140 202 220 224 C 270 236 320 240 360 244 Z" fill="#4D3253"/>' +
+  '<rect y="242" width="1000" height="138" fill="url(#hSea)"/>' +
+  '<g fill="#FFDDB0"><rect x="770" y="250" width="80" height="3" rx="1.5" opacity=".8"/><rect x="782" y="262" width="56" height="3" rx="1.5" opacity=".65"/><rect x="792" y="274" width="36" height="2.5" rx="1.25" opacity=".5"/><rect x="798" y="285" width="24" height="2" rx="1" opacity=".38"/><rect x="803" y="295" width="14" height="2" rx="1" opacity=".26"/></g>' +
+  '<g fill="#FFF0D6" opacity=".35"><rect x="630" y="252" width="18" height="2" rx="1"/><rect x="636" y="262" width="8" height="1.5" rx=".75"/></g>' +
+  '<path d="M0 380 L0 322 C 120 306 220 334 340 316 C 470 298 570 330 700 320 C 820 310 900 330 1000 314 L1000 380 Z" fill="#2B1B2E" opacity=".94"/>' +
+  '<path d="M0 380 C 160 352 300 368 420 360 C 560 350 700 372 1000 352 L1000 380 Z" fill="#1E1220" opacity=".7"/>' +
+  '<g fill="#1E1220"><path d="M650 276 h54 v46 a12 12 0 0 1 -12 12 h-30 a12 12 0 0 1 -12 -12 Z"/></g>' +
+  '<path d="M704 288 c 20 0 20 28 0 28" fill="none" stroke="#1E1220" stroke-width="7"/>' +
+  '<g fill="none" stroke="#FFF2E2" stroke-width="2" stroke-linecap="round" opacity=".38"><path d="M668 266 c -7 -10 7 -14 0 -26"/><path d="M686 264 c -7 -10 7 -14 0 -26"/></g>' +
+  '<path d="M738 336 L 868 322 L 882 338 L 752 352 Z" fill="#3A2440"/>' +
+  '<path d="M742 334 L 866 321" stroke="#6C4A6E" stroke-width="2"/>' +
+  '<g fill="#8E6A8C"><circle cx="760" cy="333" r="1.6"/><circle cx="776" cy="331" r="1.6"/><circle cx="792" cy="329.5" r="1.6"/><circle cx="808" cy="328" r="1.6"/><circle cx="824" cy="326" r="1.6"/><circle cx="840" cy="324.5" r="1.6"/></g>' +
+  '<g fill="#1E1220"><path d="M30 380 C 34 330 46 290 70 250 C 60 300 56 340 58 380 Z"/><path d="M58 380 C 70 340 94 310 128 292 C 104 322 90 350 84 380 Z"/><path d="M10 380 C 4 346 -10 320 -30 306 C 0 312 20 340 26 380 Z"/>' +
+  '<path d="M968 380 C 962 340 948 306 924 282 C 948 296 970 330 984 380 Z"/><path d="M990 380 C 1000 344 1012 318 1030 300 L 1030 380 Z"/></g>' +
+  '</svg>';
+
+const ART_SVG = '<svg viewBox="0 0 300 340" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><defs>' +
+  '<linearGradient id="aBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4A2E52"/><stop offset="1" stop-color="#26172A"/></linearGradient>' +
+  '<linearGradient id="aWin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6E4D86"/><stop offset=".55" stop-color="#D98C8C"/><stop offset="1" stop-color="#F7C68F"/></linearGradient>' +
+  '<radialGradient id="aGlow" cx="190" cy="220" r="170" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FFC994" stop-opacity=".45"/><stop offset="1" stop-color="#FFC994" stop-opacity="0"/></radialGradient></defs>' +
+  '<rect width="300" height="340" fill="url(#aBg)"/>' +
+  '<path d="M120 250 V140 A70 70 0 0 1 260 140 V250 Z" fill="url(#aWin)"/>' +
+  '<circle cx="222" cy="118" r="2.4" fill="#FFF6DE"/><circle cx="160" cy="132" r="1.2" fill="#FFF"/><circle cx="240" cy="160" r="1" fill="#FFF"/>' +
+  '<path d="M190 66 V250 M120 170 H260" stroke="#2E1C33" stroke-width="6"/>' +
+  '<path d="M120 250 V140 A70 70 0 0 1 260 140 V250" fill="none" stroke="#2E1C33" stroke-width="8"/>' +
+  '<rect width="300" height="340" fill="url(#aGlow)"/>' +
+  '<rect x="100" y="250" width="180" height="10" rx="3" fill="#2E1C33"/>' +
+  '<path d="M0 340 L0 286 C 60 270 120 296 190 284 C 240 276 270 288 300 282 L300 340 Z" fill="#1E1220"/>' +
+  '<g fill="#140B16"><ellipse cx="160" cy="292" rx="52" ry="20"/><circle cx="118" cy="280" r="16"/><path d="M106 270 l3 -16 l9 11 Z"/><path d="M121 266 l7 -14 l5 15 Z"/><path d="M206 298 c 26 6 22 28 -14 20 c 14 -2 22 -10 14 -20 Z"/></g>' +
+  '<path d="M112 282 q4 2 8 0" stroke="#5A3E5E" stroke-width="1.5" fill="none" stroke-linecap="round"/>' +
+  '<g fill="#140B16"><path d="M232 252 l6 -26 h26 l6 26 Z"/><path d="M250 226 C 246 206 236 196 226 192 C 240 196 252 208 252 226 Z"/><path d="M252 226 C 256 204 268 194 280 190 C 268 198 258 210 255 226 Z"/><path d="M251 226 C 250 206 252 190 258 180 C 258 196 256 212 254 226 Z"/></g>' +
+  '</svg>';
+
+function renderHome() {
+  const grid = h("div", { class: "grid" });
+
+  grid.append(h("section", { class: "hero span-9", html: HERO_SVG },
+    h("div", { class: "hero-in" },
+      h("p", { class: "hero-label", html: ico("star", 14) + "<span>Günün olumlaması</span>" }),
+      h("p", { class: "hero-text", text: affirmation() + " ♡" }),
+      h("button", {
+        class: "hero-copy", type: "button", text: "Kopyala",
+        onclick: async e => {
+          const b = e.currentTarget;
+          try { await navigator.clipboard.writeText(affirmation()); b.textContent = "Kopyalandı"; }
+          catch (err) { b.textContent = "Kopyalanamadı"; }
+        }
+      })
+    )
+  ));
+
+  grid.append(card({
+    title: "Bugünün Planı", icon: "calendar", span: "span-3",
+    extra: h("span", { class: "tag", text: fmtShort.format(today) }),
+    body: [
+      checklist(planOf(todayKey), { del: it => removeFrom(planOf(todayKey), it), empty: "Bugün için henüz plan yok." }),
+      addForm("plan-home", "Plana ekle", t => planOf(todayKey).push({ id: uid(), text: t, done: false }))
+    ]
+  }));
+
+  const notes = [...data.notes].sort((a, b) => b.updated - a.updated).slice(0, 4);
+  grid.append(card({
+    title: "Notlarım", icon: "note", tint: "t-peach", span: "span-3", onAdd: newNote, more: ["Tüm notlar", "notes"], doodle: "leaf",
+    body: [notes.length
+      ? h("ul", { class: "links" }, notes.map(n => h("li", {}, h("button", { type: "button", onclick: () => go("notes", { noteId: n.id }) }, h("span", { text: n.title || "Başlıksız not" })))))
+      : h("p", { class: "empty", text: "Aklına geleni yazmak için + simgesine dokun." })]
+  }));
+
+  grid.append(card({
+    title: "Alışkanlıklar", icon: "repeat", tint: "t-sage", span: "span-3", more: ["Tüm alışkanlıklar", "habits"], doodle: "sprout",
+    onAdd: () => go("habits", { focus: '[data-add="habit"] input' }),
+    body: [data.habits.length
+      ? h("ul", { class: "checks" }, data.habits.slice(0, 5).map(hb => h("li", { class: hb.done[todayKey] ? "done" : "" },
+          h("label", {},
+            h("input", { type: "checkbox", checked: !!hb.done[todayKey], onchange: e => toggleHabit(hb, todayKey, e.target.checked) }),
+            h("span", { text: hb.name })
+          ),
+          streakOf(hb) ? h("span", { class: "streak", text: streakOf(hb) + " gün" }) : null
+        )))
+      : h("p", { class: "empty", text: "Her gün yapmak istediğin bir şey ekle." })]
+  }));
+
+  const recipes = [...data.recipes].sort((a, b) => b.updated - a.updated).slice(0, 4);
+  grid.append(card({
+    title: "Tariflerim", icon: "chef", tint: "t-lilac", span: "span-3", onAdd: newRecipe, more: ["Tüm tarifler", "recipes"], doodle: "whisk",
+    body: [recipes.length
+      ? h("ul", { class: "links" }, recipes.map(r => h("li", {}, h("button", { type: "button", onclick: () => go("recipes", { recipeId: r.id }) }, h("span", { text: r.name || "İsimsiz tarif" })))))
+      : h("p", { class: "empty", text: "Kahvaltılıklar, ana yemekler, tatlılar… İlk tarifini ekle." })]
+  }));
+
+  grid.append(h("section", { class: "art span-3", html: ART_SVG }, h("p", { text: softNote() })));
+
+  const goals = data.goals.slice(0, 4);
+  grid.append(card({
+    title: "Hedeflerim", icon: "target", tint: "t-blush", span: "span-3", more: ["Tüm hedefler", "goals"], doodle: "flag",
+    onAdd: () => go("goals", { focus: "#goalText" }),
+    body: [goals.length
+      ? h("div", {}, goals.map(g => h("div", { class: "goal" },
+          h("div", { class: "goal-top" }, h("span", { text: g.text }), h("span", { text: "%" + g.progress })),
+          h("div", { class: "bar" }, h("i", { style: "width:" + g.progress + "%" }))
+        )))
+      : h("p", { class: "empty", text: "Ulaşmak istediğin ilk hedefi ekle." })]
+  }));
+
+  grid.append(card({ title: "Takvim", icon: "calendar", span: "span-3", more: ["Tüm etkinlikler", "calendar"], body: [monthGrid(false)] }));
+
+  grid.append(card({
+    title: "Alışveriş Listesi", icon: "cart", span: "span-3", more: ["Tüm liste", "shopping"], doodle: "basket",
+    onAdd: focusAdd("shop-home"),
+    body: [
+      checklist(data.shopping.slice(0, 6), { del: it => removeFrom(data.shopping, it), empty: "Liste boş." }),
+      addForm("shop-home", "Listeye ekle", t => data.shopping.push({ id: uid(), text: t, done: false }))
+    ]
+  }));
+
+  const weatherBox = h("div", {});
+  grid.append(h("div", { class: "stack span-3" },
+    h("section", { class: "card" }, weatherBox),
+    card({ title: "Bugün nasılsın?", icon: "heart", body: [moodPicker(todayKey)], more: ["Günlüğe yaz", "journal"] })
+  ));
+  loadWeather(weatherBox);
+
+  const ideas = h("section", { class: "ideas" },
+    h("h2", { text: "Daha fazlası için öneriler" }),
+    h("div", { class: "ideas-wrap" },
+      h("p", { class: "ideas-hand", html: "Senin için<br>küçük fikirler ♡<svg viewBox=\"0 0 60 40\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\"><path d=\"M6 6 C 10 26 26 34 52 30 M44 22 L52 30 L42 36\"/></svg>" }),
+      h("div", { class: "tiles" }, TILES.map(([v, title, desc, icon, color]) =>
+        h("button", { class: "tile", type: "button", onclick: () => go(v) },
+          h("span", { class: "tile-ic", style: "background:" + color, html: ico(icon, 22) }),
+          h("h3", { text: title }),
+          h("p", { text: desc })
+        )
+      ))
+    )
+  );
+  return h("div", {}, grid, ideas);
+}
+
+let weatherCache = null;
+async function loadWeather(box) {
+  const paint = () => box.replaceChildren(h("div", { class: "weather" },
+    h("span", { class: "ws", html: ico("sun", 48) }),
+    h("div", {},
+      h("div", { class: "wcity", text: weatherCache.name }),
+      h("div", { class: "wtemp", text: weatherCache.temp + "°C" }),
+      h("div", { text: WEATHER[weatherCache.code] || "" })
+    )
+  ));
+  if (!data.city) {
+    box.replaceChildren(h("div", { class: "weather" },
+      h("span", { class: "ws", html: ico("sun", 48) }),
+      h("div", {}, h("p", { class: "empty", text: "Hava durumu için şehrini ekle." }),
+        h("button", { class: "more", type: "button", style: "padding-top:.2rem", text: "Ayarlar", onclick: () => go("settings", { focus: "#setCity" }) }))
+    ));
+    return;
+  }
+  if (weatherCache && weatherCache.city === data.city) return paint();
+  box.replaceChildren(h("p", { class: "empty", text: "Hava durumu yükleniyor…" }));
+  try {
+    const g = await (await fetch("https://geocoding-api.open-meteo.com/v1/search?count=1&language=tr&name=" + encodeURIComponent(data.city))).json();
+    if (!g.results || !g.results.length) throw new Error("bulunamadı");
+    const r = g.results[0];
+    const w = await (await fetch("https://api.open-meteo.com/v1/forecast?current=temperature_2m,weather_code&timezone=auto&latitude=" + r.latitude + "&longitude=" + r.longitude)).json();
+    weatherCache = { city: data.city, name: r.name, temp: Math.round(w.current.temperature_2m), code: w.current.weather_code };
+    paint();
+  } catch (e) {
+    box.replaceChildren(h("p", { class: "empty", text: "Hava durumu alınamadı. Ayarlar'daki şehir adını kontrol et." }));
+  }
+}
+
+function newNote() {
+  const n = { id: uid(), title: "", body: "", updated: Date.now() };
+  data.notes.push(n);
+  save();
+  go("notes", { noteId: n.id, focus: ".big-title" });
+}
+
+function renderNotes() {
+  const notes = [...data.notes].sort((a, b) => b.updated - a.updated);
+  if (!data.notes.some(n => n.id === state.noteId)) state.noteId = notes[0] ? notes[0].id : null;
+  const cur = data.notes.find(n => n.id === state.noteId);
+  let activeTitle = null;
+
+  const list = h("section", { class: "card t-peach" },
+    h("button", { class: "btn primary", type: "button", text: "Yeni not", onclick: newNote, style: "margin-bottom:.75rem" }),
+    notes.length ? notes.map(n => {
+      const strong = h("strong", { text: n.title || "Başlıksız not" });
+      if (n.id === state.noteId) activeTitle = strong;
+      return h("button", { type: "button", class: "item-btn" + (n.id === state.noteId ? " active" : ""), style: n.id === state.noteId ? "background:#fff" : null, onclick: () => { state.noteId = n.id; render(); } },
+        strong, h("span", { text: fmtShort.format(new Date(n.updated)) }));
+    }) : h("p", { class: "empty", text: "Henüz not yok." })
+  );
+
+  let editor;
+  if (cur) {
+    const status = h("span", { class: "status", text: "Son düzenleme: " + fmtShort.format(new Date(cur.updated)) + " " + fmtTime.format(new Date(cur.updated)) });
+    const touch = () => { cur.updated = Date.now(); save(); status.textContent = "Kaydedildi"; };
+    editor = h("section", { class: "card" },
+      h("input", { class: "big-title", type: "text", value: cur.title, placeholder: "Başlık", "aria-label": "Not başlığı",
+        oninput: e => { cur.title = e.target.value; if (activeTitle) activeTitle.textContent = cur.title || "Başlıksız not"; touch(); } }),
+      h("textarea", { class: "bare", placeholder: "Yazmaya başla…", "aria-label": "Not içeriği", oninput: e => { cur.body = e.target.value; touch(); } }, cur.body),
+      h("div", { class: "row", style: "justify-content:space-between;margin-top:1rem" },
+        status,
+        h("button", { class: "btn danger", type: "button", text: "Notu sil", onclick: () => {
+          if (!confirm("Bu not silinsin mi?")) return;
+          data.notes = data.notes.filter(n => n.id !== cur.id); state.noteId = null; save(); render();
+        } })
+      )
+    );
+  } else {
+    editor = h("section", { class: "card" }, h("p", { class: "empty", text: "Bir not seç ya da yeni bir not oluştur." }));
+  }
+  return h("div", {}, pageHead("Notlar", "Fikirlerin, listelerin, aklına gelen her şey."), h("div", { class: "split" }, list, editor));
+}
+
+function newRecipe() {
+  const r = { id: uid(), name: "", category: RECIPE_CATS[0], ingredients: "", steps: "", updated: Date.now() };
+  data.recipes.push(r);
+  save();
+  go("recipes", { recipeId: r.id, focus: ".big-title" });
+}
+
+function renderRecipes() {
+  const list = [...data.recipes].sort((a, b) => a.category.localeCompare(b.category, "tr") || (a.name || "").localeCompare(b.name || "", "tr"));
+  if (!data.recipes.some(r => r.id === state.recipeId)) state.recipeId = list[0] ? list[0].id : null;
+  const cur = data.recipes.find(r => r.id === state.recipeId);
+  let activeName = null;
+
+  const side = h("section", { class: "card t-lilac" },
+    h("button", { class: "btn primary", type: "button", text: "Yeni tarif", onclick: newRecipe, style: "margin-bottom:.75rem" }),
+    list.length ? list.map(r => {
+      const strong = h("strong", { text: r.name || "İsimsiz tarif" });
+      if (r.id === state.recipeId) activeName = strong;
+      return h("button", { type: "button", class: "item-btn", style: r.id === state.recipeId ? "background:#fff" : null, onclick: () => { state.recipeId = r.id; render(); } },
+        strong, h("span", { text: r.category }));
+    }) : h("p", { class: "empty", text: "Henüz tarif yok." })
+  );
+
+  let editor;
+  if (cur) {
+    const status = h("span", { class: "status" });
+    const touch = () => { cur.updated = Date.now(); save(); status.textContent = "Kaydedildi"; };
+    editor = h("section", { class: "card" },
+      h("input", { class: "big-title", type: "text", value: cur.name, placeholder: "Tarifin adı", "aria-label": "Tarif adı",
+        oninput: e => { cur.name = e.target.value; if (activeName) activeName.textContent = cur.name || "İsimsiz tarif"; touch(); } }),
+      h("select", { "aria-label": "Kategori", style: "align-self:flex-start", onchange: e => { cur.category = e.target.value; touch(); render(); } },
+        RECIPE_CATS.map(c => h("option", { text: c, selected: c === cur.category }))),
+      h("label", { class: "lbl", for: "rIng", text: "Malzemeler" }),
+      h("textarea", { id: "rIng", rows: "6", placeholder: "Her satıra bir malzeme yaz", oninput: e => { cur.ingredients = e.target.value; touch(); } }, cur.ingredients),
+      h("label", { class: "lbl", for: "rSteps", text: "Yapılışı" }),
+      h("textarea", { id: "rSteps", rows: "9", placeholder: "Adım adım anlat", oninput: e => { cur.steps = e.target.value; touch(); } }, cur.steps),
+      h("div", { class: "row", style: "justify-content:space-between;margin-top:1rem" },
+        status,
+        h("button", { class: "btn danger", type: "button", text: "Tarifi sil", onclick: () => {
+          if (!confirm("Bu tarif silinsin mi?")) return;
+          data.recipes = data.recipes.filter(r => r.id !== cur.id); state.recipeId = null; save(); render();
+        } })
+      )
+    );
+  } else {
+    editor = h("section", { class: "card" }, h("p", { class: "empty", text: "Bir tarif seç ya da yeni bir tarif ekle." }));
+  }
+  return h("div", {}, pageHead("Tarifler", "Sevdiğin tarifler, malzemeleri ve yapılışlarıyla."), h("div", { class: "split" }, side, editor));
+}
+
+function renderGoals() {
+  const done = data.goals.filter(g => g.progress >= 100).length;
+  const form = h("form", { class: "row", onsubmit: e => {
+    e.preventDefault();
+    const t = $("goalText").value.trim();
+    if (!t) return;
+    data.goals.push({ id: uid(), text: t, area: $("goalArea").value, progress: 0 });
+    save(); state.focus = "#goalText"; render();
+  } },
+    h("input", { class: "field", id: "goalText", type: "text", placeholder: "Yeni bir hedef yaz", "aria-label": "Hedef" }),
+    h("select", { id: "goalArea", "aria-label": "Alan" }, AREAS.map(a => h("option", { text: a }))),
+    h("button", { class: "btn primary", type: "submit", text: "Ekle" })
+  );
+  const rows = data.goals.map(g => {
+    const pct = h("span", { class: "pct", text: "%" + g.progress });
+    return h("div", { class: "goal-row" },
+      h("div", {}, h("strong", { text: g.text }), " ", h("span", { class: "tag", text: g.area })),
+      h("button", { class: "icon-btn", type: "button", "aria-label": g.text + " sil", html: ico("trash", 18), onclick: () => {
+        if (!confirm("\"" + g.text + "\" silinsin mi?")) return;
+        removeFrom(data.goals, g); save(); render();
+      } }),
+      h("input", { type: "range", min: "0", max: "100", step: "5", value: String(g.progress), "aria-label": g.text + " ilerleme",
+        oninput: e => { g.progress = Number(e.target.value); pct.textContent = "%" + g.progress; save(); } }),
+      pct
+    );
+  });
+  return h("div", {},
+    pageHead("Hedefler", data.goals.length ? data.goals.length + " hedefin var, " + done + " tanesini tamamladın." : "Ulaşmak istediğin şeyleri yaz, ilerledikçe çubuğu kaydır."),
+    h("section", { class: "card t-blush" }, doodle("flag"), form, rows.length ? h("div", { style: "margin-top:.75rem;position:relative" }, rows) : h("p", { class: "empty", style: "margin-top:1rem", text: "Henüz hedef yok." }))
+  );
+}
+
+function toggleHabit(hb, k, on) {
+  if (on) hb.done[k] = true; else delete hb.done[k];
+  save(); render();
+}
+
+function renderHabits() {
+  const days = [];
+  for (let i = 6; i >= 0; i--) days.push(addDays(today, -i));
+  const body = !data.habits.length
+    ? h("p", { class: "empty", style: "margin-top:1rem", text: "Henüz alışkanlık yok. Yukarıdan ilkini ekle." })
+    : h("div", { class: "table-wrap", style: "margin-top:1rem" }, h("table", {},
+      h("thead", {}, h("tr", {}, h("th", { text: "Alışkanlık" }), days.map(d => h("th", { text: fmtWd.format(d) })), h("th", { text: "Seri" }), h("th"))),
+      h("tbody", {}, data.habits.map(hb => h("tr", {},
+        h("td", { text: hb.name }),
+        days.map(d => {
+          const k = keyOf(d);
+          return h("td", {}, h("input", { type: "checkbox", checked: !!hb.done[k], "aria-label": hb.name + ", " + fmtLong.format(d), onchange: e => toggleHabit(hb, k, e.target.checked) }));
+        }),
+        h("td", {}, h("span", { class: "streak", text: streakOf(hb) + " gün" })),
+        h("td", {}, h("button", { class: "icon-btn", type: "button", "aria-label": hb.name + " sil", html: ico("trash", 18), onclick: () => {
+          if (!confirm("\"" + hb.name + "\" silinsin mi?")) return;
+          removeFrom(data.habits, hb); save(); render();
+        } }))
+      )))
+    ));
+  return h("div", {},
+    pageHead("Alışkanlıklar", "Her gün yapmak istediklerin. Son 7 günü işaretle, serini koru."),
+    h("section", { class: "card t-sage" }, addForm("habit", "Örn. 10 dakika meditasyon", t => data.habits.push({ id: uid(), name: t, done: {} })), body)
+  );
+}
+
+function renderCalendar() {
+  const sel = fromKey(state.sel);
+  return h("div", {},
+    pageHead("Takvim", "Bir güne dokun, o günün planını gör ve düzenle."),
+    h("div", { class: "grid" },
+      h("section", { class: "card span-7" }, monthGrid(true)),
+      card({
+        title: fmtLong.format(sel), span: "span-5", tint: "t-peach", doodle: "leaf",
+        body: [
+          checklist(planOf(state.sel), { del: it => removeFrom(planOf(state.sel), it), empty: "Bu gün için plan yok." }),
+          addForm("plan-day", "Bu güne ekle", t => planOf(state.sel).push({ id: uid(), text: t, done: false }))
+        ]
+      })
+    )
+  );
+}
+
+function renderJournal() {
+  const k = state.jDate;
+  const j = journalOf(k);
+  const status = h("span", { class: "status" });
+  let timer;
+  const saved = () => { save(); status.textContent = "Kaydediliyor…"; clearTimeout(timer); timer = setTimeout(() => { status.textContent = "Kaydedildi"; }, 500); };
+  const entries = Object.keys(data.journal)
+    .filter(x => { const e = data.journal[x]; return e.text.trim() || e.mood || e.gratitude.some(g => g.trim()); })
+    .sort().reverse();
+
+  return h("div", {},
+    pageHead("Günlük", "Ruh halin, şükrettiklerin ve aklından geçenler."),
+    h("div", { class: "grid" },
+      h("section", { class: "card span-8" },
+        h("div", { class: "row", style: "justify-content:space-between;margin-bottom:1rem" },
+          h("input", { class: "field", type: "date", value: k, max: todayKey, style: "flex:none", "aria-label": "Tarih",
+            onchange: e => { state.jDate = e.target.value || todayKey; render(); } }),
+          status
+        ),
+        h("h3", { style: "margin:.25rem 0 .6rem;font-size:1rem", text: "Nasıl hissediyorsun?" }),
+        moodPicker(k),
+        h("h3", { style: "margin:1.5rem 0 .6rem;font-size:1rem", text: "Şükrettiğim üç şey" }),
+        h("div", { class: "gratitude" }, [0, 1, 2].map(i =>
+          h("input", { class: "field", type: "text", value: j.gratitude[i] || "", placeholder: (i + 1) + ". şey", "aria-label": "Şükran " + (i + 1),
+            oninput: e => { j.gratitude[i] = e.target.value; saved(); } })
+        )),
+        h("h3", { style: "margin:1.5rem 0 .6rem;font-size:1rem", text: "Bugün aklımda" }),
+        h("textarea", { rows: "9", placeholder: "Yazmaya başla…", "aria-label": "Günlük yazısı", oninput: e => { j.text = e.target.value; saved(); } }, j.text)
+      ),
+      card({
+        title: "Önceki günler", span: "span-4", tint: "t-blush",
+        body: [entries.length ? h("div", {}, entries.map(x => {
+          const e = data.journal[x];
+          const preview = e.text.trim() || e.gratitude.filter(g => g.trim()).join(", ") || "";
+          return h("button", { class: "entry", type: "button", onclick: () => { state.jDate = x; render(); } },
+            h("small", { text: fmtDate.format(fromKey(x)) + (e.mood ? ", " + e.mood : "") }),
+            preview.length > 70 ? preview.slice(0, 70) + "…" : preview
+          );
+        })) : h("p", { class: "empty", text: "Yazdıkların burada birikecek." })]
+      })
+    )
+  );
+}
+
+function renderShopping() {
+  const doneCount = data.shopping.filter(i => i.done).length;
+  return h("div", {},
+    pageHead("Alışveriş Listesi", "Aldıklarını işaretle, bitince temizle."),
+    h("section", { class: "card t-lilac", style: "max-width:40rem" },
+      doodle("basket"),
+      addForm("shop", "Listeye ekle", t => data.shopping.push({ id: uid(), text: t, done: false })),
+      h("div", { style: "margin-top:.75rem;position:relative" }, checklist(data.shopping, { del: it => removeFrom(data.shopping, it), empty: "Liste boş." })),
+      doneCount ? h("button", { class: "btn", type: "button", style: "margin-top:1rem;align-self:flex-start;position:relative", text: "Alınanları temizle (" + doneCount + ")",
+        onclick: () => { data.shopping = data.shopping.filter(i => !i.done); save(); render(); } }) : null
+    )
+  );
+}
+
+function renderBooks() {
+  const form = h("form", { class: "row", onsubmit: e => {
+    e.preventDefault();
+    const t = $("bookTitle").value.trim();
+    if (!t) return;
+    data.books.push({ id: uid(), title: t, author: $("bookAuthor").value.trim(), status: "Okunacak" });
+    save(); state.focus = "#bookTitle"; render();
+  } },
+    h("input", { class: "field", id: "bookTitle", type: "text", placeholder: "Kitap adı", "aria-label": "Kitap adı" }),
+    h("input", { class: "field", id: "bookAuthor", type: "text", placeholder: "Yazar", "aria-label": "Yazar" }),
+    h("button", { class: "btn primary", type: "submit", text: "Ekle" })
+  );
+  const tints = { "Okunacak": "t-peach", "Okunuyor": "t-sage", "Bitti": "t-lilac" };
+  const cols = BOOK_STATUSES.map(s => {
+    const items = data.books.filter(b => b.status === s);
+    return card({
+      title: s + " (" + items.length + ")", span: "span-4", tint: tints[s],
+      body: [items.length ? h("ul", { class: "checks" }, items.map(b => h("li", {},
+        h("div", { style: "flex:1;min-width:0;padding:.4rem 0" }, h("div", { text: b.title }), b.author ? h("div", { class: "tag", text: b.author }) : null),
+        h("select", { "aria-label": b.title + " durumu", style: "padding:.3rem .5rem;font-size:.8rem", onchange: e => { b.status = e.target.value; save(); render(); } },
+          BOOK_STATUSES.map(x => h("option", { text: x, selected: x === b.status }))),
+        h("button", { class: "icon-btn sm", type: "button", "aria-label": b.title + " sil", html: ico("trash", 18), onclick: () => { removeFrom(data.books, b); save(); render(); } })
+      ))) : h("p", { class: "empty", text: "Boş." })]
+    });
+  });
+  return h("div", {},
+    pageHead("Okuma Listesi", "Okumak istediklerin, okuduğun ve bitirdiklerin."),
+    h("section", { class: "card", style: "margin-bottom:1.25rem" }, form),
+    h("div", { class: "grid" }, cols)
+  );
+}
+
+function renderSettings() {
+  const msg = h("span", { class: "status" });
+  const fileIn = h("input", { type: "file", accept: "application/json", hidden: true, onchange: async e => {
+    const f = e.target.files[0];
+    if (!f) return;
+    try {
+      const parsed = JSON.parse(await f.text());
+      if (!confirm("Yedek yüklenecek ve mevcut verilerin yerine geçecek. Devam edilsin mi?")) return;
+      const base = defaults();
+      Object.keys(base).forEach(k => { data[k] = parsed[k] != null ? parsed[k] : base[k]; });
+      weatherCache = null; save(); go("home");
+    } catch (err) { alert("Dosya okunamadı. Nerii'den indirilmiş bir yedek dosyası seç."); }
+  } });
+  return h("div", {},
+    pageHead("Ayarlar"),
+    h("div", { class: "grid" },
+      card({
+        title: "Profil", span: "span-6",
+        body: [h("form", { onsubmit: e => {
+          e.preventDefault();
+          data.name = $("setName").value.trim();
+          const city = $("setCity").value.trim();
+          if (city !== data.city) weatherCache = null;
+          data.city = city;
+          save(); updateHeader(); msg.textContent = "Kaydedildi";
+        } },
+          h("label", { class: "lbl", for: "setName", style: "margin-top:0", text: "Adın" }),
+          h("input", { class: "field", id: "setName", type: "text", value: data.name, style: "width:100%" }),
+          h("label", { class: "lbl", for: "setCity", text: "Şehrin (hava durumu için)" }),
+          h("input", { class: "field", id: "setCity", type: "text", value: data.city, placeholder: "Örn. İstanbul", style: "width:100%" }),
+          h("div", { class: "row", style: "margin-top:1.1rem" }, h("button", { class: "btn primary", type: "submit", text: "Kaydet" }), msg)
+        )]
+      }),
+      card({
+        title: "Yedekleme", span: "span-6",
+        body: [
+          h("p", { class: "empty", style: "margin-bottom:1rem", text: "Veriler bu tarayıcıda saklanır. Başka bir cihaza taşımak ya da güvende tutmak için yedek al." }),
+          h("div", { class: "row" },
+            h("button", { class: "btn", type: "button", text: "Yedeği indir", onclick: () => {
+              const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
+              const a = h("a", { href: url, download: "nerii-yedek-" + todayKey + ".json" });
+              document.body.append(a); a.click(); a.remove();
+              setTimeout(() => URL.revokeObjectURL(url), 1000);
+            } }),
+            h("button", { class: "btn", type: "button", text: "Yedek yükle", onclick: () => fileIn.click() }),
+            fileIn
+          ),
+          h("button", { class: "btn danger", type: "button", style: "margin-top:1.25rem;align-self:flex-start", text: "Tüm verileri sil", onclick: () => {
+            if (!confirm("Tüm notların, hedeflerin, planların, tariflerin ve günlüğün silinecek. Emin misin?")) return;
+            const base = defaults();
+            Object.keys(base).forEach(k => { data[k] = base[k]; });
+            weatherCache = null; save(); go("home");
+          } })
+        ]
+      })
+    )
+  );
+}
+
+const RENDER = { home: renderHome, notes: renderNotes, goals: renderGoals, habits: renderHabits, calendar: renderCalendar, journal: renderJournal, recipes: renderRecipes, shopping: renderShopping, books: renderBooks, settings: renderSettings };
+
+function greeting() {
+  const hr = new Date().getHours();
+  if (hr >= 5 && hr < 12) return "Günaydın";
+  if (hr >= 12 && hr < 18) return "İyi günler";
+  if (hr >= 18 && hr < 22) return "İyi akşamlar";
+  return "İyi geceler";
+}
+
+function updateHeader() {
+  $("greetTitle").textContent = greeting() + (data.name ? " " + data.name : "") + " ♡";
+  const p = data.plan[todayKey] || [];
+  const done = p.filter(i => i.done).length;
+  const left = p.length - done;
+  $("greetSub").textContent = !p.length ? "Bugün harika şeyler başarabilirsin."
+    : !left ? "Bugünkü planının hepsini tamamladın, tebrikler."
+    : "Bugün planında " + p.length + " iş var, " + done + " tanesi tamam.";
+  const now = new Date();
+  $("clockDate").textContent = fmtDate.format(now);
+  $("clockTime").textContent = fmtTime.format(now);
+  $("bellBtn").innerHTML = ico("bell", 22) + (left ? '<span class="badge">' + left + "</span>" : "");
+  $("bellBtn").setAttribute("aria-label", left ? "Bugün " + left + " iş kaldı" : "Bugünün planı");
+  $("avatarBtn").textContent = data.name ? data.name.charAt(0).toLocaleUpperCase("tr") : "♡";
+}
+
+function tick() {
+  const now = new Date(); now.setHours(0, 0, 0, 0);
+  if (now.getTime() !== today.getTime()) {
+    today = now; todayKey = keyOf(today); state.calMonth = firstOfMonth(today);
+    if (state.view === "home") render();
+  }
+  updateHeader();
+}
+
+function searchAll(q) {
+  q = q.toLocaleLowerCase("tr");
+  const has = s => s && s.toLocaleLowerCase("tr").includes(q);
+  const out = [];
+  data.notes.forEach(n => { if (has(n.title) || has(n.body)) out.push([n.title || "Başlıksız not", "Not", () => go("notes", { noteId: n.id })]); });
+  data.recipes.forEach(r => { if (has(r.name) || has(r.ingredients) || has(r.steps)) out.push([r.name || "İsimsiz tarif", "Tarif, " + r.category, () => go("recipes", { recipeId: r.id })]); });
+  data.goals.forEach(g => { if (has(g.text)) out.push([g.text, "Hedef", () => go("goals")]); });
+  data.habits.forEach(hb => { if (has(hb.name)) out.push([hb.name, "Alışkanlık", () => go("habits")]); });
+  Object.entries(data.plan).forEach(([k, arr]) => arr.forEach(it => {
+    if (has(it.text)) out.push([it.text, "Plan, " + fmtShort.format(fromKey(k)), () => go("calendar", { sel: k, calMonth: firstOfMonth(fromKey(k)) })]);
+  }));
+  data.shopping.forEach(i => { if (has(i.text)) out.push([i.text, "Alışveriş listesi", () => go("shopping")]); });
+  data.books.forEach(b => { if (has(b.title) || has(b.author)) out.push([b.title, "Kitap, " + b.status, () => go("books")]); });
+  Object.entries(data.journal).forEach(([k, e]) => { if (has(e.text) || e.gratitude.some(has)) out.push([fmtDate.format(fromKey(k)), "Günlük", () => go("journal", { jDate: k })]); });
+  return out.slice(0, 8);
+}
+
+const searchIn = $("search");
+const resultsEl = $("results");
+searchIn.addEventListener("input", () => {
+  const q = searchIn.value.trim();
+  if (q.length < 2) { resultsEl.hidden = true; return; }
+  const res = searchAll(q);
+  resultsEl.replaceChildren(...(res.length
+    ? res.map(([label, kind, fn]) => h("li", {}, h("button", { type: "button", onclick: () => { searchIn.value = ""; resultsEl.hidden = true; fn(); } }, label, h("small", { text: kind }))))
+    : [h("li", { class: "empty", style: "padding:.5rem .7rem", text: "Sonuç bulunamadı." })]));
+  resultsEl.hidden = false;
+});
+document.addEventListener("click", e => { if (!e.target.closest(".search")) resultsEl.hidden = true; });
+searchIn.addEventListener("keydown", e => { if (e.key === "Escape") { searchIn.value = ""; resultsEl.hidden = true; } });
+
+$("gsun").innerHTML = ico("sun", 44);
+$("searchIco").innerHTML = ico("search", 18);
+$("bellBtn").addEventListener("click", () => go("calendar", { sel: todayKey, calMonth: firstOfMonth(today) }));
+$("avatarBtn").addEventListener("click", () => go("settings"));
+
+$("nav").append(...VIEWS.map(([v, label, icon]) =>
+  h("button", { type: "button", "data-view": v, title: label, onclick: () => go(v) }, h("span", { html: ico(icon, 21), style: "display:grid" }), h("span", { class: "lbl", text: label }))
+));
+
+window.addEventListener("hashchange", () => { const v = location.hash.slice(1); if (v !== state.view) go(v); });
+setInterval(tick, 20000);
+go(location.hash.slice(1) || "home");
+</script>
+</body>
+</html>
