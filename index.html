@@ -1769,12 +1769,32 @@ function formField(id, label, type, extra) {
 
 function renderSettings() {
   const cityMsg = h("p", { class: "ok" });
+  const nameMsg = h("p", { class: "err" });
   const passMsg = h("p", { class: "err" });
   return h("div", {},
     pageHead("Ayarlar", "Giriş yaptığın profil: " + me.name + (me.isAdmin ? " (yönetici)" : "")),
     h("div", { class: "grid" },
       card({
-        title: "Profil", icon: "heart", span: "span-6",
+        title: "Kullanıcı adım", icon: "users", span: "span-6",
+        body: [h("form", { onsubmit: async e => {
+          e.preventDefault();
+          nameMsg.className = "err"; nameMsg.textContent = "";
+          const v = $("myName").value.trim();
+          const mine = allProfiles.find(x => x.uid === me.uid) || { uid: me.uid, name: me.name, slug: slugOf(me.name), email: me.email };
+          if (v === mine.name) { nameMsg.textContent = "Bu zaten şu anki adın."; return; }
+          try {
+            await renameProfile(mine, v);
+            nameMsg.className = "ok"; nameMsg.textContent = "Adın değiştirildi. Bundan sonra girişte \"" + v + "\" yaz.";
+          } catch (ex) { nameMsg.textContent = ex.message && !ex.code ? ex.message : "Ad değiştirilemedi. Firestore kurallarının güncel olduğundan emin ol."; }
+        } },
+          h("p", { class: "empty", text: "Sitede görünen ve girişte yazdığın ad. Şifren değişmez." }),
+          ...formField("myName", "Kullanıcı adın", "text", { value: me.name, autocomplete: "off" }),
+          h("div", { class: "row", style: "margin-top:1.1rem" }, h("button", { class: "btn primary", type: "submit", text: "Adımı değiştir" })),
+          nameMsg
+        )]
+      }),
+      card({
+        title: "Hava durumu", icon: "sun", span: "span-6",
         body: [h("form", { onsubmit: e => {
           e.preventDefault();
           const city = $("setCity").value.trim();
@@ -1782,7 +1802,6 @@ function renderSettings() {
           data.city = city;
           save(); cityMsg.textContent = "Kaydedildi";
         } },
-          h("p", { class: "empty", text: "Kullanıcı adın: " + me.name }),
           ...formField("setCity", "Şehrin (hava durumu için)", "text", { value: data.city, placeholder: "Örn. İstanbul" }),
           h("div", { class: "row", style: "margin-top:1.1rem" }, h("button", { class: "btn primary", type: "submit", text: "Kaydet" })),
           cityMsg
@@ -1828,7 +1847,7 @@ function renderSettings() {
         ]
       }),
       me.isAdmin ? card({
-        title: "Yönetici", icon: "shield", span: "span-6", tint: "t-blush",
+        title: "Yönetici", icon: "shield", span: "span-12", tint: "t-blush",
         body: [h("p", { class: "empty", text: "Profilleri, duyuruları ve paylaşılan içerikleri yönetici panelinden yönetebilirsin." }),
           h("button", { class: "btn primary", type: "button", style: "align-self:flex-start;margin-top:1rem", text: "Yönetici paneline git", onclick: () => go("admin") })]
       }) : null
@@ -1872,28 +1891,50 @@ function renderAdmin() {
   const newMsg = h("p", { class: "err" });
   const annMsg = h("p", { class: "ok" });
   const apMsg = h("p", { class: "err" });
-  const sorted = allProfiles.slice().sort((a, b) => (a.at || 0) - (b.at || 0));
-  const isRootProfile = p => p.slug === ADMIN_EMAIL.split("@")[0];
+  const sorted = allProfiles.slice().sort((a, b) => (isRootProfile(b) ? 1 : 0) - (isRootProfile(a) ? 1 : 0) || (a.at || 0) - (b.at || 0));
+  const fail = () => showToast("Değişiklik kaydedilemedi", "Firestore kurallarının güncel olduğundan emin ol.");
   const profUpdate = (p, patch, okText) => db.collection("profiles").doc(p.uid).update(patch)
-    .then(() => okText && showToast(okText))
-    .catch(() => showToast("Değişiklik kaydedilemedi", "Firestore kurallarının güncel olduğundan emin ol."));
+    .then(() => okText && showToast(okText)).catch(fail);
 
   const rows = sorted.map(p => {
     const self = p.uid === me.uid;
-    const role = p.disabled ? ["off", "Devre dışı"] : isRootProfile(p) ? ["admin", "Yönetici"] : ["", "Üye"];
+    const root = isRootProfile(p);
+    const locked = self || (root && !me.isRoot);
+    const role = p.disabled ? ["off", "Devre dışı"] : root ? ["admin", "Ana yönetici"] : p.role === "admin" ? ["admin", "Yönetici"] : ["", "Üye"];
     return h("div", { class: "admin-row" },
       h("span", { class: "pav", text: initial(p.name) }),
       h("div", { style: "min-width:0" },
         h("div", { class: "row", style: "gap:.5rem" },
-          h("input", { class: "field name-edit", id: "pn-" + p.uid, type: "text", value: p.name, "aria-label": "Görünen ad",
-            onchange: e => { const v = e.target.value.trim(); if (v && v !== p.name) profUpdate(p, { name: v }, "Görünen ad güncellendi"); } }),
+          h("input", { class: "field name-edit", id: "pn-" + p.uid, type: "text", value: p.name, "aria-label": "Kullanıcı adı", disabled: root && !me.isRoot,
+            onchange: async e => {
+              const v = e.target.value.trim();
+              if (!v || v === p.name) return;
+              try { await renameProfile(p, v); showToast("Kullanıcı adı güncellendi", p.name + " artık girişte \"" + v + "\" yazacak."); }
+              catch (ex) { e.target.value = p.name; showToast("Ad değiştirilemedi", ex.message && !ex.code ? ex.message : "Firestore kurallarının güncel olduğundan emin ol."); }
+            } }),
           h("span", { class: "role " + role[0], text: role[1] })
         ),
-        h("div", { class: "tag", style: "margin-top:.3rem", text: "Kullanıcı adı: " + (p.slug || "") + (self ? " (sen)" : "") })
+        h("div", { class: "tag", style: "margin-top:.3rem", text: "Girişte yazacağı ad: " + p.name + (self ? " (sen)" : "") })
       ),
-      h("div", { class: "row", style: "gap:.4rem;justify-content:flex-end" },
-        !self && !isRootProfile(p) ? h("button", { class: "btn small " + (p.disabled ? "" : "danger"), type: "button", text: p.disabled ? "Etkinleştir" : "Devre dışı bırak",
-          onclick: () => { if (p.disabled || confirm(p.name + " artık giriş yapamayacak. Devam edilsin mi?")) profUpdate(p, { disabled: !p.disabled }); } }) : null
+      locked ? h("span") : h("div", { class: "row", style: "gap:.4rem;justify-content:flex-end" },
+        h("button", { class: "btn small", type: "button", text: p.role === "admin" ? "Yöneticilikten çıkar" : "Yönetici yap",
+          onclick: () => profUpdate(p, { role: p.role === "admin" ? "user" : "admin" }, p.role === "admin" ? p.name + " artık üye" : p.name + " artık yönetici") }),
+        h("button", { class: "btn small", type: "button", text: p.disabled ? "Etkinleştir" : "Devre dışı bırak",
+          onclick: () => { if (p.disabled || confirm(p.name + " artık giriş yapamayacak. Devam edilsin mi?")) profUpdate(p, { disabled: !p.disabled }); } }),
+        h("button", { class: "btn small danger", type: "button", text: "Sil",
+          onclick: async () => {
+            if (!confirm(p.name + " profili silinsin mi? Bu kişi bir daha giriş yapamaz.")) return;
+            try {
+              const batch = db.batch();
+              batch.delete(db.collection("profiles").doc(p.uid));
+              if (p.slug) {
+                const lg = await db.collection("logins").doc(p.slug).get();
+                if (lg.exists && lg.data().uid === p.uid) batch.delete(db.collection("logins").doc(p.slug));
+              }
+              await batch.commit();
+              showToast(p.name + " profili silindi");
+            } catch (ex) { fail(); }
+          } })
       )
     );
   });
@@ -1915,14 +1956,21 @@ function renderAdmin() {
           newMsg.className = "err"; newMsg.textContent = "";
           const name = $("npName").value.trim(), pw = $("npPass").value, pw2 = $("npPass2").value;
           if (!slugOf(name) || name.includes("@")) { newMsg.textContent = "Geçerli bir kullanıcı adı yaz."; return; }
+          if (allProfiles.some(x => x.slug === slugOf(name))) { newMsg.textContent = "Bu kullanıcı adı başka bir profilde kullanılıyor."; return; }
           if (pw.length < 6) { newMsg.textContent = "Şifre en az 6 karakter olmalı."; return; }
           if (pw !== pw2) { newMsg.textContent = "Şifreler birbiriyle aynı değil."; return; }
           const btn = e.target.querySelector("button[type=submit]");
           btn.disabled = true;
           try {
             const sec = firebase.apps.find(x => x.name === "ikincil") || firebase.initializeApp(firebaseConfig, "ikincil");
-            const cred = await sec.auth().createUserWithEmailAndPassword(emailOf(name), pw);
-            await db.collection("profiles").doc(cred.user.uid).set({ name, slug: slugOf(name), role: "user", at: Date.now() });
+            const taken = await db.collection("logins").doc(slugOf(name)).get();
+            if (taken.exists) { newMsg.textContent = "Bu kullanıcı adı daha önce alınmış."; btn.disabled = false; return; }
+            const email = slugOf(name) + "@nerii.app";
+            const cred = await sec.auth().createUserWithEmailAndPassword(email, pw);
+            const batch = db.batch();
+            batch.set(db.collection("profiles").doc(cred.user.uid), { name, slug: slugOf(name), role: "user", email, at: Date.now() });
+            batch.set(db.collection("logins").doc(slugOf(name)), { uid: cred.user.uid, email, at: Date.now() });
+            await batch.commit();
             await sec.auth().signOut();
             e.target.reset();
             newMsg.className = "ok"; newMsg.textContent = name + " profili oluşturuldu. Giriş ekranında \"" + name + "\" ve bu şifreyle girebilir.";
@@ -2135,7 +2183,13 @@ function showLogin(message) {
     btn.disabled = true; btn.textContent = "Giriş yapılıyor…";
     try {
       if (!name.includes("@")) pendingName = name;
-      await auth.signInWithEmailAndPassword(emailOf(name), pw);
+      const email = await resolveEmail(name);
+      if (!email) {
+        err.textContent = "Bu kullanıcı adı değiştirilmiş. Yeni kullanıcı adınla giriş yap.";
+        btn.disabled = false; btn.textContent = "Giriş yap";
+        return;
+      }
+      await auth.signInWithEmailAndPassword(email, pw);
     } catch (ex) {
       err.textContent = authError(ex);
       btn.disabled = false; btn.textContent = "Giriş yap";
@@ -2180,19 +2234,63 @@ async function migrateBlob(blob) {
   data.v3 = true;
 }
 
+async function resolveEmail(name) {
+  if (name.includes("@")) return name.trim().toLowerCase();
+  const slug = slugOf(name);
+  try {
+    const d = await db.collection("logins").doc(slug).get();
+    if (d.exists) {
+      const x = d.data();
+      if (x.moved) return null;
+      if (x.email) return x.email;
+    }
+  } catch (e) {}
+  return slug + "@nerii.app";
+}
+
+const isRootProfile = p => p.root === true || (me && me.isRoot && p.uid === me.uid);
+const profEmail = p => p.email || (p.slug ? p.slug + "@nerii.app" : "");
+
+async function renameProfile(p, newName) {
+  newName = (newName || "").trim();
+  const newSlug = slugOf(newName);
+  if (!newSlug || newName.includes("@")) throw new Error("Geçerli bir kullanıcı adı yaz.");
+  if (newName === p.name) return;
+  const batch = db.batch();
+  if (newSlug !== p.slug) {
+    if (allProfiles.some(x => x.uid !== p.uid && x.slug === newSlug)) throw new Error("Bu kullanıcı adı başka bir profilde kullanılıyor.");
+    const taken = await db.collection("logins").doc(newSlug).get();
+    if (taken.exists && taken.data().uid !== p.uid) throw new Error("Bu kullanıcı adı daha önce alınmış.");
+    batch.set(db.collection("logins").doc(newSlug), { uid: p.uid, email: profEmail(p), at: Date.now() });
+    if (p.slug) batch.set(db.collection("logins").doc(p.slug), { uid: p.uid, moved: true, at: Date.now() });
+  }
+  batch.update(db.collection("profiles").doc(p.uid), { name: newName, slug: newSlug, email: profEmail(p) });
+  await batch.commit();
+}
+
 async function startApp(user) {
   const isRoot = (user.email || "").toLowerCase() === ADMIN_EMAIL;
   const pRef = db.collection("profiles").doc(user.uid);
   let pDoc = await pRef.get();
   if (!pDoc.exists) {
     if (!isRoot) { loginNotice = "Bu profil yönetici tarafından eklenmemiş."; await auth.signOut(); return; }
-    await pRef.set({ name: pendingName || "Neriii", slug: ADMIN_EMAIL.split("@")[0], role: "admin", at: Date.now() });
+    await pRef.set({ name: pendingName || "Neriii", slug: ADMIN_EMAIL.split("@")[0], role: "admin", root: true, email: ADMIN_EMAIL, at: Date.now() });
     pDoc = await pRef.get();
   }
   const p = pDoc.data();
   if (p.disabled && !isRoot) { loginNotice = "Bu profil devre dışı bırakılmış. Yöneticiyle görüş."; await auth.signOut(); return; }
   pendingName = "";
-  me = { uid: user.uid, name: p.name, email: user.email, isAdmin: isRoot };
+  me = { uid: user.uid, name: p.name, email: user.email, isRoot, isAdmin: isRoot || p.role === "admin" };
+  const fix = {};
+  if (isRoot && p.root !== true) Object.assign(fix, { root: true, role: "admin" });
+  if (!p.email) fix.email = user.email;
+  if (Object.keys(fix).length) { try { await pRef.update(fix); } catch (e) {} }
+  if (p.slug) {
+    try {
+      const lg = await db.collection("logins").doc(p.slug).get();
+      if (!lg.exists) await db.collection("logins").doc(p.slug).set({ uid: user.uid, email: user.email, at: Date.now() });
+    } catch (e) {}
+  }
 
   const uDoc = await db.collection("userdata").doc(user.uid).get();
   const blob = uDoc.exists && uDoc.data().json ? JSON.parse(uDoc.data().json) : null;
@@ -2221,7 +2319,8 @@ async function startApp(user) {
     if (mine) {
       if (mine.disabled && !isRoot) { loginNotice = "Bu profil devre dışı bırakıldı."; logout(); return; }
       me.name = mine.name;
-      me.isAdmin = isRoot;
+      me.isAdmin = isRoot || mine.role === "admin";
+      if (!me.isAdmin && state.view === "admin") { go("home"); return; }
       paintMe();
     }
     if (["messages", "admin"].includes(state.view)) scheduleRender(); else updateHeader();
