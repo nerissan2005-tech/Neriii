@@ -1,4 +1,4 @@
-const CACHE = "neriii-v2";
+const CACHE = "neriii-v3";
 
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", e => e.waitUntil(
@@ -24,6 +24,20 @@ self.addEventListener("fetch", e => {
       return res;
     })));
   }
+});
+
+self.addEventListener("push", e => {
+  let p = {};
+  try { p = e.data ? e.data.json() : {}; } catch (err) { p = { data: { body: e.data ? e.data.text() : "" } }; }
+  const d = p.data || (p.notification ? { title: p.notification.title, body: p.notification.body } : p);
+  e.waitUntil(self.registration.showNotification(d.title || "Neriii", {
+    body: d.body || "",
+    icon: "icons/icon-192.png",
+    badge: "icons/icon-192.png",
+    tag: d.tag || "neriii",
+    renotify: true,
+    data: { view: d.view || "home", chatWith: d.chatWith || null }
+  }));
 });
 
 self.addEventListener("notificationclick", e => {

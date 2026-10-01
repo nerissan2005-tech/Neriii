@@ -23,6 +23,8 @@ const ICONS = {
   shield: "M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z",
   bell: "M6 9a6 6 0 0 1 12 0c0 6 2.5 8 2.5 8h-17S6 15 6 9zM10 20.5a2 2 0 0 0 4 0",
   star: "M12 3l1.8 6.2L20 11l-6.2 1.8L12 19l-1.8-6.2L4 11l6.2-1.8z",
+  download: "M12 4v11M7 10l5 5 5-5M5 20h14",
+  check: "M5 12.5l4.5 4.5L19 7.5",
   share: "M12 3v12M8 7l4-4 4 4M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1",
   moon: "M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5z",
   sun: "M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"
@@ -47,16 +49,39 @@ const VIEWS = [
   ["calendar", "Takvim", "calendar"],
   ["journal", "Günlük", "heart"],
   ["shopping", "Alışveriş Listesi", "cart"],
-  ["books", "Okuma Listesi", "book"],
+  ["prayers", "Dualarımız", "moon"],
   ["settings", "Ayarlar", "settings"],
   ["admin", "Yönetici", "shield"]
 ];
 const TAB_MAIN = ["home", "messages", "affirm", "journal"];
 const TILES = [
   ["journal", "Duygu Günlüğü", "Bugünün ruh hali ve şükran listesi", "heart", "#C46A8A"],
-  ["books", "Okuma Listesi", "Okunacaklar, okuduklarım ve bitenler", "book", "#6F8F78"],
+  ["prayers", "Dualarımız", "Dualarını yaz, birlikte amin deyin", "moon", "#6F8F78"],
   ["habits", "Alışkanlıklar", "Her gün küçük bir adım, uzun seriler", "repeat", "#E0975A"],
   ["affirm", "Olumlamalar", "Aşk, bolluk, şükür ve daha fazlası", "star", "#8C6BB1"],
   ["goals", "Hedefler", "Hayallerini adım adım takip et", "target", "#5B2E4F"],
   ["calendar", "Takvim", "Günlerini önceden planla", "calendar", "#4F7FA3"]
 ];
+
+let installPrompt = null;
+function platformInfo() {
+  const ua = navigator.userAgent;
+  const ios = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  return {
+    ios,
+    android: /Android/.test(ua),
+    safari: ios && /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|GSA/.test(ua),
+    standalone: window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true
+  };
+}
+function refreshInstallUi() {
+  const p = platformInfo();
+  const show = !p.standalone && (p.ios || p.android || !!installPrompt);
+  document.querySelectorAll("[data-install]").forEach(el => { el.hidden = !show; });
+}
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installPrompt = e; refreshInstallUi(); });
+window.addEventListener("appinstalled", () => {
+  installPrompt = null;
+  refreshInstallUi();
+  if (typeof showToast === "function") showToast("Neriii yüklendi ♡", "Artık ana ekranından açabilirsin.");
+});

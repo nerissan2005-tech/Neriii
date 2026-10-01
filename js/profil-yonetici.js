@@ -60,9 +60,57 @@ function backupCard() {
   ] });
 }
 
-let installPrompt = null;
-window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installPrompt = e; if (state.view === "settings") render(); });
-window.addEventListener("appinstalled", () => { installPrompt = null; showToast("Neriii yüklendi ♡", "Artık ana ekranından açabilirsin."); });
+function guideSteps(steps) {
+  return h("ol", { class: "guide" }, steps.map(([icon, html]) => h("li", {}, h("span", { class: "guide-ic", html: ico(icon, 18) }), h("span", { html }))));
+}
+
+function installGuide() {
+  const p = platformInfo();
+  let title, steps;
+  if (p.ios && !p.safari) {
+    title = "Önce Safari'de aç";
+    steps = [["share", "Adres çubuğundaki <b>Paylaş</b> simgesine dokun. Görmüyorsan sayfayı <b>Safari</b>'de aç."],
+      ["plus", "Listeyi kaydırıp <b>Ana Ekrana Ekle</b>'yi seç."], ["check", "Sağ üstteki <b>Ekle</b>'ye dokun."]];
+  } else if (p.ios) {
+    title = "iPhone'a Neriii'yi ekle";
+    steps = [["share", "Ekranın altındaki <b>Paylaş</b> simgesine dokun."],
+      ["plus", "Listeyi aşağı kaydırıp <b>Ana Ekrana Ekle</b>'yi seç."], ["check", "Sağ üstteki <b>Ekle</b>'ye dokun. Hayalet simgesi ana ekranında belirecek."]];
+  } else if (p.android) {
+    title = "Telefonuna Neriii'yi ekle";
+    steps = [["menu", "Chrome'da sağ üstteki <b>⋮</b> menüsüne dokun."],
+      ["download", "<b>Uygulamayı yükle</b> ya da <b>Ana ekrana ekle</b>'yi seç."], ["check", "<b>Yükle</b>'ye dokun. Hayalet simgesi ana ekranında belirecek."]];
+  } else {
+    title = "Bilgisayara Neriii'yi yükle";
+    steps = [["download", "Adres çubuğunun sağındaki <b>yükle</b> simgesine tıkla."],
+      ["menu", "Görmüyorsan tarayıcı menüsünden <b>Uygulamayı yükle</b>'yi seç."]];
+  }
+  return new Promise(resolve => {
+    const root = $("dialog");
+    const close = () => { root.classList.remove("show"); setTimeout(() => { root.hidden = true; root.replaceChildren(); resolve(); }, 160); };
+    root.replaceChildren(
+      h("div", { class: "dlg-back", onclick: close }),
+      h("div", { class: "dlg dlg-wide", role: "dialog", "aria-modal": "true", "aria-labelledby": "instTitle" },
+        h("img", { class: "dlg-app", src: "icons/icon.svg", alt: "", width: "64", height: "64" }),
+        h("h2", { id: "instTitle", text: title }),
+        guideSteps(steps),
+        h("div", { class: "dlg-actions" }, h("button", { class: "btn primary", type: "button", text: "Tamam", onclick: close }))
+      )
+    );
+    root.hidden = false;
+    requestAnimationFrame(() => root.classList.add("show"));
+  });
+}
+
+async function installApp() {
+  if (installPrompt) {
+    installPrompt.prompt();
+    try { await installPrompt.userChoice; } catch (e) {}
+    installPrompt = null;
+    refreshInstallUi();
+    return;
+  }
+  installGuide();
+}
 
 function themeCard() {
   const cur = (data.theme || "auto");
@@ -75,36 +123,61 @@ function themeCard() {
       h("button", { type: "button", "aria-pressed": cur === v ? "true" : "false", onclick: () => { data.theme = v; save(); applyTheme(); render(); } },
         h("span", { html: ico(ic, 14), style: "display:grid" }), l))),
     h("div", { class: "install-box" },
-      h("strong", { text: "Uygulama olarak yükle" }),
-      standalone ? h("p", { class: "empty", text: "Neriii zaten uygulama olarak açık ♡" })
-        : installPrompt ? h("div", {}, h("p", { class: "empty", text: "Neriii'yi ana ekranına ekle, tarayıcı çubuğu olmadan tam ekran açılsın." }),
-            h("button", { class: "btn primary", type: "button", style: "margin-top:.7rem", text: "Uygulamayı yükle", onclick: async () => { installPrompt.prompt(); await installPrompt.userChoice; installPrompt = null; render(); } }))
-        : h("p", { class: "empty", text: ios ? "Safari'de alttaki Paylaş simgesine bas, sonra Ana Ekrana Ekle'yi seç." : "Tarayıcının menüsünden Ana ekrana ekle ya da Uygulamayı yükle seçeneğini kullan." })
+      h("strong", { text: "Uygulama" }),
+      standalone ? h("p", { class: "empty", text: "Neriii uygulama olarak açık ♡" })
+        : h("div", {}, h("p", { class: "empty", text: "Neriii'yi ana ekranına ekle, tarayıcı çubuğu olmadan tam ekran açılsın." }),
+            h("button", { class: "btn primary", type: "button", style: "margin-top:.7rem", onclick: installApp },
+              h("span", { html: ico("download", 16), style: "display:inline-grid;vertical-align:-3px;margin-right:.4rem" }), "Uygulamayı indir"))
     )
   );
 }
 
 function notifyCard() {
-  const supported = "Notification" in window;
+  const supported = "Notification" in window && "serviceWorker" in navigator;
   const perm = supported ? Notification.permission : "denied";
-  const on = supported && perm === "granted" && data.notify !== false;
-  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) && !window.matchMedia("(display-mode: standalone)").matches;
-  let note;
-  if (!supported) note = ios ? "iPhone'da bildirimler için siteyi Paylaş menüsünden Ana Ekrana Ekle ile ekleyip oradan açman gerekiyor." : "Bu tarayıcı bildirimleri desteklemiyor.";
-  else if (perm === "denied") note = "Bildirimler tarayıcı ayarlarından engellenmiş. Adres çubuğundaki kilit simgesinden bildirimlere izin verebilirsin.";
-  else note = on ? "Yeni bir mesaj geldiğinde, site başka bir sekmede ya da arka planda açıkken bildirim alırsın." : "Yeni mesaj geldiğinde bildirim almak için aç.";
+  const pi = platformInfo();
+  const deviceOn = pushActive || (perm === "granted" && (() => { try { return !!localStorage.getItem("neriii-push-id"); } catch (e) { return false; } })());
+  const msg = h("p", { class: "ok" });
+  const sw = (label, sub, on, set) => h("label", { class: "switch-row" },
+    h("span", {}, h("strong", { text: label }), sub ? h("small", { text: sub }) : null),
+    h("input", { type: "checkbox", class: "switch", checked: !!on, onchange: async e => { try { await set(e.target.checked); msg.className = "ok"; msg.textContent = "Kaydedildi"; } catch (ex) { msg.className = "err"; msg.textContent = "Kaydedilemedi, tekrar dene."; } } }));
+
+  if (pi.ios && !pi.standalone) {
+    return h("div", {},
+      h("p", { class: "empty", text: "iPhone'da bildirim alabilmek için önce Neriii'yi ana ekrana eklemen ve oradan açman gerekiyor." }),
+      h("button", { class: "btn primary", type: "button", style: "margin-top:1rem", onclick: installApp },
+        h("span", { html: ico("download", 16), style: "display:inline-grid;vertical-align:-3px;margin-right:.4rem" }), "Uygulamayı indir"));
+  }
+  if (!supported) return h("p", { class: "empty", text: "Bu tarayıcı bildirimleri desteklemiyor." });
+  if (perm === "denied") return h("p", { class: "empty", text: "Bildirimler bu cihazda engellenmiş. Telefonun ya da tarayıcının ayarlarından Neriii için bildirimlere izin verip sayfayı yenile." });
+
+  if (!deviceOn) {
+    return h("div", {},
+      h("p", { class: "empty", text: "Uygulama kapalıyken bile yeni mesajları ve her gün seçtiğin saatte günün olumlamasını bildirim olarak al." }),
+      h("button", { class: "btn primary", type: "button", style: "margin-top:1rem", text: "Bildirimleri aç", onclick: async e => {
+        e.currentTarget.disabled = true;
+        let r = "error";
+        try { r = await registerPush(true); } catch (ex) {}
+        if (r === "ok" || r === "local") {
+          await saveNotif({ msgOn: notifSettings.msgOn !== false, affOn: notifSettings.affOn !== false, affTime: notifSettings.affTime || "09:00" }).catch(() => {});
+          notify("Bildirimler açık ♡", "Artık Neriii'den bildirim alacaksın.", "test");
+        } else if (r !== "granted") showToast("Bildirimler açılamadı", r === "denied" ? "İzin verilmedi. Ayarlardan izin verip tekrar dene." : "Biraz sonra tekrar dene.");
+        render();
+      } }));
+  }
+
   return h("div", {},
-    h("p", { class: "empty", text: note }),
-    supported && perm !== "denied" ? h("div", { class: "row", style: "margin-top:1rem" },
-      h("button", { class: "btn " + (on ? "" : "primary"), type: "button", text: on ? "Bildirimleri kapat" : "Bildirimleri aç", onclick: async () => {
-        if (on) { data.notify = false; save(); render(); return; }
-        const r = perm === "granted" ? "granted" : await Notification.requestPermission();
-        data.notify = r === "granted";
-        save(); render();
-        if (r === "granted") notify("Bildirimler açık ♡", "Yeni mesajların artık bildirim olarak gelecek.");
-      } }),
-      on ? h("button", { class: "btn", type: "button", text: "Deneme bildirimi", onclick: () => notify("Neriii ♡", "Bildirimler çalışıyor.") }) : null
-    ) : null
+    sw("Mesaj bildirimleri", "Biri sana yazınca bildirim gelsin", notifSettings.msgOn !== false, v => saveNotif({ msgOn: v })),
+    sw("Günün olumlaması", "Her gün seçtiğin saatte", notifSettings.affOn !== false, v => saveNotif({ affOn: v })),
+    h("div", { class: "row", style: "margin-top:.4rem" },
+      h("label", { class: "lbl", for: "affTime", style: "margin:0", text: "Olumlama saati" }),
+      h("input", { class: "field", id: "affTime", type: "time", value: notifSettings.affTime || "09:00", style: "flex:none;width:8rem",
+        onchange: async e => { if (!e.target.value) return; try { await saveNotif({ affTime: e.target.value, lastAff: "" }); msg.className = "ok"; msg.textContent = "Her gün " + e.target.value + "'da gelecek."; } catch (ex) {} } })),
+    !PUSH_API ? h("p", { class: "empty", style: "margin-top:.8rem", text: "Bildirim sunucusu bağlanınca uygulama kapalıyken de bildirimler gelmeye başlayacak." }) : null,
+    h("div", { class: "row", style: "margin-top:1rem" },
+      h("button", { class: "btn", type: "button", text: "Deneme bildirimi", onclick: () => notify("Neriii ♡", "Bildirimler bu cihazda çalışıyor.", "test") }),
+      h("button", { class: "btn danger", type: "button", text: "Bu cihazda kapat", onclick: async () => { await unregisterPush(); render(); } })),
+    msg
   );
 }
 
@@ -262,11 +335,12 @@ function lockAdmin() {
   try { sessionStorage.removeItem("nerii-admin"); } catch (e) {}
 }
 
-const KIND_NAMES = { note: "Not", goal: "Hedef", habit: "Alışkanlık", plan: "Plan", shop: "Alışveriş", book: "Kitap", aff: "Olumlama", journal: "Günlük" };
+const KIND_NAMES = { note: "Not", goal: "Hedef", habit: "Alışkanlık", plan: "Plan", shop: "Alışveriş", book: "Kitap", prayer: "Dua", aff: "Olumlama", journal: "Günlük" };
 function itemSummary(i) {
   if (i.kind === "note") return (i.title || "Başlıksız not") + (i.body ? ": " + i.body : "");
   if (i.kind === "habit") return i.name;
   if (i.kind === "book") return i.title + (i.author ? ", " + i.author : "");
+  if (i.kind === "prayer") return (i.title || "Dua") + (i.text ? ": " + i.text : "");
   if (i.kind === "journal") return fmtDate.format(fromKey(i.date)) + (i.mood ? ", " + i.mood : "") + ((i.text || "").trim() ? ": " + i.text : "");
   if (i.kind === "plan") return i.text + ", " + fmtShort.format(fromKey(i.date));
   return i.text || "";
@@ -299,7 +373,7 @@ function allItemsCard() {
     h("div", { class: "row", style: "margin-bottom:.8rem" },
       sel("aiP", fp, [["", "Tüm profiller"]].concat(owners), "aiProfile"),
       sel("aiK", fk, [["", "Tüm türler"]].concat(Object.entries(KIND_NAMES)), "aiKind"),
-      sel("aiV", fv, [["", "Herkese açık ve özel"], ["private", "Sadece kendine özel"], ["public", "Herkese açık"]], "aiVis"),
+      sel("aiV", fv, [["", "Tüm görünürlükler"], ["private", "Sadece kendine özel"], ["some", "Seçili kişiler"], ["public", "Herkese açık"]], "aiVis"),
       h("button", { class: "btn small", type: "button", text: "Yenile", onclick: loadAllItems })),
     rows.length ? h("ul", { class: "aff-list all-items" }, rows.slice(0, 300).map(i => h("li", {},
       h("div", { style: "flex:1;min-width:0" },
@@ -307,7 +381,7 @@ function allItemsCard() {
         h("div", { class: "aff-meta" },
           h("span", { class: "who mine", text: KIND_NAMES[i.kind] || i.kind }),
           h("span", { text: (profileOf(i.owner) || {}).name || i.ownerName }),
-          h("span", { class: "who" + (i.vis === "public" ? "" : " priv"), text: i.vis === "public" ? "Herkese açık" : "Sadece kendine özel" }),
+          h("span", { class: "who" + (i.vis === "public" ? "" : " priv"), text: i.vis === "public" ? "Herkese açık" : i.vis === "some" ? (i.mode === "except" ? "Herkes, " + (i.except || []).map(nameOfUid).join(", ") + " hariç" : "Seçili: " + (i.viewers || []).map(nameOfUid).join(", ")) : "Sadece kendine özel" }),
           h("span", { text: fmtShort.format(new Date(i.upd || i.at)) }))
       ),
       h("button", { class: "icon-btn", type: "button", "aria-label": "Sil", html: ico("trash", 17), onclick: async () => {
@@ -420,11 +494,16 @@ function renderAdmin() {
         body: [
           h("p", { class: "empty", text: "Yazdığın duyuru herkesin ana sayfasında en üstte görünür." }),
           h("textarea", { id: "annText", rows: "4", style: "margin-top:.75rem", placeholder: "Örn. Bu hafta herkes 3 kitap hedefini eklesin ♡" }, site.announcement || ""),
+          PUSH_API ? h("label", { class: "check-row" }, h("input", { type: "checkbox", id: "annPush", checked: true }), h("span", { text: "Herkese bildirim olarak da gönder" })) : null,
           h("div", { class: "row", style: "margin-top:.75rem" },
             h("button", { class: "btn primary", type: "button", text: "Yayınla", onclick: () => {
               const text = $("annText").value.trim();
+              const push = $("annPush") && $("annPush").checked;
               db.collection("config").doc("site").set({ announcement: text, byName: me.name, at: Date.now() }, { merge: true })
-                .then(() => { annMsg.textContent = text ? "Duyuru yayında." : "Duyuru kaldırıldı."; })
+                .then(async () => {
+                  annMsg.textContent = text ? "Duyuru yayında." : "Duyuru kaldırıldı.";
+                  if (text && push) { try { const r = await pushApi("/notify-announcement", {}); annMsg.textContent = "Duyuru yayında, " + ((r && r.sent) || 0) + " cihaza bildirim gitti."; } catch (e) { annMsg.textContent = "Duyuru yayında ama bildirim gönderilemedi."; } }
+                })
                 .catch(() => showToast("Duyuru kaydedilemedi", "Firestore kurallarının güncel olduğundan emin ol."));
             } }),
             site.announcement ? h("button", { class: "btn", type: "button", text: "Duyuruyu kaldır", onclick: () => {

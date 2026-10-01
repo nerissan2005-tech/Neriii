@@ -167,6 +167,8 @@ async function startApp(user) {
   $("appRoot").hidden = false;
   $("band").hidden = false;
   $("tabbar").hidden = false;
+  refreshInstallUi();
+  loadNotif();
   const paintMe = () => {
     $("logoName").textContent = me.name + " ♡";
     $("logoShort").textContent = initial(me.name) + "♡";
@@ -200,6 +202,7 @@ async function startApp(user) {
       if (!me.isAdmin && state.view === "admin") { go("home"); return; }
       paintMe();
     }
+    if (structural) healExcept();
     if (structural && ["messages", "admin", "settings"].includes(state.view)) scheduleRender();
     else if (state.view === "messages" && (typingChanged || presenceFlip)) scheduleRender();
     else updateHeader();
@@ -244,7 +247,8 @@ async function startApp(user) {
       if (!["messages", "settings"].includes(state.view)) scheduleRender(); else updateHeader();
     };
     unsubs.push(itemsCol().where("vis", "==", "public").onSnapshot(onItems("pub", m => { pubItems = m; }), () => {}));
-    unsubs.push(itemsCol().where("owner", "==", me.uid).onSnapshot(onItems("mine", m => { myItems = m; }), () => {}));
+    unsubs.push(itemsCol().where("owner", "==", me.uid).onSnapshot(onItems("mine", m => { myItems = m; healExcept(); }), () => {}));
+    unsubs.push(itemsCol().where("viewers", "array-contains", me.uid).onSnapshot(onItems("some", m => { someItems = m; }), () => {}));
   };
   startItems();
   go(location.hash.slice(1) || "home");
@@ -255,6 +259,17 @@ async function startApp(user) {
 }
 
 let presenceTimer = null;
+function healExcept() {
+  if (!me || !allProfiles.length) return;
+  const others = otherMembers();
+  myItems.forEach(it => {
+    if (it.vis !== "some" || it.mode !== "except") return;
+    const want = others.filter(u => !(it.except || []).includes(u));
+    const have = it.viewers || [];
+    if (want.some(u => !have.includes(u))) updItem(it, { viewers: [...new Set(have.concat(want))] });
+  });
+}
+
 function hideSplash() {
   const s = $("splash");
   if (!s || s.classList.contains("out")) return;
@@ -273,7 +288,7 @@ function logout() {
   setTimeout(() => auth.signOut().then(() => { history.replaceState(null, "", location.pathname); location.reload(); }), 300);
 }
 
-const RENDER = { home: renderHome, notes: renderNotes, goals: renderGoals, habits: renderHabits, calendar: renderCalendar, journal: renderJournal, affirm: renderAffirm, messages: renderMessages, shopping: renderShopping, books: renderBooks, settings: renderSettings, admin: renderAdmin };
+const RENDER = { home: renderHome, notes: renderNotes, goals: renderGoals, habits: renderHabits, calendar: renderCalendar, journal: renderJournal, affirm: renderAffirm, messages: renderMessages, shopping: renderShopping, prayers: renderPrayers, settings: renderSettings, admin: renderAdmin };
 
 
 function greeting() {
@@ -333,7 +348,7 @@ function searchAll(q) {
     if (i.kind === "habit" && has(i.name)) out.push([i.name, "Alışkanlık", () => go("habits")]);
     if (i.kind === "plan" && has(i.text)) out.push([i.text, "Plan, " + fmtShort.format(fromKey(i.date)), () => go("calendar", { sel: i.date, calMonth: firstOfMonth(fromKey(i.date)) })]);
     if (i.kind === "shop" && has(i.text)) out.push([i.text, "Alışveriş listesi", () => go("shopping")]);
-    if (i.kind === "book" && (has(i.title) || has(i.author))) out.push([i.title, "Kitap, " + i.status, () => go("books")]);
+    if (i.kind === "prayer" && (has(i.title) || has(i.text))) out.push([i.title || "Dua", "Dua, " + (i.cat || ""), () => go("prayers", { prayerOpen: i.id })]);
     if (i.kind === "journal" && (has(i.text) || (i.gratitude || []).some(has))) out.push([fmtDate.format(fromKey(i.date)) + (isMine(i) ? "" : ", " + i.ownerName), "Günlük", () => go("journal", isMine(i) ? { jDate: i.date, jOther: null } : { jOther: i.id })]);
     if (i.kind === "aff" && has(i.text)) out.push([i.text, "Olumlama", () => go("affirm", { affFilter: "Eklenenler" })]);
   });
@@ -360,6 +375,8 @@ searchIn.addEventListener("keydown", e => { if (e.key === "Escape") { searchIn.v
 
 $("gsun").innerHTML = ico("sun", 44);
 $("searchIco").innerHTML = ico("search", 18);
+$("installBtn").innerHTML = ico("download", 20) + '<span>İndir</span>';
+$("installBtn").addEventListener("click", installApp);
 $("bellBtn").addEventListener("click", () => {
   const un = msgsIn.filter(m => !m.read).sort((a, b) => b.at - a.at);
   if (un.length) go("messages", { chatWith: un[0].from });
@@ -376,7 +393,58 @@ if ("serviceWorker" in navigator && location.protocol === "https:") {
     if (d.type === "open" && me) go(d.view || "home", d.chatWith ? { chatWith: d.chatWith } : {});
   });
 }
+let pushActive = false;
+let notifSettings = {};
+const notifRef = () => db.collection("userdata").doc(me.uid).collection("notify").doc("settings");
+
+async function pushApi(path, body) {
+  if (!PUSH_API || !auth || !auth.currentUser) return null;
+  const token = await auth.currentUser.getIdToken();
+  const res = await fetch(PUSH_API.replace(/\/+$/, "") + path, { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, body: JSON.stringify(body || {}) });
+  if (!res.ok) throw new Error(String(res.status));
+  return res.json();
+}
+
+async function saveNotif(patch) {
+  notifSettings = Object.assign({}, notifSettings, patch, { tz: Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Istanbul" });
+  await notifRef().set(notifSettings, { merge: true });
+}
+
+async function registerPush(ask) {
+  if (!("Notification" in window) || !("serviceWorker" in navigator)) return "unsupported";
+  const perm = ask ? await Notification.requestPermission() : Notification.permission;
+  if (perm !== "granted") return perm;
+  let supported = false;
+  try { supported = typeof firebase.messaging === "function" && await firebase.messaging.isSupported(); } catch (e) {}
+  if (!supported) { try { localStorage.setItem("neriii-push-id", "local"); } catch (e) {} return "local"; }
+  const reg = swReg || await navigator.serviceWorker.ready;
+  const token = await firebase.messaging().getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
+  if (!token) return "error";
+  const id = (await sha256(token)).slice(0, 40);
+  await db.collection("userdata").doc(me.uid).collection("tokens").doc(id).set({ token, at: Date.now(), ua: navigator.userAgent.slice(0, 120) });
+  try { localStorage.setItem("neriii-push-id", id); } catch (e) {}
+  pushActive = true;
+  return "ok";
+}
+
+async function unregisterPush() {
+  let id = null;
+  try { id = localStorage.getItem("neriii-push-id"); localStorage.removeItem("neriii-push-id"); } catch (e) {}
+  if (id && id !== "local") await db.collection("userdata").doc(me.uid).collection("tokens").doc(id).delete().catch(() => {});
+  try { if (typeof firebase.messaging === "function") await firebase.messaging().deleteToken(); } catch (e) {}
+  pushActive = false;
+}
+
+async function loadNotif() {
+  try { const d = await notifRef().get(); notifSettings = d.exists ? d.data() : {}; } catch (e) { notifSettings = {}; }
+  let id = null;
+  try { id = localStorage.getItem("neriii-push-id"); } catch (e) {}
+  if (id && "Notification" in window && Notification.permission === "granted") registerPush(false).catch(() => {});
+  if (state.view === "settings") scheduleRender();
+}
+
 function notify(title, body, tag, view, chatWith) {
+  if (pushActive && PUSH_API && tag !== "test") return;
   if (!("Notification" in window) || Notification.permission !== "granted" || data.notify === false) return;
   const opts = { body, icon: "icons/icon-192.png", badge: "icons/icon-192.png", tag: tag || "neriii", data: { view: view || "home", chatWith: chatWith || null } };
   if (swReg && swReg.showNotification) { swReg.showNotification(title, opts).catch(() => {}); return; }
@@ -397,6 +465,8 @@ function openSheet() {
       h("div", { class: "sheet-grid" },
         items.map(([v, label, icon]) => h("button", { type: "button", "aria-current": state.view === v ? "page" : null, onclick: () => { close(); go(v); } },
           h("span", { class: "sheet-ic", html: ico(icon, 22) }), h("span", { text: label }))),
+        platformInfo().standalone ? null : h("button", { type: "button", class: "dl", onclick: () => { close(); installApp(); } },
+          h("span", { class: "sheet-ic", html: ico("download", 22) }), h("span", { text: "Uygulamayı indir" })),
         h("button", { type: "button", class: "out", onclick: () => { close(); logout(); } },
           h("span", { class: "sheet-ic", html: ico("logout", 22) }), h("span", { text: "Çıkış yap" }))
       )

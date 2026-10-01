@@ -1,22 +1,23 @@
-function iosInstallCard() {
-  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  const standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+function installCard() {
+  const p = platformInfo();
   let hidden = false;
-  try { hidden = localStorage.getItem("neriii-ios-hint") === "1"; } catch (e) {}
-  if (!ios || standalone || hidden) return null;
-  const close = e => { try { localStorage.setItem("neriii-ios-hint", "1"); } catch (ex) {} e.currentTarget.closest(".ios-hint").remove(); };
-  return h("section", { class: "card ios-hint span-12" },
+  try { hidden = localStorage.getItem("neriii-install-hint") === "1"; } catch (e) {}
+  if (p.standalone || hidden || !(p.ios || p.android || installPrompt)) return null;
+  const close = e => { try { localStorage.setItem("neriii-install-hint", "1"); } catch (ex) {} e.currentTarget.closest(".ios-hint").remove(); };
+  return h("section", { class: "card ios-hint span-12", "data-install": "" },
     h("img", { src: "icons/icon.svg", alt: "", width: "56", height: "56" }),
     h("div", { style: "flex:1;min-width:0" },
-      h("strong", { text: "Neriii'yi uygulama gibi kullan ♡" }),
-      h("p", {}, "Alttaki ", h("span", { class: "share-ic", html: ico("share", 16) }), " Paylaş simgesine dokun, sonra ", h("b", { text: "Ana Ekrana Ekle" }), "'yi seç. Neriii hayalet simgesiyle ana ekranına gelir ve tam ekran açılır.")),
+      h("strong", { text: "Neriii'yi telefonuna indir ♡" }),
+      h("p", { text: "Ana ekranında hayalet simgesiyle dursun, uygulama gibi tam ekran açılsın." }),
+      h("button", { class: "btn primary small", type: "button", style: "margin-top:.6rem", onclick: installApp },
+        h("span", { html: ico("download", 15), style: "display:inline-grid;vertical-align:-3px;margin-right:.35rem" }), "Uygulamayı indir")),
     h("button", { class: "icon-btn", type: "button", "aria-label": "Kapat", html: ico("x", 18), onclick: close })
   );
 }
 
 function renderHome() {
   const grid = h("div", { class: "grid" });
-  const hint = iosInstallCard();
+  const hint = installCard();
   if (hint) grid.append(hint);
 
   if (site.announcement) {
@@ -178,7 +179,7 @@ function renderNotes() {
   } else {
     editor = h("section", { class: "card" }, h("p", { class: "empty", text: "Bir not seç ya da yeni bir not oluştur." }));
   }
-  return h("div", {}, pageHead("Notlar", "Fikirlerin, listelerin, aklına gelen her şey. Herkesle paylaştıkların tüm profillerde görünür."), h("div", { class: "split" }, list, editor));
+  return h("div", {}, pageHead("Notlar", "Fikirlerin, listelerin, aklına gelen her şey. Her not için kimlerin göreceğini sen seçersin."), h("div", { class: "split" }, list, editor));
 }
 
 function renderAffirm() {
@@ -343,6 +344,70 @@ function renderShopping() {
       doneMine.length ? h("button", { class: "btn", type: "button", style: "margin-top:1rem;align-self:flex-start;position:relative", text: "Alınanları temizle (" + doneMine.length + ")",
         onclick: async () => { if (await ask({ title: "Alınanlar temizlensin mi?", text: "İşaretlenen " + doneMine.length + " ürün listeden kaldırılacak.", ok: "Temizle", icon: "cart" })) doneMine.forEach(i => delItem(i)); } }) : null
     )
+  );
+}
+
+function toggleAmin(it) {
+  const F = firebase.firestore;
+  const on = !!((it.amins || {})[me.uid]);
+  itemsCol().doc(it.id).update(new F.FieldPath("amins", me.uid), on ? F.FieldValue.delete() : Date.now(), "upd", Date.now()).catch(writeFail);
+}
+
+function renderPrayers() {
+  const all = listOf("prayer").sort((a, b) => (b.at || 0) - (a.at || 0));
+  const f = state.prayerCat || "Tümü";
+  const shown = all.filter(p => f === "Tümü" || p.cat === f);
+  const form = h("form", { onsubmit: e => {
+    e.preventDefault();
+    const title = $("prTitle").value.trim(), text = $("prText").value.trim();
+    if (!title && !text) return;
+    addItem("prayer", { title: title || "Dua", text, cat: $("prCat").value, amins: {} }, getVis("prayer"));
+    $("prTitle").value = ""; $("prText").value = "";
+  } },
+    h("div", { class: "row" },
+      h("input", { class: "field", id: "prTitle", type: "text", placeholder: "Duanın adı, örn. Sabah duası", "aria-label": "Duanın adı", autocomplete: "off" }),
+      h("select", { id: "prCat", "aria-label": "Kategori" }, PRAYER_CATS.map(c => h("option", { text: c })))),
+    h("textarea", { id: "prText", rows: "4", style: "margin-top:.6rem", placeholder: "Duanı buraya yaz…", "aria-label": "Dua" }),
+    h("div", { class: "row", style: "justify-content:space-between;align-items:flex-start;margin-top:.4rem" },
+      visPicker("prayer"),
+      h("button", { class: "btn primary", type: "submit", style: "margin-top:.5rem", text: "Duayı ekle" }))
+  );
+
+  const cats = ["Tümü"].concat(PRAYER_CATS.filter(c => all.some(p => p.cat === c)));
+  const chips = cats.length > 2 ? h("div", { class: "chips" }, cats.map(c =>
+    h("button", { type: "button", "aria-pressed": c === f ? "true" : "false", onclick: () => { state.prayerCat = c; render(); } }, c,
+      h("small", { text: String(c === "Tümü" ? all.length : all.filter(p => p.cat === c).length) })))) : null;
+
+  const cardsEl = shown.length ? h("div", { class: "prayer-list" }, shown.map(p => {
+    const amins = Object.keys(p.amins || {});
+    const mineAmin = amins.includes(me.uid);
+    const editing = state.prayerEdit === p.id && isMine(p);
+    return h("article", { class: "prayer" },
+      h("div", { class: "prayer-head" },
+        h("span", { class: "prayer-ic", html: ico("moon", 18) }),
+        editing
+          ? h("input", { class: "field live", id: "pe-t-" + p.id, value: p.title || "", "aria-label": "Duanın adı", oninput: e => updItem(p, { title: e.target.value }, true) })
+          : h("h3", { text: p.title || "Dua" }),
+        h("span", { class: "tag", text: p.cat || "" }),
+        whoTag(p), visBtn(p),
+        isMine(p) ? h("button", { class: "icon-btn sm", type: "button", "aria-label": editing ? "Düzenlemeyi bitir" : "Düzenle", html: ico(editing ? "check" : "note", 16),
+          onclick: () => { flushItems(); state.prayerEdit = editing ? null : p.id; state.focus = editing ? null : "#pe-x-" + p.id; render(); } }) : null,
+        delBtn(p, p.title, "Bu dua silinsin mi?")),
+      editing
+        ? h("textarea", { class: "live", id: "pe-x-" + p.id, rows: "5", "aria-label": "Dua", oninput: e => updItem(p, { text: e.target.value }, true) }, p.text || "")
+        : p.text ? h("p", { class: "prayer-text", text: p.text }) : null,
+      h("div", { class: "prayer-foot" },
+        h("button", { class: "amin" + (mineAmin ? " on" : ""), type: "button", "aria-pressed": mineAmin ? "true" : "false", onclick: () => toggleAmin(p) }, "🤲 ", mineAmin ? "Amin dedin" : "Amin"),
+        amins.length ? h("span", { class: "tag", title: amins.map(u => u === me.uid ? me.name : nameOfUid(u)).join(", "),
+          text: amins.length === 1 && mineAmin ? "Sen amin dedin" : amins.length + " kişi amin dedi" }) : null)
+    );
+  })) : h("p", { class: "empty", text: all.length ? "Bu kategoride dua yok." : "Henüz dua eklenmedi. İlk duayı sen yaz ♡" });
+
+  return h("div", {},
+    pageHead("Dualarımız", "Dualarını yaz, istersen sevdiklerinle paylaş ve birlikte amin deyin."),
+    h("div", { class: "grid" },
+      h("section", { class: "card span-12 t-sage" }, doodle("moon"), form)),
+    h("div", { style: "margin-top:1.25rem" }, chips, cardsEl)
   );
 }
 

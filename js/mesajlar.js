@@ -229,7 +229,8 @@ function renderMessages() {
 
     const sendMsg = async (fields) => {
       try {
-        await db.collection("messages").add(Object.assign({ from: me.uid, fromName: me.name, to: other.uid, toName: other.name, text: "", at: Date.now(), read: false, hidden: [] }, fields));
+        const ref = await db.collection("messages").add(Object.assign({ from: me.uid, fromName: me.name, to: other.uid, toName: other.name, text: "", at: Date.now(), read: false, hidden: [] }, fields));
+        pushApi("/notify-message", { id: ref.id }).catch(() => {});
       } catch (e) { showToast("Mesaj gönderilemedi", "İnternet bağlantını kontrol edip tekrar dene."); return false; }
       return true;
     };

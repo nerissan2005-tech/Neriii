@@ -8,6 +8,7 @@ const SOFT_NOTES = [
 const MOODS = [["Harika", "🌞"], ["İyi", "🙂"], ["Normal", "😐"], ["Yorgun", "😴"], ["Zor bir gün", "🌧️"]];
 const AREAS = ["Kişisel", "Sağlık", "Kariyer", "İlişkiler", "Finans", "Seyahat"];
 const BOOK_STATUSES = ["Okunacak", "Okunuyor", "Bitti"];
+const PRAYER_CATS = ["Sabah", "Akşam", "Şükür", "Şifa", "Bereket", "Koruma", "Aile", "Diğer"];
 const WEATHER = { 0: "Güneşli", 1: "Çoğunlukla açık", 2: "Parçalı bulutlu", 3: "Kapalı", 45: "Sisli", 48: "Sisli", 51: "Çisenti", 53: "Çisenti", 55: "Çisenti", 61: "Hafif yağmurlu", 63: "Yağmurlu", 65: "Kuvvetli yağmur", 71: "Hafif kar", 73: "Karlı", 75: "Yoğun kar", 80: "Sağanak", 81: "Sağanak", 82: "Kuvvetli sağanak", 95: "Gök gürültülü", 96: "Dolu", 99: "Dolu" };
 
 const DAY_MS = 86400000;
@@ -61,7 +62,7 @@ let auth = null, db = null;
 let allProfiles = [];
 let profiles = [];
 let msgsIn = [], msgsOut = [];
-let pubItems = new Map(), myItems = new Map();
+let pubItems = new Map(), myItems = new Map(), someItems = new Map();
 let itemsCache = null;
 let site = {};
 let unsubs = [];
@@ -147,15 +148,15 @@ function ensureJournal(k) {
   let it = journalOf(k);
   if (it) return it;
   const fields = { date: k, mood: "", gratitude: ["", "", ""], text: "" };
-  const vis = getVis("journal");
-  const id = addItem("journal", fields, vis);
-  it = Object.assign({ id, kind: "journal", owner: me.uid, ownerName: me.name, vis, at: Date.now() }, fields);
+  const aud = audFields(getVis("journal"));
+  const id = addItem("journal", fields, aud);
+  it = Object.assign({ id, kind: "journal", owner: me.uid, ownerName: me.name, at: Date.now() }, aud, fields);
   pendingJournal[k] = it;
   return it;
 }
 
 function allItems() {
-  if (!itemsCache) { itemsCache = new Map(pubItems); myItems.forEach((v, k) => itemsCache.set(k, v)); }
+  if (!itemsCache) { itemsCache = new Map(pubItems); someItems.forEach((v, k) => itemsCache.set(k, v)); myItems.forEach((v, k) => itemsCache.set(k, v)); }
   return itemsCache;
 }
 const listOf = kind => [...allItems().values()].filter(i => i.kind === kind).sort((a, b) => a.at - b.at);
@@ -163,13 +164,27 @@ const isMine = i => i.owner === me.uid;
 const canDel = i => isMine(i) || (me.isAdmin && i.vis === "public");
 const plansOn = k => listOf("plan").filter(i => i.date === k);
 const doneOf = hb => ((hb.done || {})[me.uid]) || {};
-const getVis = kind => (data.visPref || {})[kind] || "private";
+const audDefault = () => ({ vis: "private", mode: "only", people: [] });
+const audState = kind => (state.aud || (state.aud = {}))[kind] || (state.aud[kind] = audDefault());
+function getVis(kind) {
+  const cur = audState(kind);
+  state.aud[kind] = audDefault();
+  return { vis: cur.vis, mode: cur.mode, people: cur.people.slice() };
+}
+const otherMembers = () => allProfiles.filter(p => p.uid !== me.uid && !p.disabled).map(p => p.uid);
+function audFields(a) {
+  if (!a || typeof a === "string") return { vis: a === "public" ? "public" : "private", viewers: [], mode: "", except: [] };
+  if (a.vis !== "some") return { vis: a.vis === "public" ? "public" : "private", viewers: [], mode: "", except: [] };
+  if (a.mode === "except") return { vis: "some", mode: "except", except: a.people.slice(), viewers: otherMembers().filter(u => !a.people.includes(u)) };
+  return { vis: "some", mode: "only", except: [], viewers: a.people.filter(u => u !== me.uid) };
+}
+const audOf = it => ({ vis: it.vis || "private", mode: it.mode === "except" ? "except" : "only", people: (it.mode === "except" ? it.except : it.viewers || []).slice() });
 const itemsCol = () => db.collection("items");
 const writeFail = () => showToast("Kaydedilemedi", "İnternet bağlantını kontrol edip tekrar dene.");
 
-function addItem(kind, fields, vis) {
+function addItem(kind, fields, aud) {
   const ref = itemsCol().doc();
-  ref.set(Object.assign({ kind, owner: me.uid, ownerName: me.name, vis: vis || "private", at: Date.now(), upd: Date.now(), updName: me.name }, fields)).catch(writeFail);
+  ref.set(Object.assign({ kind, owner: me.uid, ownerName: me.name, at: Date.now(), upd: Date.now(), updName: me.name }, audFields(aud), fields)).catch(writeFail);
   return ref.id;
 }
 const pendingPatch = new Map();
@@ -326,31 +341,89 @@ function card(o) {
   );
 }
 
-const VIS_OPTS = [["private", "Kişisel", "lock", "Kişisel"], ["public", "Herkese açık", "users", "Tüm profiller görebilir"]];
-function visSwitch(cur, onPick, label) {
-  const wrap = h("div", { class: "vis", role: "group", "aria-label": label || "Kimler görsün" });
-  VIS_OPTS.forEach(([v, l, ic, tip]) => wrap.append(h("button", {
-    type: "button", "data-v": v, title: tip, "aria-pressed": v === cur ? "true" : "false",
-    onclick: () => {
-      wrap.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === v ? "true" : "false"));
-      onPick(v);
-    }
-  }, h("span", { html: ico(ic, 14), style: "display:grid" }), l)));
+const AUD_OPTS = [["private", "Kişisel", "lock"], ["public", "Herkese açık", "users"], ["some", "Kişi seç", "heart"]];
+const nameOfUid = u => (allProfiles.find(p => p.uid === u) || {}).name || "?";
+function audSummary(a) {
+  if (a.vis === "public") return "Tüm profiller görebilir.";
+  if (a.vis !== "some") return "Sadece sen görürsün.";
+  const names = a.people.map(nameOfUid);
+  if (a.mode === "except") return names.length ? names.join(", ") + " hariç herkes görebilir." : "Hariç tutmak istediğin kişileri seç.";
+  return names.length ? "Sen ve " + names.join(", ") + " görebilir." : "Görmesini istediğin kişileri seç.";
+}
+
+function audPicker(cur, onChange, label) {
+  const wrap = h("div", { class: "aud" });
+  const others = allProfiles.filter(p => p.uid !== me.uid && !p.disabled);
+  const draw = () => {
+    const seg = (opts, val, set) => h("div", { class: "vis", role: "group", "aria-label": label || "Kimler görsün" }, opts.map(([v, l, ic]) =>
+      h("button", { type: "button", "aria-pressed": v === val ? "true" : "false", onclick: () => { set(v); draw(); onChange(cur); } },
+        ic ? h("span", { html: ico(ic, 14), style: "display:grid" }) : null, l)));
+    wrap.replaceChildren(...[
+      seg(AUD_OPTS, cur.vis, v => { cur.vis = v; }),
+      cur.vis === "some" ? h("div", { class: "aud-some" },
+        seg([["only", "Sadece seçtiklerim"], ["except", "Herkes, seçtiklerim hariç"]], cur.mode, v => { if (cur.mode !== v) cur.people = []; cur.mode = v; }),
+        others.length ? h("div", { class: "aud-people" }, others.map(p => {
+          const on = cur.people.includes(p.uid);
+          return h("button", { type: "button", class: "person" + (on ? (cur.mode === "except" ? " off" : " on") : ""), "aria-pressed": on ? "true" : "false",
+            onclick: () => { cur.people = on ? cur.people.filter(u => u !== p.uid) : cur.people.concat(p.uid); draw(); onChange(cur); } },
+            avatar(p), h("span", { text: p.name }));
+        })) : h("p", { class: "empty", text: "Henüz başka profil yok." })
+      ) : null,
+      h("p", { class: "aud-sum", text: audSummary(cur) })
+    ].filter(Boolean));
+  };
+  draw();
   return wrap;
 }
-const visPicker = kind => visSwitch(getVis(kind), v => { data.visPref = Object.assign({}, data.visPref, { [kind]: v }); save(); }, "Yeni eklenenleri kimler görsün");
-const itemVis = it => visSwitch(it.vis, v => { if (v !== it.vis) updItem(it, { vis: v }); }, "Bunu kimler görsün");
+const visPicker = kind => audPicker(audState(kind), c => { state.aud[kind] = c; }, "Bunu kimler görsün");
+const itemVis = it => audPicker(audOf(it), c => updItem(it, audFields(c)), "Bunu kimler görsün");
+
+function audDialog(it) {
+  return new Promise(resolve => {
+    const root = $("dialog");
+    const cur = audOf(it);
+    const close = v => {
+      root.classList.remove("show");
+      document.removeEventListener("keydown", onKey, true);
+      setTimeout(() => { root.hidden = true; root.replaceChildren(); }, 160);
+      resolve(v);
+    };
+    const onKey = e => { if (e.key === "Escape") { e.preventDefault(); close(false); } };
+    root.replaceChildren(
+      h("div", { class: "dlg-back", onclick: () => close(false) }),
+      h("div", { class: "dlg dlg-wide", role: "dialog", "aria-modal": "true", "aria-labelledby": "audTitle" },
+        h("span", { class: "dlg-ic", html: ico("users", 26) }),
+        h("h2", { id: "audTitle", text: "Kimler görsün?" }),
+        h("p", { class: "clip", text: it.title || it.text || it.name || "" }),
+        audPicker(cur, () => {}),
+        h("div", { class: "dlg-actions" },
+          h("button", { class: "btn", type: "button", text: "Vazgeç", onclick: () => close(false) }),
+          h("button", { class: "btn primary", type: "button", text: "Kaydet", onclick: () => { updItem(it, audFields(cur)); close(true); } }))
+      )
+    );
+    root.hidden = false;
+    requestAnimationFrame(() => root.classList.add("show"));
+    document.addEventListener("keydown", onKey, true);
+  });
+}
 
 function whoTag(it) {
-  if (!isMine(it)) return h("span", { class: "who", title: it.ownerName + " paylaştı" }, h("span", { html: ico("users", 12), style: "display:grid" }), it.ownerName);
-  if (it.vis === "public") return h("span", { class: "who mine", title: "Herkes görebiliyor" }, h("span", { html: ico("users", 12), style: "display:grid" }), "Herkes");
+  const tag = (text, title, cls) => h("span", { class: "who" + (cls ? " " + cls : ""), title }, h("span", { html: ico("users", 12), style: "display:grid" }), text);
+  if (!isMine(it)) return tag(it.ownerName, it.ownerName + " paylaştı");
+  if (it.vis === "public") return tag("Herkese açık", "Tüm profiller görebilir", "mine");
+  if (it.vis === "some") {
+    const a = audOf(it);
+    const names = a.people.map(nameOfUid);
+    if (a.mode === "except") return tag(names.length ? names.length + " kişi hariç" : "Herkes", audSummary(a), "mine");
+    if (!names.length) return null;
+    return tag(names.length <= 2 ? names.join(", ") : names.length + " kişi", audSummary(a), "mine");
+  }
   return null;
 }
 function visBtn(it) {
   if (!isMine(it)) return null;
-  const pub = it.vis === "public";
-  return h("button", { class: "icon-btn sm", type: "button", title: pub ? "Kişisel yap" : "Herkesle paylaş", "aria-label": pub ? "Kişisel yap" : "Herkesle paylaş",
-    html: ico(pub ? "users" : "lock", 16), onclick: () => updItem(it, { vis: pub ? "private" : "public" }) });
+  const ic = it.vis === "public" ? "users" : it.vis === "some" ? "heart" : "lock";
+  return h("button", { class: "icon-btn sm", type: "button", title: "Kimler görsün", "aria-label": "Kimler görsün", html: ico(ic, 16), onclick: () => audDialog(it) });
 }
 function delBtn(it, label, ask) {
   if (!canDel(it)) return null;
