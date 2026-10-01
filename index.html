@@ -298,6 +298,46 @@ td input[type="checkbox"] { margin: 0 auto; }
 .fav.on { color: var(--rose); }
 .fav.on svg path { fill: currentColor; }
 
+
+[hidden] { display: none !important; }
+.login { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: calc(2rem + env(safe-area-inset-top, 0px)) 1rem calc(2rem + env(safe-area-inset-bottom, 0px)); position: relative; overflow: hidden; background: #2B1B2E; }
+.login > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.login-card { position: relative; width: min(24rem, 100%); background: rgba(255,252,250,.95); border-radius: 1.4rem; padding: 2.1rem 1.75rem 1.75rem; box-shadow: 0 30px 60px rgba(20,8,20,.4); }
+.login-card h1 { font-family: "Caveat", cursive; font-size: 3.2rem; line-height: 1; margin: 0; color: var(--plum); text-align: center; font-weight: 500; }
+.login-card .sub { text-align: center; color: var(--muted); margin: .4rem 0 1.4rem; font-size: .92rem; }
+.login-card .field { width: 100%; }
+.login-card .btn.primary { width: 100%; margin-top: 1.25rem; padding: .8rem; }
+.login-card .lbl:first-of-type { margin-top: 0; }
+.err { color: #A33D52; font-size: .85rem; margin: .8rem 0 0; min-height: 1.2em; }
+.ok { color: #3E7D5E; font-size: .85rem; margin: .8rem 0 0; }
+.switch { display: block; margin: 1rem auto 0; background: none; border: 0; color: var(--plum); font-weight: 600; cursor: pointer; font-size: .88rem; }
+.setup { font-size: .88rem; color: var(--ink); background: var(--peach); border-radius: .9rem; padding: .9rem 1rem; line-height: 1.5; }
+.toast { position: fixed; z-index: 80; right: 1.25rem; bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px)); width: min(22rem, calc(100vw - 2.5rem)); background: var(--card); border: 1px solid var(--line); border-radius: 1.1rem; box-shadow: 0 20px 44px rgba(43,27,46,.22); padding: 1rem 1.1rem; display: flex; gap: .8rem; align-items: flex-start; }
+.toast .ti { width: 2.4rem; height: 2.4rem; border-radius: 50%; background: var(--rose); color: #fff; display: grid; place-items: center; flex: none; }
+.toast strong { display: block; }
+.toast p { margin: .15rem 0 .6rem; color: var(--muted); font-size: .88rem; overflow-wrap: anywhere; }
+.toast .x { margin-left: auto; }
+.chat { display: grid; grid-template-columns: 16.5rem minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+.people { display: grid; gap: .2rem; }
+.people button { display: flex; gap: .7rem; align-items: center; width: 100%; text-align: left; border: 0; background: none; padding: .65rem .7rem; border-radius: .85rem; cursor: pointer; }
+.people button:hover { background: rgba(255,255,255,.55); }
+.people button[aria-current="true"] { background: #fff; }
+.pav { width: 2.5rem; height: 2.5rem; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 700; background: linear-gradient(160deg, #F6C99F, #C46A8A 60%, #5B2E4F); flex: none; }
+.people .meta { flex: 1; min-width: 0; }
+.people .meta strong { display: block; }
+.people .meta span { font-size: .78rem; color: var(--muted); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.unread { background: var(--rose); color: #fff; font-size: .7rem; font-weight: 700; border-radius: 999px; min-width: 1.35rem; height: 1.35rem; display: grid; place-items: center; padding: 0 .35rem; }
+.thread-head { display: flex; align-items: center; gap: .75rem; padding-bottom: .9rem; border-bottom: 1px solid var(--line); }
+.thread-head strong { font-size: 1.05rem; }
+.thread { display: flex; flex-direction: column; gap: .5rem; min-height: 18rem; max-height: 58vh; overflow-y: auto; padding: 1rem .15rem; }
+.bubble { max-width: 78%; padding: .6rem .9rem; border-radius: 1.1rem; background: var(--blush); align-self: flex-start; overflow-wrap: anywhere; white-space: pre-wrap; border-bottom-left-radius: .35rem; }
+.bubble.mine { background: var(--plum); color: #fff; align-self: flex-end; border-bottom-left-radius: 1.1rem; border-bottom-right-radius: .35rem; }
+.bubble small { display: block; font-size: .7rem; opacity: .7; margin-top: .25rem; }
+.day-sep { align-self: center; font-size: .75rem; color: var(--muted); margin: .5rem 0; }
+.composer { display: flex; gap: .5rem; align-items: flex-end; border-top: 1px solid var(--line); padding-top: 1rem; }
+.composer textarea { min-height: 2.9rem; height: 2.9rem; max-height: 9rem; resize: none; }
+.side nav .logout { margin-top: .6rem; opacity: .75; }
+
 @media (max-width: 1300px) {
   .span-9 { grid-column: span 12; }
   .span-3 { grid-column: span 6; }
@@ -323,7 +363,7 @@ td input[type="checkbox"] { margin: 0 auto; }
   .search { order: 3; width: 100%; }
   .greet h1 { font-size: 1.3rem; }
   .gsun svg { width: 2.2rem; height: 2.2rem; }
-  .split { grid-template-columns: minmax(0, 1fr); }
+  .split, .chat { grid-template-columns: minmax(0, 1fr); }
   .ideas-wrap { grid-template-columns: minmax(0, 1fr); }
   .ideas-hand { display: none; }
   .hero { align-items: flex-end; min-height: 19rem; }
@@ -341,9 +381,11 @@ td input[type="checkbox"] { margin: 0 auto; }
 </style>
 </head>
 <body>
-<div class="app">
+<div id="login" class="login" hidden></div>
+<div id="toast" class="toast" role="status" hidden></div>
+<div class="app" id="appRoot" hidden>
   <aside class="side">
-    <p class="logo"><span class="full">Nerii ♡</span><span class="short" aria-hidden="true">N♡</span></p>
+    <p class="logo"><span class="full" id="logoName">Nerii ♡</span><span class="short" id="logoShort" aria-hidden="true">N♡</span></p>
     <nav id="nav" aria-label="Bölümler"></nav>
     <div class="side-foot">
       <p>Daha iyi bir sen,<br>her gün mümkün ♡</p>
@@ -367,19 +409,31 @@ td input[type="checkbox"] { margin: 0 auto; }
         <ul class="results" id="results" hidden></ul>
       </div>
       <div class="actions">
-        <button class="icon-btn bell" id="bellBtn" type="button" aria-label="Bugünün planı"></button>
+        <button class="icon-btn bell" id="bellBtn" type="button" aria-label="Bildirimler"></button>
         <button class="avatar" id="avatarBtn" type="button" aria-label="Ayarlar"></button>
       </div>
     </header>
     <div id="view"></div>
   </div>
 </div>
-<footer class="band">
+<footer class="band" id="band" hidden>
   <svg viewBox="0 0 1440 48" preserveAspectRatio="none" aria-hidden="true"><path d="M0 30 C 300 0 620 52 960 24 C 1180 6 1340 14 1440 22 V48 H0 Z" fill="#2B1B2E"/></svg>
   <div><i></i><p>Küçük adımlar, büyük değişimler ♡</p><i></i></div>
 </footer>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCzTOBEkbddq_wNwh6j7Sg50sgmMeXjH34",
+  authDomain: "neriii.firebaseapp.com",
+  projectId: "neriii",
+  storageBucket: "neriii.firebasestorage.app",
+  messagingSenderId: "1047691141611",
+  appId: "1:1047691141611:web:baaee8f6f51141113139ae"
+};
+
 const ICONS = {
   home: "M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z",
   note: "M7 3h7l5 5v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM14 3v5h5M9 13h6M9 17h4",
@@ -395,6 +449,10 @@ const ICONS = {
   trash: "M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3",
   left: "M15 18l-6-6 6-6",
   right: "M9 18l6-6-6-6",
+  chat: "M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-5 4V6a1 1 0 0 1 1-1zM8 10h8M8 13h5",
+  logout: "M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 17l5-5-5-5M15 12H3",
+  send: "M4 12l16-8-6 16-2.5-6.5z",
+  x: "M6 6l12 12M18 6L6 18",
   bell: "M6 9a6 6 0 0 1 12 0c0 6 2.5 8 2.5 8h-17S6 15 6 9zM10 20.5a2 2 0 0 0 4 0",
   star: "M12 3l1.8 6.2L20 11l-6.2 1.8L12 19l-1.8-6.2L4 11l6.2-1.8z",
   sun: "M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"
@@ -411,6 +469,7 @@ const doodle = n => h("span", { class: "doodle", "aria-hidden": "true", html: '<
 
 const VIEWS = [
   ["home", "Ana Sayfa", "home"],
+  ["messages", "Mesajlar", "chat"],
   ["affirm", "Olumlamalar", "star"],
   ["notes", "Notlar", "note"],
   ["goals", "Hedefler", "target"],
@@ -864,20 +923,36 @@ function migrate(old) {
   });
   return d;
 }
-function load() {
+function loadLocal() {
   try {
     const raw = localStorage.getItem(STORE);
     if (raw) return Object.assign(defaults(), JSON.parse(raw));
     const old = localStorage.getItem("nerii-data");
     if (old) return migrate(JSON.parse(old));
   } catch (e) {}
-  return defaults();
+  return null;
 }
-const data = load();
-save();
+let data = defaults();
+let me = null;
+let auth = null, db = null;
+let profiles = [];
+let msgsIn = [], msgsOut = [];
+let unsubs = [];
+let saveTimer = null;
+function pushData() {
+  clearTimeout(saveTimer); saveTimer = null;
+  if (!me || !db) return;
+  db.collection("userdata").doc(me.uid).set({ json: JSON.stringify(data), at: Date.now() })
+    .catch(() => showToast("Kaydedilemedi", "İnternet bağlantını kontrol et, değişiklikler tekrar denenecek."));
+}
 function save() {
-  try { localStorage.setItem(STORE, JSON.stringify(data)); } catch (e) {}
+  if (!me) return;
+  try { localStorage.setItem("nerii-cache-" + me.uid, JSON.stringify(data)); } catch (e) {}
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(pushData, 800);
 }
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden" && saveTimer) pushData(); });
+window.addEventListener("pagehide", () => { if (saveTimer) pushData(); });
 
 function h(tag, attrs, ...kids) {
   const n = document.createElement(tag);
@@ -942,6 +1017,7 @@ function go(view, opts) {
   if (!VIEWS.some(v => v[0] === view)) view = "home";
   state.view = view;
   Object.assign(state, opts || {});
+  if (view === "messages") $("toast").hidden = true;
   if (location.hash.slice(1) !== view) history.replaceState(null, "", "#" + view);
   render();
   window.scrollTo(0, 0);
@@ -951,8 +1027,15 @@ function render() {
   document.querySelectorAll("#nav button").forEach(b => {
     if (b.dataset.view === state.view) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
   });
+  const act = document.activeElement;
+  const keepId = act && act.id && $("view").contains(act) ? act.id : null;
+  const caret = keepId && typeof act.selectionStart === "number" ? act.selectionStart : null;
   $("view").replaceChildren(RENDER[state.view]());
   updateHeader();
+  if (keepId && !state.focus) {
+    const f = $(keepId);
+    if (f) { f.focus(); if (caret != null && typeof f.setSelectionRange === "function") try { f.setSelectionRange(caret, caret); } catch (e) {} }
+  }
   if (state.focus) {
     const f = document.querySelector(state.focus);
     if (f) f.focus();
@@ -1531,65 +1614,370 @@ function renderBooks() {
 }
 
 function renderSettings() {
-  const msg = h("span", { class: "status" });
   const fileIn = h("input", { type: "file", accept: "application/json", hidden: true, onchange: async e => {
     const f = e.target.files[0];
     if (!f) return;
     try {
       const parsed = JSON.parse(await f.text());
-      if (!confirm("Yedek yüklenecek ve mevcut verilerin yerine geçecek. Devam edilsin mi?")) return;
+      if (!confirm("Yedek yüklenecek ve bu profildeki verilerin yerine geçecek. Devam edilsin mi?")) return;
       const base = defaults();
       Object.keys(base).forEach(k => { data[k] = parsed[k] != null ? parsed[k] : base[k]; });
       weatherCache = null; save(); go("home");
     } catch (err) { alert("Dosya okunamadı. Nerii'den indirilmiş bir yedek dosyası seç."); }
   } });
+
+  const cityMsg = h("p", { class: "ok" });
+  const passMsg = h("p", { class: "err" });
+  const newMsg = h("p", { class: "err" });
+  const field = (id, label, type, extra) => [h("label", { class: "lbl", for: id, text: label }), h("input", Object.assign({ class: "field", id, type, style: "width:100%" }, extra || {}))];
+
   return h("div", {},
-    pageHead("Ayarlar"),
+    pageHead("Ayarlar", "Giriş yaptığın profil: " + me.name),
     h("div", { class: "grid" },
       card({
-        title: "Profil", span: "span-6",
+        title: "Profil", icon: "heart", span: "span-6",
         body: [h("form", { onsubmit: e => {
           e.preventDefault();
-          data.name = $("setName").value.trim();
           const city = $("setCity").value.trim();
           if (city !== data.city) weatherCache = null;
           data.city = city;
-          save(); updateHeader(); msg.textContent = "Kaydedildi";
+          save(); cityMsg.textContent = "Kaydedildi";
         } },
-          h("label", { class: "lbl", for: "setName", style: "margin-top:0", text: "Adın" }),
-          h("input", { class: "field", id: "setName", type: "text", value: data.name, style: "width:100%" }),
-          h("label", { class: "lbl", for: "setCity", text: "Şehrin (hava durumu için)" }),
-          h("input", { class: "field", id: "setCity", type: "text", value: data.city, placeholder: "Örn. İstanbul", style: "width:100%" }),
-          h("div", { class: "row", style: "margin-top:1.1rem" }, h("button", { class: "btn primary", type: "submit", text: "Kaydet" }), msg)
+          h("p", { class: "empty", text: "Profil adın giriş adın olarak kullanılır: " + me.name }),
+          ...field("setCity", "Şehrin (hava durumu için)", "text", { value: data.city, placeholder: "Örn. İstanbul" }),
+          h("div", { class: "row", style: "margin-top:1.1rem" }, h("button", { class: "btn primary", type: "submit", text: "Kaydet" })),
+          cityMsg
         )]
       }),
       card({
-        title: "Yedekleme", span: "span-6",
+        title: "Şifremi değiştir", icon: "settings", span: "span-6",
+        body: [h("form", { onsubmit: async e => {
+          e.preventDefault();
+          passMsg.className = "err"; passMsg.textContent = "";
+          const cur = $("pwCur").value, nw = $("pwNew").value, nw2 = $("pwNew2").value;
+          if (nw.length < 6) { passMsg.textContent = "Yeni şifre en az 6 karakter olmalı."; return; }
+          if (nw !== nw2) { passMsg.textContent = "Yeni şifreler birbiriyle aynı değil."; return; }
+          try {
+            const user = auth.currentUser;
+            await user.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(user.email, cur));
+            await user.updatePassword(nw);
+            e.target.reset();
+            passMsg.className = "ok"; passMsg.textContent = "Şifren değiştirildi.";
+          } catch (err) { passMsg.textContent = authError(err); }
+        } },
+          ...field("pwCur", "Şu anki şifren", "password", { autocomplete: "current-password" }),
+          ...field("pwNew", "Yeni şifre", "password", { autocomplete: "new-password" }),
+          ...field("pwNew2", "Yeni şifre (tekrar)", "password", { autocomplete: "new-password" }),
+          h("div", { class: "row", style: "margin-top:1.1rem" }, h("button", { class: "btn primary", type: "submit", text: "Şifreyi değiştir" })),
+          passMsg
+        )]
+      }),
+      card({
+        title: "Yeni profil ekle", icon: "plus", span: "span-6", tint: "t-blush",
+        body: [h("form", { onsubmit: async e => {
+          e.preventDefault();
+          newMsg.className = "err"; newMsg.textContent = "";
+          const name = $("npName").value.trim(), pw = $("npPass").value, pw2 = $("npPass2").value;
+          if (!slugOf(name)) { newMsg.textContent = "Bir profil adı yaz."; return; }
+          if (pw.length < 6) { newMsg.textContent = "Şifre en az 6 karakter olmalı."; return; }
+          if (pw !== pw2) { newMsg.textContent = "Şifreler birbiriyle aynı değil."; return; }
+          const btn = e.target.querySelector("button[type=submit]");
+          btn.disabled = true;
+          try {
+            const sec = firebase.apps.find(x => x.name === "ikincil") || firebase.initializeApp(firebaseConfig, "ikincil");
+            const cred = await sec.auth().createUserWithEmailAndPassword(emailOf(name), pw);
+            await sec.firestore().collection("profiles").doc(cred.user.uid).set({ name, slug: slugOf(name), at: Date.now() });
+            await sec.auth().signOut();
+            e.target.reset();
+            newMsg.className = "ok"; newMsg.textContent = name + " profili oluşturuldu. Artık bu ad ve şifreyle giriş yapabilir.";
+          } catch (err) { newMsg.textContent = authError(err); }
+          btn.disabled = false;
+        } },
+          h("p", { class: "empty", text: "Eklediğin profil kendi adı ve şifresiyle giriş yapar, kendi verilerini görür ve seninle mesajlaşabilir." }),
+          ...field("npName", "Profil adı", "text", { autocomplete: "off" }),
+          ...field("npPass", "Şifre", "password", { autocomplete: "new-password" }),
+          ...field("npPass2", "Şifre (tekrar)", "password", { autocomplete: "new-password" }),
+          h("div", { class: "row", style: "margin-top:1.1rem" }, h("button", { class: "btn primary", type: "submit", text: "Profili oluştur" })),
+          newMsg
+        )]
+      }),
+      card({
+        title: "Yedekleme ve çıkış", icon: "book", span: "span-6",
         body: [
-          h("p", { class: "empty", style: "margin-bottom:1rem", text: "Veriler bu tarayıcıda saklanır. Başka bir cihaza taşımak ya da güvende tutmak için yedek al." }),
+          h("p", { class: "empty", style: "margin-bottom:1rem", text: "Verilerin hesabında saklanır, hangi cihazdan girersen gir aynısını görürsün. İstersen ayrıca bir yedek indirebilirsin." }),
           h("div", { class: "row" },
             h("button", { class: "btn", type: "button", text: "Yedeği indir", onclick: () => {
               const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
-              const a = h("a", { href: url, download: "nerii-yedek-" + todayKey + ".json" });
+              const a = h("a", { href: url, download: "nerii-" + slugOf(me.name) + "-" + todayKey + ".json" });
               document.body.append(a); a.click(); a.remove();
               setTimeout(() => URL.revokeObjectURL(url), 1000);
             } }),
             h("button", { class: "btn", type: "button", text: "Yedek yükle", onclick: () => fileIn.click() }),
             fileIn
           ),
-          h("button", { class: "btn danger", type: "button", style: "margin-top:1.25rem;align-self:flex-start", text: "Tüm verileri sil", onclick: () => {
-            if (!confirm("Tüm notların, hedeflerin, planların, favori olumlamaların ve günlüğün silinecek. Emin misin?")) return;
-            const base = defaults();
-            Object.keys(base).forEach(k => { data[k] = base[k]; });
-            weatherCache = null; save(); go("home");
-          } })
+          h("div", { class: "row", style: "margin-top:1.25rem" },
+            h("button", { class: "btn primary", type: "button", text: "Çıkış yap", onclick: logout }),
+            h("button", { class: "btn danger", type: "button", text: "Tüm verilerimi sil", onclick: () => {
+              if (!confirm("Bu profildeki tüm notların, hedeflerin, planların, favori olumlamaların ve günlüğün silinecek. Emin misin?")) return;
+              const base = defaults();
+              Object.keys(base).forEach(k => { data[k] = base[k]; });
+              weatherCache = null; save(); go("home");
+            } })
+          )
         ]
       })
     )
   );
 }
 
-const RENDER = { home: renderHome, notes: renderNotes, goals: renderGoals, habits: renderHabits, calendar: renderCalendar, journal: renderJournal, affirm: renderAffirm, shopping: renderShopping, books: renderBooks, settings: renderSettings };
+const allMessages = () => {
+  const m = new Map();
+  msgsIn.concat(msgsOut).forEach(x => m.set(x.id, x));
+  return [...m.values()].sort((a, b) => a.at - b.at);
+};
+const unreadCount = () => msgsIn.filter(x => !x.read).length;
+const initial = n => (n || "?").trim().charAt(0).toLocaleUpperCase("tr");
+const markedRead = new Set();
+
+function renderMessages() {
+  const all = allMessages();
+  const withUser = uid => all.filter(m => (m.from === uid && m.to === me.uid) || (m.from === me.uid && m.to === uid));
+  const unreadFrom = uid => msgsIn.filter(m => m.from === uid && !m.read).length;
+  const people = profiles.slice().sort((a, b) => {
+    const la = withUser(a.uid).slice(-1)[0], lb = withUser(b.uid).slice(-1)[0];
+    return (lb ? lb.at : 0) - (la ? la.at : 0) || a.name.localeCompare(b.name, "tr");
+  });
+  if (!people.length) {
+    return h("div", {}, pageHead("Mesajlar", "Profiller arasında mesajlaş."),
+      h("section", { class: "card t-blush", style: "max-width:36rem" },
+        h("p", { class: "empty", text: "Henüz başka profil yok. Ayarlar'dan yeni bir profil ekleyince burada onunla mesajlaşabilirsin." }),
+        h("button", { class: "more", type: "button", text: "Profil ekle", onclick: () => go("settings", { focus: "#npName" }) })));
+  }
+  if (!people.some(p => p.uid === state.chatWith)) {
+    const firstUnread = people.find(p => unreadFrom(p.uid));
+    state.chatWith = (firstUnread || people[0]).uid;
+  }
+  const other = people.find(p => p.uid === state.chatWith);
+  const thread = withUser(other.uid);
+
+  const toMark = thread.filter(m => m.to === me.uid && !m.read && !markedRead.has(m.id));
+  if (toMark.length) {
+    const batch = db.batch();
+    toMark.forEach(m => { markedRead.add(m.id); batch.update(db.collection("messages").doc(m.id), { read: true }); });
+    batch.commit().catch(() => toMark.forEach(m => markedRead.delete(m.id)));
+  }
+
+  const list = h("section", { class: "card t-peach" },
+    h("div", { class: "card-head" }, h("h2", { text: "Kişiler" })),
+    h("div", { class: "people" }, people.map(p => {
+      const last = withUser(p.uid).slice(-1)[0];
+      const un = unreadFrom(p.uid);
+      return h("button", { type: "button", "aria-current": p.uid === other.uid ? "true" : "false", onclick: () => { state.chatWith = p.uid; state.focus = "#msgInput"; render(); } },
+        h("span", { class: "pav", text: initial(p.name) }),
+        h("span", { class: "meta" }, h("strong", { text: p.name }), h("span", { text: last ? (last.from === me.uid ? "Sen: " : "") + last.text : "Henüz mesaj yok" })),
+        un ? h("span", { class: "unread", text: String(un) }) : null
+      );
+    }))
+  );
+
+  const box = h("div", { class: "thread" });
+  let lastDay = "";
+  if (!thread.length) box.append(h("p", { class: "empty", style: "align-self:center;margin:auto", text: other.name + " ile henüz mesajın yok. İlk mesajı sen yaz ♡" }));
+  thread.forEach(m => {
+    const d = new Date(m.at);
+    const dk = keyOf(d);
+    if (dk !== lastDay) { lastDay = dk; box.append(h("div", { class: "day-sep", text: dk === todayKey ? "Bugün" : fmtDate.format(d) })); }
+    box.append(h("div", { class: "bubble" + (m.from === me.uid ? " mine" : "") }, m.text,
+      h("small", { text: fmtTime.format(d) + (m.from === me.uid && m.read ? ", okundu" : "") })));
+  });
+  setTimeout(() => { box.scrollTop = box.scrollHeight; });
+
+  const send = async () => {
+    const input = $("msgInput");
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = ""; state.msgDraft = "";
+    try {
+      await db.collection("messages").add({ from: me.uid, fromName: me.name, to: other.uid, toName: other.name, text, at: Date.now(), read: false });
+    } catch (e) {
+      input.value = text; state.msgDraft = text;
+      showToast("Mesaj gönderilemedi", "İnternet bağlantını kontrol edip tekrar dene.");
+    }
+  };
+
+  const chatCard = h("section", { class: "card" },
+    h("div", { class: "thread-head" }, h("span", { class: "pav", text: initial(other.name) }), h("strong", { text: other.name })),
+    box,
+    h("form", { class: "composer", onsubmit: e => { e.preventDefault(); send(); } },
+      h("textarea", { id: "msgInput", class: "field", rows: "1", placeholder: other.name + " için bir mesaj yaz…", "aria-label": "Mesaj",
+        oninput: e => { state.msgDraft = e.target.value; },
+        onkeydown: e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } } }, state.msgDraft || ""),
+      h("button", { class: "btn primary", type: "submit", "aria-label": "Gönder", html: ico("send", 18) })
+    )
+  );
+
+  return h("div", {}, pageHead("Mesajlar", "Profiller arasında mesajlaş, yeni mesajlar anında gelir."), h("div", { class: "chat" }, list, chatCard));
+}
+
+let toastTimer = null;
+function showToast(title, body, action, actionLabel) {
+  const t = $("toast");
+  t.replaceChildren(
+    h("span", { class: "ti", html: ico(action ? "chat" : "bell", 20) }),
+    h("div", { style: "flex:1;min-width:0" },
+      h("strong", { text: title }),
+      body ? h("p", { text: body }) : null,
+      action ? h("button", { class: "btn primary", type: "button", style: "padding:.45rem .9rem;font-size:.85rem", text: actionLabel || "Aç", onclick: () => { t.hidden = true; action(); } }) : null
+    ),
+    h("button", { class: "icon-btn x", type: "button", "aria-label": "Kapat", html: ico("x", 18), onclick: () => { t.hidden = true; } })
+  );
+  t.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.hidden = true; }, 9000);
+}
+
+const TR_MAP = { "ı": "i", "ğ": "g", "ü": "u", "ş": "s", "ö": "o", "ç": "c" };
+const slugOf = n => (n || "").toLocaleLowerCase("tr").replace(/[ığüşöç]/g, c => TR_MAP[c]).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+const emailOf = n => n.includes("@") ? n.trim().toLowerCase() : slugOf(n) + "@nerii.app";
+function authError(err) {
+  const c = (err && err.code) || "";
+  if (["auth/invalid-credential", "auth/wrong-password", "auth/user-not-found", "auth/invalid-login-credentials", "auth/invalid-email"].includes(c)) return "Profil adı ya da şifre hatalı.";
+  if (c === "auth/email-already-in-use") return "Bu isimde bir profil zaten var.";
+  if (c === "auth/weak-password") return "Şifre en az 6 karakter olmalı.";
+  if (c === "auth/too-many-requests") return "Çok fazla deneme yapıldı, biraz bekleyip tekrar dene.";
+  if (c === "auth/network-request-failed") return "İnternet bağlantını kontrol et.";
+  if (c === "auth/operation-not-allowed" || c === "auth/admin-restricted-operation") return "Yeni profil oluşturma şu an kapalı.";
+  if (c === "auth/requires-recent-login") return "Güvenlik için çıkış yapıp tekrar giriş yapman gerekiyor.";
+  return "Bir sorun oluştu, tekrar dene.";
+}
+
+const FB_READY = !Object.values(firebaseConfig).some(v => !v || v === "BURAYA");
+let loginMode = "login";
+let pendingName = "";
+
+function showLogin(message) {
+  $("appRoot").hidden = true;
+  $("band").hidden = true;
+  const box = $("login");
+  box.hidden = false;
+  const err = h("p", { class: "err", role: "alert", text: message || "" });
+  const signup = loginMode === "signup";
+  const form = h("form", { onsubmit: async e => {
+    e.preventDefault();
+    err.textContent = "";
+    if (!FB_READY) { err.textContent = "Kurulum henüz tamamlanmadı."; return; }
+    const name = $("lgName").value.trim(), pw = $("lgPass").value;
+    if (!slugOf(name)) { err.textContent = "Profil adını yaz."; return; }
+    if (signup) {
+      if (pw.length < 6) { err.textContent = "Şifre en az 6 karakter olmalı."; return; }
+      if (pw !== $("lgPass2").value) { err.textContent = "Şifreler birbiriyle aynı değil."; return; }
+    }
+    const btn = e.target.querySelector("button[type=submit]");
+    btn.disabled = true; btn.textContent = signup ? "Oluşturuluyor…" : "Giriş yapılıyor…";
+    try {
+      if (signup) { pendingName = name; await auth.createUserWithEmailAndPassword(emailOf(name), pw); }
+      else await auth.signInWithEmailAndPassword(emailOf(name), pw);
+    } catch (ex) {
+      err.textContent = authError(ex);
+      btn.disabled = false; btn.textContent = signup ? "Profili oluştur" : "Giriş yap";
+    }
+  } },
+    h("label", { class: "lbl", for: "lgName", text: "Profil adı ya da e-posta" }),
+    h("input", { class: "field", id: "lgName", type: "text", autocomplete: "username", autocapitalize: "words" }),
+    h("label", { class: "lbl", for: "lgPass", text: "Şifre" }),
+    h("input", { class: "field", id: "lgPass", type: "password", autocomplete: signup ? "new-password" : "current-password" }),
+    signup ? h("label", { class: "lbl", for: "lgPass2", text: "Şifre (tekrar)" }) : null,
+    signup ? h("input", { class: "field", id: "lgPass2", type: "password", autocomplete: "new-password" }) : null,
+    h("button", { class: "btn primary", type: "submit", text: signup ? "Profili oluştur" : "Giriş yap" }),
+    err
+  );
+  box.replaceChildren(
+    h("span", { html: HERO_SVG, style: "position:absolute;inset:0;display:block" }),
+    h("div", { class: "login-card" },
+      h("h1", { text: "Nerii ♡" }),
+      h("p", { class: "sub", text: signup ? "Yeni bir profil oluştur" : "Profilinle giriş yap" }),
+      FB_READY ? form : h("p", { class: "setup", text: "Giriş sistemi için Firebase ayarlarının index.html içindeki firebaseConfig alanına eklenmesi gerekiyor." }),
+      FB_READY ? h("button", { class: "switch", type: "button", text: signup ? "Zaten profilim var, giriş yap" : "Yeni profil oluştur",
+        onclick: () => { loginMode = signup ? "login" : "signup"; showLogin(); } }) : null
+    )
+  );
+  box.querySelector("span > svg").style.cssText = "width:100%;height:100%";
+  const first = $("lgName");
+  if (first) first.focus();
+}
+
+async function startApp(user) {
+  const pRef = db.collection("profiles").doc(user.uid);
+  let pDoc = await pRef.get();
+  if (!pDoc.exists) {
+    const fallback = user.email.split("@")[0];
+    const asked = pendingName || user.email.endsWith("@nerii.app") ? "" : (prompt("Profilinde görünecek adın ne olsun?", fallback) || "").trim();
+    const name = pendingName || asked || fallback;
+    await pRef.set({ name, slug: slugOf(name), at: Date.now() });
+    pDoc = await pRef.get();
+  }
+  pendingName = "";
+  me = { uid: user.uid, name: pDoc.data().name };
+
+  const uDoc = await db.collection("userdata").doc(user.uid).get();
+  if (uDoc.exists && uDoc.data().json) {
+    data = Object.assign(defaults(), JSON.parse(uDoc.data().json));
+  } else {
+    const local = loadLocal();
+    data = local && confirm("Bu tarayıcıda daha önce girdiğin veriler var. " + me.name + " profiline aktarılsın mı?") ? local : defaults();
+    pushData();
+  }
+
+  $("login").hidden = true;
+  $("login").replaceChildren();
+  $("appRoot").hidden = false;
+  $("band").hidden = false;
+  $("logoName").textContent = me.name + " ♡";
+  $("logoShort").textContent = initial(me.name) + "♡";
+  document.title = "Nerii, " + me.name;
+
+  let firstIn = true;
+  unsubs.push(db.collection("profiles").onSnapshot(snap => {
+    profiles = snap.docs.map(d => Object.assign({ uid: d.id }, d.data())).filter(p => p.uid !== me.uid);
+    if (state.view === "messages") render();
+  }));
+  unsubs.push(db.collection("messages").where("to", "==", me.uid).onSnapshot(snap => {
+    msgsIn = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+    if (firstIn) {
+      firstIn = false;
+      const un = msgsIn.filter(m => !m.read).sort((a, b) => b.at - a.at);
+      if (un.length) {
+        const names = [...new Set(un.map(m => m.fromName))];
+        showToast(un.length === 1 ? un[0].fromName + " sana bir mesaj bıraktı" : "Sana " + un.length + " yeni mesaj var",
+          un.length === 1 ? un[0].text : names.join(", ") + " sana yazdı.",
+          () => go("messages", { chatWith: un[0].from }), "Mesajlara git");
+      }
+    } else {
+      snap.docChanges().forEach(ch => {
+        const m = Object.assign({ id: ch.doc.id }, ch.doc.data());
+        if (ch.type === "added" && !m.read && !(state.view === "messages" && state.chatWith === m.from && document.visibilityState === "visible")) {
+          showToast(m.fromName + " sana yazdı", m.text, () => go("messages", { chatWith: m.from }), "Cevap ver");
+        }
+      });
+    }
+    if (state.view === "messages") render(); else updateHeader();
+  }, () => {}));
+  unsubs.push(db.collection("messages").where("from", "==", me.uid).onSnapshot(snap => {
+    msgsOut = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+    if (state.view === "messages") render();
+  }, () => {}));
+
+  go(location.hash.slice(1) || "home");
+}
+
+function logout() {
+  if (saveTimer) pushData();
+  unsubs.forEach(u => u());
+  unsubs = [];
+  setTimeout(() => auth.signOut().then(() => { location.hash = ""; location.reload(); }), 300);
+}
+
+const RENDER = { home: renderHome, notes: renderNotes, goals: renderGoals, habits: renderHabits, calendar: renderCalendar, journal: renderJournal, affirm: renderAffirm, messages: renderMessages, shopping: renderShopping, books: renderBooks, settings: renderSettings };
 
 function greeting() {
   const hr = new Date().getHours();
@@ -1600,22 +1988,29 @@ function greeting() {
 }
 
 function updateHeader() {
-  $("greetTitle").textContent = greeting() + (data.name ? " " + data.name : "") + " ♡";
+  if (!me) return;
+  const unread = unreadCount();
+  $("greetTitle").textContent = greeting() + " " + me.name + " ♡";
   const p = data.plan[todayKey] || [];
   const done = p.filter(i => i.done).length;
   const left = p.length - done;
-  $("greetSub").textContent = !p.length ? "Bugün harika şeyler başarabilirsin."
+  $("greetSub").textContent = unread ? "Sana " + unread + " yeni mesaj var ♡"
+    : !p.length ? "Bugün harika şeyler başarabilirsin."
     : !left ? "Bugünkü planının hepsini tamamladın, tebrikler."
     : "Bugün planında " + p.length + " iş var, " + done + " tanesi tamam.";
   const now = new Date();
   $("clockDate").textContent = fmtDate.format(now);
   $("clockTime").textContent = fmtTime.format(now);
-  $("bellBtn").innerHTML = ico("bell", 22) + (left ? '<span class="badge">' + left + "</span>" : "");
-  $("bellBtn").setAttribute("aria-label", left ? "Bugün " + left + " iş kaldı" : "Bugünün planı");
-  $("avatarBtn").textContent = data.name ? data.name.charAt(0).toLocaleUpperCase("tr") : "♡";
+  const total = unread + left;
+  $("bellBtn").innerHTML = ico("bell", 22) + (total ? '<span class="badge">' + total + "</span>" : "");
+  $("bellBtn").setAttribute("aria-label", unread ? unread + " okunmamış mesaj" : left ? "Bugün " + left + " iş kaldı" : "Bildirimler");
+  $("avatarBtn").textContent = initial(me.name);
+  const mBtn = document.querySelector('#nav button[data-view="messages"] .lbl');
+  if (mBtn) mBtn.textContent = unread ? "Mesajlar (" + unread + ")" : "Mesajlar";
 }
 
 function tick() {
+  if (!me) return;
   const now = new Date(); now.setHours(0, 0, 0, 0);
   if (now.getTime() !== today.getTime()) {
     today = now; todayKey = keyOf(today); state.calMonth = firstOfMonth(today);
@@ -1659,16 +2054,33 @@ searchIn.addEventListener("keydown", e => { if (e.key === "Escape") { searchIn.v
 
 $("gsun").innerHTML = ico("sun", 44);
 $("searchIco").innerHTML = ico("search", 18);
-$("bellBtn").addEventListener("click", () => go("calendar", { sel: todayKey, calMonth: firstOfMonth(today) }));
+$("bellBtn").addEventListener("click", () => {
+  const un = msgsIn.filter(m => !m.read).sort((a, b) => b.at - a.at);
+  if (un.length) go("messages", { chatWith: un[0].from });
+  else go("calendar", { sel: todayKey, calMonth: firstOfMonth(today) });
+});
 $("avatarBtn").addEventListener("click", () => go("settings"));
 
 $("nav").append(...VIEWS.map(([v, label, icon]) =>
   h("button", { type: "button", "data-view": v, title: label, onclick: () => go(v) }, h("span", { html: ico(icon, 21), style: "display:grid" }), h("span", { class: "lbl", text: label }))
 ));
 
-window.addEventListener("hashchange", () => { const v = location.hash.slice(1); if (v !== state.view) go(v); });
+$("nav").append(h("button", { type: "button", class: "logout", title: "Çıkış yap", onclick: logout }, h("span", { html: ico("logout", 21), style: "display:grid" }), h("span", { class: "lbl", text: "Çıkış yap" })));
+
+window.addEventListener("hashchange", () => { if (!me) return; const v = location.hash.slice(1); if (v !== state.view) go(v); });
 setInterval(tick, 20000);
-go(location.hash.slice(1) || "home");
+
+if (!FB_READY || typeof firebase === "undefined") {
+  showLogin();
+} else {
+  firebase.initializeApp(firebaseConfig);
+  auth = firebase.auth();
+  db = firebase.firestore();
+  auth.onAuthStateChanged(user => {
+    if (user) startApp(user).catch(() => { showLogin("Veriler yüklenemedi. İnternet bağlantını kontrol edip sayfayı yenile."); });
+    else { me = null; showLogin(); }
+  });
+}
 </script>
 </body>
 </html>
