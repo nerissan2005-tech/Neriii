@@ -1870,6 +1870,7 @@ function showLogin(message) {
     const btn = e.target.querySelector("button[type=submit]");
     btn.disabled = true; btn.textContent = "Giriş yapılıyor…";
     try {
+      if (!name.includes("@")) pendingName = name;
       await auth.signInWithEmailAndPassword(emailOf(name), pw);
     } catch (ex) {
       err.textContent = authError(ex);
@@ -1901,9 +1902,7 @@ async function startApp(user) {
   let pDoc = await pRef.get();
   if (!pDoc.exists) {
     const prefix = user.email.split("@")[0];
-    const fallback = prefix.charAt(0).toLocaleUpperCase("tr") + prefix.slice(1);
-    const asked = pendingName || user.email.endsWith("@nerii.app") ? "" : (prompt("Profilinde görünecek adın ne olsun?", fallback) || "").trim();
-    const name = pendingName || asked || fallback;
+    const name = pendingName || prefix.charAt(0).toLocaleUpperCase("tr") + prefix.slice(1);
     await pRef.set({ name, slug: slugOf(name), at: Date.now() });
     pDoc = await pRef.get();
   }
