@@ -257,6 +257,7 @@ async function delItem(it, q) {
   itemsCol().doc(it.id).delete().catch(writeFail);
 }
 function toggleHabit(hb, k, on) {
+  if (on && k === todayKey) petAward("aliskanlik", 5);
   const F = firebase.firestore;
   itemsCol().doc(hb.id).update(new F.FieldPath("done", me.uid, k), on ? true : F.FieldValue.delete(), "upd", Date.now()).catch(writeFail);
 }
@@ -435,7 +436,7 @@ function checklist(items, o) {
   return h("ul", { class: "checks" }, items.map(it =>
     h("li", { class: it.done ? "done" : "" },
       h("label", {},
-        h("input", { type: "checkbox", checked: !!it.done, onchange: e => updItem(it, { done: e.target.checked }) }),
+        h("input", { type: "checkbox", checked: !!it.done, onchange: e => { updItem(it, { done: e.target.checked }); if (e.target.checked && it.kind === "plan") petAward("gorev", 5); } }),
         h("span", { text: it.text })
       ),
       whoTag(it), visBtn(it), delBtn(it, it.text)

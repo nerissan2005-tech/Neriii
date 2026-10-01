@@ -132,7 +132,8 @@ async function startApp(user) {
   const p = pDoc.data();
   if (p.disabled && !isRoot) { loginNotice = "Bu profil devre dışı bırakılmış. Yöneticiyle görüş."; await auth.signOut(); return; }
   pendingName = "";
-  me = { uid: user.uid, name: p.name, photo: p.photo || "", email: user.email, isRoot, isAdmin: isRoot || p.role === "admin" };
+  petState = p.pet ? Object.assign({}, p.pet) : null;
+  me = { uid: user.uid, name: p.name, photo: p.photo || "", frame: p.frame || "", email: user.email, isRoot, isAdmin: isRoot || p.role === "admin" };
   const fix = {};
   if (isRoot && p.root !== true) Object.assign(fix, { root: true, role: "admin" });
   if (!p.email) fix.email = user.email;
@@ -198,6 +199,7 @@ async function startApp(user) {
       if (mine.disabled && !isRoot) { loginNotice = "Bu profil devre dışı bırakıldı."; logout(); return; }
       me.name = mine.name;
       me.photo = mine.photo || "";
+      me.frame = mine.frame || "";
       me.isAdmin = isRoot || mine.role === "admin";
       if (!me.isAdmin && state.view === "admin") { go("home"); return; }
       paintMe();
@@ -288,7 +290,7 @@ function logout() {
   setTimeout(() => auth.signOut().then(() => { history.replaceState(null, "", location.pathname); location.reload(); }), 300);
 }
 
-const RENDER = { home: renderHome, notes: renderNotes, goals: renderGoals, habits: renderHabits, calendar: renderCalendar, journal: renderJournal, affirm: renderAffirm, messages: renderMessages, shopping: renderShopping, prayers: renderPrayers, memories: renderMemories, magic: renderMagic, settings: renderSettings, admin: renderAdmin };
+const RENDER = { home: renderHome, notes: renderNotes, goals: renderGoals, habits: renderHabits, calendar: renderCalendar, journal: renderJournal, affirm: renderAffirm, messages: renderMessages, shopping: renderShopping, prayers: renderPrayers, pet: renderPet, memories: renderMemories, magic: renderMagic, settings: renderSettings, admin: renderAdmin };
 
 
 function greeting() {
@@ -321,6 +323,7 @@ function updateHeader() {
   ab.textContent = me.photo ? "" : initial(me.name);
   ab.style.backgroundImage = me.photo ? "url(\"" + me.photo + "\")" : "";
   ab.classList.toggle("has-photo", !!me.photo);
+  ab.className = "avatar" + (me.photo ? " has-photo" : "") + frameCls(me.frame);
   document.title = unread ? "(" + unread + ") Neriii" : "Neriii";
   const tb = document.querySelector('#tabbar button[data-view="messages"] .ti-ic');
   if (tb) { const old = tb.querySelector(".badge"); if (old) old.remove(); if (unread) tb.append(h("span", { class: "badge", text: String(unread) })); }

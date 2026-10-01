@@ -194,6 +194,7 @@ function renderSettings() {
   return h("div", {},
     pageHead("Ayarlar", "Giriş yaptığın profil: " + me.name + (me.isAdmin ? " (yönetici)" : "")),
     h("div", { class: "grid" },
+      framePickerCard(),
       card({
         title: "Kullanıcı adım", icon: "users", span: "span-6",
         body: [h("form", { onsubmit: async e => {

@@ -9,7 +9,7 @@ const markedRead = new Set();
 const profileOf = uid => allProfiles.find(p => p.uid === uid);
 function avatar(p, cls) {
   const photo = p && p.photo;
-  return h("span", { class: "pav" + (cls ? " " + cls : "") + (photo ? " has-photo" : ""), style: photo ? "background-image:url(\"" + photo + "\")" : null, text: photo ? "" : initial(p && p.name), "aria-hidden": "true" });
+  return h("span", { class: "pav" + (cls ? " " + cls : "") + (photo ? " has-photo" : "") + frameCls(p && p.frame), style: photo ? "background-image:url(\"" + photo + "\")" : null, text: photo ? "" : initial(p && p.name), "aria-hidden": "true" });
 }
 
 const EMOJIS = {
@@ -294,6 +294,7 @@ function renderMessages() {
 
     const sendMsg = async (fields) => {
       try {
+        petAward("mesaj", 2);
         const ref = await db.collection("messages").add(Object.assign({ from: me.uid, fromName: me.name, to: other.uid, toName: other.name, text: "", at: Date.now(), read: false, hidden: [] }, fields));
         pushApi("/notify-message", { id: ref.id }).catch(() => {});
       } catch (e) { showToast("Mesaj gönderilemedi", "İnternet bağlantını kontrol edip tekrar dene."); return false; }

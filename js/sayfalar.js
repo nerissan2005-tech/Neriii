@@ -90,7 +90,7 @@ function renderHome() {
       : h("p", { class: "empty", text: "Her gün yeni bir olumlama açılır. Önceki günlerin olumlamaları burada birikecek." })]
   }));
 
-  grid.append(h("section", { class: "art span-3", html: ART_SVG }, h("p", { text: softNote() })));
+  grid.append(petCard());
 
   const goals = listOf("goal").slice(0, 4);
   grid.append(card({
@@ -183,6 +183,7 @@ function renderNotes() {
 }
 
 function renderAffirm() {
+  petAward("olumlama", 10);
   const d = affDay();
   const t = todayAff();
   const fav = isFav(t.text);
@@ -360,7 +361,7 @@ function prayedToday() {
 function togglePrayed(id) {
   const list = prayedToday().slice();
   const i = list.indexOf(id);
-  if (i > -1) list.splice(i, 1); else list.push(id);
+  if (i > -1) list.splice(i, 1); else { list.push(id); petAward("dua", 10); }
   data.prayed = { [todayKey]: list };
   save();
   render();
@@ -559,7 +560,7 @@ function renderJournal() {
       )),
       h("h3", { style: "margin:1.5rem 0 .6rem;font-size:1rem", text: "Bugün aklımda" }),
       h("textarea", { class: "live", id: "jText", rows: "9", placeholder: "Yazmaya başla…", "aria-label": "Günlük yazısı",
-        oninput: e => { updItem(ensureJournal(k), { text: e.target.value }, true); saving(); } }, j ? j.text || "" : ""),
+        oninput: e => { updItem(ensureJournal(k), { text: e.target.value }, true); saving(); if (k === todayKey && e.target.value.trim().length > 20) petAward("gunluk", 20); } }, j ? j.text || "" : ""),
       j && canDel(j) && filled(j) ? h("div", { class: "row", style: "justify-content:flex-end;margin-top:1rem" },
         h("button", { class: "btn danger", type: "button", text: "Bu günü sil", onclick: () => delItem(j, "Bu günün günlüğü silinsin mi?") })) : null
     );

@@ -91,6 +91,7 @@ function renderMemories() {
     e.preventDefault();
     const title = $("memTitle").value.trim(), text = $("memText").value.trim();
     if (!title && !text && !state.memPhotos.length) { msg.textContent = "Bir başlık, birkaç cümle ya da fotoğraf ekle."; return; }
+    petAward("ani", 15);
     addItem("memory", { title: title || "Güzel bir an", text, date: $("memDate").value || todayKey, place: $("memPlace").value.trim(), photos: state.memPhotos.slice() }, getVis("memory"));
     state.memPhotos = [];
     $("memTitle").value = ""; $("memText").value = ""; $("memPlace").value = "";
@@ -173,7 +174,7 @@ function renderMagic() {
         return h("i", { style: "--x:" + Math.cos(a) * r + "px;--y:" + Math.sin(a) * r + "px;--d:" + (Math.random() * .25) + "s;--s:" + (.6 + Math.random() * .9), text: ["✨", "♡", "★", "✦"][i % 4] });
       }));
       if (navigator.vibrate) try { navigator.vibrate(30); } catch (e) {}
-      setTimeout(() => { state.magicWord = pick; data.magicCount = (data.magicCount || 0) + 1; save(); render(); }, 650);
+      setTimeout(() => { state.magicWord = pick; data.magicCount = (data.magicCount || 0) + 1; save(); petAward("sihir", 10); render(); }, 650);
     }, 650);
   } },
     h("span", { class: "magic-glow" }),
