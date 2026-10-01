@@ -1852,7 +1852,6 @@ function authError(err) {
 }
 
 const FB_READY = !Object.values(firebaseConfig).some(v => !v || v === "BURAYA");
-let loginMode = "login";
 let pendingName = "";
 
 function showLogin(message) {
@@ -1861,44 +1860,35 @@ function showLogin(message) {
   const box = $("login");
   box.hidden = false;
   const err = h("p", { class: "err", role: "alert", text: message || "" });
-  const signup = loginMode === "signup";
   const form = h("form", { onsubmit: async e => {
     e.preventDefault();
     err.textContent = "";
     if (!FB_READY) { err.textContent = "Kurulum henüz tamamlanmadı."; return; }
     const name = $("lgName").value.trim(), pw = $("lgPass").value;
-    if (!slugOf(name)) { err.textContent = "Profil adını yaz."; return; }
-    if (signup) {
-      if (pw.length < 6) { err.textContent = "Şifre en az 6 karakter olmalı."; return; }
-      if (pw !== $("lgPass2").value) { err.textContent = "Şifreler birbiriyle aynı değil."; return; }
-    }
+    if (!slugOf(name)) { err.textContent = "Profil adını ya da kullanıcı adını yaz."; return; }
+    if (!pw) { err.textContent = "Şifreni yaz."; return; }
     const btn = e.target.querySelector("button[type=submit]");
-    btn.disabled = true; btn.textContent = signup ? "Oluşturuluyor…" : "Giriş yapılıyor…";
+    btn.disabled = true; btn.textContent = "Giriş yapılıyor…";
     try {
-      if (signup) { pendingName = name; await auth.createUserWithEmailAndPassword(emailOf(name), pw); }
-      else await auth.signInWithEmailAndPassword(emailOf(name), pw);
+      await auth.signInWithEmailAndPassword(emailOf(name), pw);
     } catch (ex) {
       err.textContent = authError(ex);
-      btn.disabled = false; btn.textContent = signup ? "Profili oluştur" : "Giriş yap";
+      btn.disabled = false; btn.textContent = "Giriş yap";
     }
   } },
-    h("label", { class: "lbl", for: "lgName", text: "Profil adı ya da e-posta" }),
+    h("label", { class: "lbl", for: "lgName", text: "Profil adı ya da kullanıcı adı" }),
     h("input", { class: "field", id: "lgName", type: "text", autocomplete: "username", autocapitalize: "words" }),
     h("label", { class: "lbl", for: "lgPass", text: "Şifre" }),
-    h("input", { class: "field", id: "lgPass", type: "password", autocomplete: signup ? "new-password" : "current-password" }),
-    signup ? h("label", { class: "lbl", for: "lgPass2", text: "Şifre (tekrar)" }) : null,
-    signup ? h("input", { class: "field", id: "lgPass2", type: "password", autocomplete: "new-password" }) : null,
-    h("button", { class: "btn primary", type: "submit", text: signup ? "Profili oluştur" : "Giriş yap" }),
+    h("input", { class: "field", id: "lgPass", type: "password", autocomplete: "current-password" }),
+    h("button", { class: "btn primary", type: "submit", text: "Giriş yap" }),
     err
   );
   box.replaceChildren(
     h("span", { html: HERO_SVG, style: "position:absolute;inset:0;display:block" }),
     h("div", { class: "login-card" },
       h("h1", { text: "Nerii ♡" }),
-      h("p", { class: "sub", text: signup ? "Yeni bir profil oluştur" : "Profilinle giriş yap" }),
-      FB_READY ? form : h("p", { class: "setup", text: "Giriş sistemi için Firebase ayarlarının index.html içindeki firebaseConfig alanına eklenmesi gerekiyor." }),
-      FB_READY ? h("button", { class: "switch", type: "button", text: signup ? "Zaten profilim var, giriş yap" : "Yeni profil oluştur",
-        onclick: () => { loginMode = signup ? "login" : "signup"; showLogin(); } }) : null
+      h("p", { class: "sub", text: "Profilinle giriş yap" }),
+      FB_READY ? form : h("p", { class: "setup", text: "Giriş sistemi için Firebase ayarlarının index.html içindeki firebaseConfig alanına eklenmesi gerekiyor." })
     )
   );
   box.querySelector("span > svg").style.cssText = "width:100%;height:100%";
@@ -1910,7 +1900,8 @@ async function startApp(user) {
   const pRef = db.collection("profiles").doc(user.uid);
   let pDoc = await pRef.get();
   if (!pDoc.exists) {
-    const fallback = user.email.split("@")[0];
+    const prefix = user.email.split("@")[0];
+    const fallback = prefix.charAt(0).toLocaleUpperCase("tr") + prefix.slice(1);
     const asked = pendingName || user.email.endsWith("@nerii.app") ? "" : (prompt("Profilinde görünecek adın ne olsun?", fallback) || "").trim();
     const name = pendingName || asked || fallback;
     await pRef.set({ name, slug: slugOf(name), at: Date.now() });
