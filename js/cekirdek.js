@@ -246,12 +246,18 @@ function toggleHabit(hb, k, on) {
   itemsCol().doc(hb.id).update(new F.FieldPath("done", me.uid, k), on ? true : F.FieldValue.delete(), "upd", Date.now()).catch(writeFail);
 }
 
+let renderQueued = false;
 function scheduleRender() {
-  if (!me) return;
-  const a = document.activeElement;
-  if (a && a.classList && a.classList.contains("live") && $("view").contains(a)) { pendingRender = true; updateHeader(); return; }
-  pendingRender = false;
-  render();
+  if (!me || renderQueued) return;
+  renderQueued = true;
+  requestAnimationFrame(() => {
+    renderQueued = false;
+    if (!me) return;
+    const a = document.activeElement;
+    if (a && a.classList && a.classList.contains("live") && $("view").contains(a)) { pendingRender = true; updateHeader(); return; }
+    pendingRender = false;
+    render();
+  });
 }
 document.addEventListener("focusout", e => {
   if (!e.target.classList || !e.target.classList.contains("live")) return;

@@ -17,6 +17,7 @@ const FB_READY = !Object.values(firebaseConfig).some(v => !v || v === "BURAYA");
 let pendingName = "";
 
 function showLogin(message) {
+  hideSplash();
   $("appRoot").hidden = true;
   $("band").hidden = true;
   const box = $("login");
@@ -121,6 +122,7 @@ async function renameProfile(p, newName) {
 async function startApp(user) {
   const isRoot = (user.email || "").toLowerCase() === ADMIN_EMAIL;
   const pRef = db.collection("profiles").doc(user.uid);
+  const uDocP = db.collection("userdata").doc(user.uid).get().catch(() => null);
   let pDoc = await pRef.get();
   if (!pDoc.exists) {
     if (!isRoot) { loginNotice = "Bu profil yönetici tarafından eklenmemiş."; await auth.signOut(); return; }
@@ -134,15 +136,15 @@ async function startApp(user) {
   const fix = {};
   if (isRoot && p.root !== true) Object.assign(fix, { root: true, role: "admin" });
   if (!p.email) fix.email = user.email;
-  if (Object.keys(fix).length) { try { await pRef.update(fix); } catch (e) {} }
+  if (Object.keys(fix).length) pRef.update(fix).catch(() => {});
   if (p.slug) {
-    try {
-      const lg = await db.collection("logins").doc(p.slug).get();
-      if (!lg.exists) await db.collection("logins").doc(p.slug).set({ uid: user.uid, email: user.email, at: Date.now() });
-    } catch (e) {}
+    db.collection("logins").doc(p.slug).get().then(lg => {
+      if (!lg.exists) return db.collection("logins").doc(p.slug).set({ uid: user.uid, email: user.email, at: Date.now() });
+    }).catch(() => {});
   }
 
-  const uDoc = await db.collection("userdata").doc(user.uid).get();
+  let uDoc = await uDocP;
+  if (!uDoc) uDoc = await db.collection("userdata").doc(user.uid).get();
   const blob = uDoc.exists && uDoc.data().json ? JSON.parse(uDoc.data().json) : null;
   data = Object.assign(defaults(), blob || {});
   if (blob && !blob.v3) { await migrateBlob(blob); pushData(); }
@@ -161,6 +163,7 @@ async function startApp(user) {
 
   $("login").hidden = true;
   $("login").replaceChildren();
+  hideSplash();
   $("appRoot").hidden = false;
   $("band").hidden = false;
   $("tabbar").hidden = false;
@@ -179,8 +182,14 @@ async function startApp(user) {
   document.addEventListener("visibilitychange", beat);
 
   let firstIn = true;
+  let profSig = "", typingSig = "", chatOnline = null;
   unsubs.push(db.collection("profiles").onSnapshot(snap => {
     allProfiles = snap.docs.map(d => Object.assign({ uid: d.id }, d.data()));
+    const sig = JSON.stringify(allProfiles.map(x => [x.uid, x.name, x.photo ? x.photo.length : 0, x.role, x.disabled, x.slug]));
+    const tSig = JSON.stringify(allProfiles.filter(x => x.typingTo === me.uid).map(x => [x.uid, x.typingAt]));
+    const cOn = state.chatWith ? isOnline(allProfiles.find(x => x.uid === state.chatWith)) : null;
+    const structural = sig !== profSig, typingChanged = tSig !== typingSig, presenceFlip = cOn !== chatOnline;
+    profSig = sig; typingSig = tSig; chatOnline = cOn;
     profiles = allProfiles.filter(x => x.uid !== me.uid && !x.disabled);
     const mine = allProfiles.find(x => x.uid === me.uid);
     if (mine) {
@@ -191,7 +200,9 @@ async function startApp(user) {
       if (!me.isAdmin && state.view === "admin") { go("home"); return; }
       paintMe();
     }
-    if (["messages", "admin", "settings"].includes(state.view)) scheduleRender(); else updateHeader();
+    if (structural && ["messages", "admin", "settings"].includes(state.view)) scheduleRender();
+    else if (state.view === "messages" && (typingChanged || presenceFlip)) scheduleRender();
+    else updateHeader();
   }, () => {}));
   unsubs.push(db.collection("messages").where("to", "==", me.uid).onSnapshot(snap => {
     msgsIn = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
@@ -229,20 +240,28 @@ async function startApp(user) {
       snap.docs.forEach(d => m.set(d.id, Object.assign({ id: d.id }, d.data())));
       setter(m);
       itemsCache = null;
-      if (firstItems < 2) { firstItems++; if (firstItems === 2) go(location.hash.slice(1) || "home"); return; }
+      if (firstItems < 2) firstItems++;
       if (!["messages", "settings"].includes(state.view)) scheduleRender(); else updateHeader();
     };
-    unsubs.push(itemsCol().where("vis", "==", "public").onSnapshot(onItems("pub", m => { pubItems = m; }), () => { if (firstItems < 2) { firstItems++; if (firstItems === 2) go(location.hash.slice(1) || "home"); } }));
-    unsubs.push(itemsCol().where("owner", "==", me.uid).onSnapshot(onItems("mine", m => { myItems = m; }), () => { if (firstItems < 2) { firstItems++; if (firstItems === 2) go(location.hash.slice(1) || "home"); } }));
+    unsubs.push(itemsCol().where("vis", "==", "public").onSnapshot(onItems("pub", m => { pubItems = m; }), () => {}));
+    unsubs.push(itemsCol().where("owner", "==", me.uid).onSnapshot(onItems("mine", m => { myItems = m; }), () => {}));
   };
   startItems();
+  go(location.hash.slice(1) || "home");
   unsubs.push(db.collection("config").doc("site").onSnapshot(d => {
     site = d.exists ? d.data() : {};
-    if (state.view === "home" && firstItems >= 2) scheduleRender();
+    if (state.view === "home") scheduleRender();
   }, () => {}));
 }
 
 let presenceTimer = null;
+function hideSplash() {
+  const s = $("splash");
+  if (!s || s.classList.contains("out")) return;
+  s.classList.add("out");
+  setTimeout(() => s.remove(), 350);
+}
+
 function logout() {
   clearInterval(presenceTimer);
   if (me && db) db.collection("profiles").doc(me.uid).update({ lastSeen: Date.now() - 3 * 60000, typingTo: "", typingAt: 0 }).catch(() => {});
@@ -408,6 +427,7 @@ if (!FB_READY || typeof firebase === "undefined") {
   firebase.initializeApp(firebaseConfig);
   auth = firebase.auth();
   db = firebase.firestore();
+  try { db.enablePersistence({ synchronizeTabs: true }).catch(() => {}); } catch (e) {}
   auth.onAuthStateChanged(user => {
     if (user) startApp(user).catch(() => { loginNotice = "Veriler yüklenemedi. Firestore kurallarını ve internet bağlantını kontrol edip tekrar dene."; auth.signOut(); });
     else { me = null; showLogin(loginNotice); loginNotice = ""; }

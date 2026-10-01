@@ -1,5 +1,23 @@
+function iosInstallCard() {
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  let hidden = false;
+  try { hidden = localStorage.getItem("neriii-ios-hint") === "1"; } catch (e) {}
+  if (!ios || standalone || hidden) return null;
+  const close = e => { try { localStorage.setItem("neriii-ios-hint", "1"); } catch (ex) {} e.currentTarget.closest(".ios-hint").remove(); };
+  return h("section", { class: "card ios-hint span-12" },
+    h("img", { src: "icons/icon.svg", alt: "", width: "56", height: "56" }),
+    h("div", { style: "flex:1;min-width:0" },
+      h("strong", { text: "Neriii'yi uygulama gibi kullan ♡" }),
+      h("p", {}, "Alttaki ", h("span", { class: "share-ic", html: ico("share", 16) }), " Paylaş simgesine dokun, sonra ", h("b", { text: "Ana Ekrana Ekle" }), "'yi seç. Neriii hayalet simgesiyle ana ekranına gelir ve tam ekran açılır.")),
+    h("button", { class: "icon-btn", type: "button", "aria-label": "Kapat", html: ico("x", 18), onclick: close })
+  );
+}
+
 function renderHome() {
   const grid = h("div", { class: "grid" });
+  const hint = iosInstallCard();
+  if (hint) grid.append(hint);
 
   if (site.announcement) {
     grid.append(h("section", { class: "card announce span-12" },
