@@ -369,7 +369,8 @@ function searchAll(q) {
     if (i.kind === "goal" && has(i.text)) out.push([i.text, "Hedef", () => go("goals")]);
     if (i.kind === "habit" && has(i.name)) out.push([i.name, "Alışkanlık", () => go("habits")]);
     if (i.kind === "plan" && has(i.text)) out.push([i.text, "Plan, " + fmtShort.format(fromKey(i.date)), () => go("calendar", { sel: i.date, calMonth: firstOfMonth(fromKey(i.date)) })]);
-    if (i.kind === "shop" && has(i.text)) out.push([i.text, "Alışveriş listesi", () => go("shopping")]);
+    if (i.kind === "shop" && has(i.text)) out.push([i.text, "Alışveriş listesi", () => go("shopping", { shopTab: "shop" })]);
+    if (i.kind === "payment" && has(i.text)) out.push([i.text, "Ödeme", () => go("shopping", { shopTab: "pay" })]);
     if (i.kind === "prayer" && (has(i.title) || has(i.text))) out.push([i.title || "Dua", "Dua, " + (i.cat || ""), () => go("prayers", { prayerOpen: i.id })]);
     if (i.kind === "journal" && (has(i.text) || (i.gratitude || []).some(has))) out.push([fmtDate.format(fromKey(i.date)) + (isMine(i) ? "" : ", " + i.ownerName), "Günlük", () => go("journal", isMine(i) ? { jDate: i.date, jOther: null } : { jOther: i.id })]);
     if (i.kind === "memory" && (has(i.title) || has(i.text) || has(i.place))) out.push([i.title || "Anı", "Anı, " + fmtShort.format(fromKey(i.date || todayKey)), () => { go("memories"); setTimeout(() => memoryDialog(i), 250); }]);
