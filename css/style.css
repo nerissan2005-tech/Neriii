@@ -903,3 +903,9 @@ input.switch:checked::after { transform: translateX(1.2rem); border: 0; width: 1
 [data-theme="dark"] .meet-scene::after { background: #1E2B26; border-color: #2E4A3C; }
 [data-theme="dark"] .coins { background: #3A2E14; color: #FFD166; }
 @media (prefers-reduced-motion: reduce) { .pet-svg, .pet-svg .eyes, .pet-svg .ear-l, .pet-svg .ear-r, .pet-fx { animation: none !important; } }
+.pet-stage.night { background: radial-gradient(circle at 80% 20%, #FFF3C4 0 6px, transparent 7px), radial-gradient(circle at 20% 30%, #fff 0 1.5px, transparent 2px), radial-gradient(circle at 60% 15%, #fff 0 1.2px, transparent 2px), radial-gradient(circle at 35% 12%, #fff 0 1px, transparent 2px), linear-gradient(#2E2A5A, #5B4E8C) !important; border-radius: 1rem; }
+.pet-card .pet-stage.night { border-radius: .9rem; }
+.pet-svg .zzz text { animation: zfloat 2.4s ease-in-out infinite; }
+.pet-svg .zzz text:nth-child(2) { animation-delay: .4s; }
+.pet-svg .zzz text:nth-child(3) { animation-delay: .8s; }
+@keyframes zfloat { 0%, 100% { opacity: .4; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-5px); } }
