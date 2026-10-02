@@ -953,3 +953,9 @@ input.switch:checked::after { transform: translateX(1.2rem); border: 0; width: 1
 @keyframes envfade { 0%, 60% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
 @media (prefers-reduced-motion: reduce) { .letter-modal.anim .letter-paper, .envelope .env-art { animation: none !important; } }
 .side nav button .lbl { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pet-svg text, .ward-pic text, .pet-duo text, .species text { font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla", sans-serif; }
+.pet-emoji.sad { transform: translateY(6px) rotate(-4deg); transform-box: fill-box; transform-origin: 50% 100%; }
+.pet-emoji.asleep { opacity: .82; transform: rotate(-8deg); transform-box: fill-box; transform-origin: 50% 100%; }
+.emo-badge { animation: badgefloat 2.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes badgefloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@media (prefers-reduced-motion: reduce) { .emo-badge { animation: none; } }
