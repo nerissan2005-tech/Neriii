@@ -1,449 +1,100 @@
-const allMessages = () => {
-  const m = new Map();
-  msgsIn.concat(msgsOut).forEach(x => m.set(x.id, x));
-  return [...m.values()].filter(x => !(x.hidden || []).includes(me.uid)).sort((a, b) => a.at - b.at);
+const ICONS = {
+  mail: "M4 6h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1zM3.5 7l8.5 6 8.5-6",
+  paw: "M4.2 10.5a1.8 2.2 0 1 0 3.6 0a1.8 2.2 0 1 0-3.6 0zM16.2 10.5a1.8 2.2 0 1 0 3.6 0a1.8 2.2 0 1 0-3.6 0zM7.7 6.5a1.8 2.2 0 1 0 3.6 0a1.8 2.2 0 1 0-3.6 0zM12.7 6.5a1.8 2.2 0 1 0 3.6 0a1.8 2.2 0 1 0-3.6 0zM12 12.5c-3 0-5.5 3.2-5.5 5.3 0 1.5 1.1 2.4 2.5 2.4 1.2 0 2-.6 3-.6s1.8.6 3 .6c1.4 0 2.5-.9 2.5-2.4 0-2.1-2.5-5.3-5.5-5.3z",
+  ghost: "M6 20v-9a6 6 0 0 1 12 0v9l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5zM10 10h.01M14 10h.01",
+  home: "M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z",
+  note: "M7 3h7l5 5v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM14 3v5h5M9 13h6M9 17h4",
+  target: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM12 12h.01",
+  repeat: "M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3",
+  calendar: "M4 5h16a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM3 10h18M8 3v4M16 3v4",
+  heart: "M12 20s-7-4.5-9-9a4.5 4.5 0 0 1 9-2 4.5 4.5 0 0 1 9 2c-2 4.5-9 9-9 9z",
+  cart: "M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 8H6.2M9 20.5h.01M17 20.5h.01",
+  book: "M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 21V5M19 19v2H6",
+  settings: "M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1M15 4v4M9 10v4M17 16v4",
+  menu: "M4 6h16M4 12h16M4 18h16",
+  plus: "M12 5v14M5 12h14",
+  search: "M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4",
+  trash: "M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3",
+  left: "M15 18l-6-6 6-6",
+  right: "M9 18l6-6-6-6",
+  chat: "M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-5 4V6a1 1 0 0 1 1-1zM8 10h8M8 13h5",
+  logout: "M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 17l5-5-5-5M15 12H3",
+  send: "M4 12l16-8-6 16-2.5-6.5z",
+  x: "M6 6l12 12M18 6L6 18",
+  lock: "M7 11V8a5 5 0 0 1 10 0v3M6 11h12v9H6z",
+  users: "M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 4.5a3.5 3.5 0 0 1 0 6.5M18 14c2 .7 3 2.8 3 6",
+  shield: "M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z",
+  bell: "M6 9a6 6 0 0 1 12 0c0 6 2.5 8 2.5 8h-17S6 15 6 9zM10 20.5a2 2 0 0 0 4 0",
+  star: "M12 3l1.8 6.2L20 11l-6.2 1.8L12 19l-1.8-6.2L4 11l6.2-1.8z",
+  camera: "M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
+  gift: "M4 11h16v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1zM3 7h18v4H3zM12 7v14M12 7S10.5 3 8 3a2 2 0 0 0 0 4M12 7s1.5-4 4-4a2 2 0 0 1 0 4",
+  mic: "M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zM6 11a6 6 0 0 0 12 0M12 17v4M9 21h6",
+  image: "M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM3 16l5-5 4 4 3-3 6 6M15.5 9.5h.01",
+  stop: "M7 7h10v10H7z",
+  download: "M12 4v11M7 10l5 5 5-5M5 20h14",
+  check: "M5 12.5l4.5 4.5L19 7.5",
+  share: "M12 3v12M8 7l4-4 4 4M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1",
+  wallet: "M4 7h15a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12v3M16 13.5h.01",
+  moon: "M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5z",
+  sun: "M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"
 };
-const unreadCount = () => msgsIn.filter(x => !x.read && !x.unsent && !(x.hidden || []).includes(me.uid)).length;
-const initial = n => (n || "?").trim().charAt(0).toLocaleUpperCase("tr");
-const markedRead = new Set();
-const profileOf = uid => allProfiles.find(p => p.uid === uid);
-function avatar(p, cls) {
-  const photo = p && p.photo;
-  return h("span", { class: "pav" + (cls ? " " + cls : "") + (photo ? " has-photo" : "") + frameCls(p && p.frame), style: photo ? "background-image:url(\"" + photo + "\")" : null, text: photo ? "" : initial(p && p.name), "aria-hidden": "true" });
-}
+const ico = (n, s) => '<svg viewBox="0 0 24 24" width="' + (s || 20) + '" height="' + (s || 20) + '" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + ICONS[n] + '"/></svg>';
+const DOODLES = {
+  leaf: "M12 60 C 24 44 34 30 52 6 M24 44 c -10 -2 -14 -10 -12 -18 c 8 2 12 8 12 18 M31 34 c 8 -6 16 -6 20 0 c -6 6 -14 6 -20 0 M39 23 c -8 -4 -10 -12 -6 -18 c 6 4 8 10 6 18",
+  flag: "M2 60 L 22 28 L 31 40 L 42 22 L 62 60 M42 22 V 4 L 54 8 L 42 12 M14 60 c 6 -4 10 -4 14 0",
+  basket: "M6 28 H58 L52 58 H12 Z M18 28 L28 8 M46 28 L36 8 M20 36 V50 M32 36 V50 M44 36 V50",
+  sprout: "M32 60 V30 M32 40 C 20 40 12 32 12 20 C 24 20 32 28 32 40 M32 30 C 32 18 40 10 52 10 C 52 22 44 30 32 30",
+  moon: "M40 8 A 24 24 0 1 0 56 44 A 20 20 0 1 1 40 8 Z M14 14 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z"
+};
+const doodle = n => h("span", { class: "doodle", "aria-hidden": "true", html: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="' + DOODLES[n] + '"/></svg>' });
 
-const EMOJIS = {
-  "Yüzler": "😀 😁 😂 🤣 😊 😇 🙂 😉 😍 🥰 😘 😋 😜 🤗 🤭 🤔 😌 😴 🥺 😢 😭 😤 😡 🤯 😳 🥳 😎 🤓 😅 🙃 😬 🤩",
-  "Kalpler": "❤️ 🧡 💛 💚 💙 💜 🤎 🖤 🤍 💖 💗 💓 💞 💕 💘 💝 💟 ❣️ 💔 ❤️‍🔥 💌 💋 🫶 🥂",
-  "Eller": "👍 👎 👏 🙌 🙏 🤝 👋 ✌️ 🤞 🤟 👌 💪 ✍️ 🫂 👀 💅",
-  "Doğa": "🌸 🌷 🌹 🌺 🌻 🌼 🍀 🌿 🌱 🌙 ⭐ 🌟 ✨ ☀️ 🌈 ☁️ 🌧️ ❄️ 🔥 🌊 🦋 🐱 🐶 🐰 🐻 🐼 🦊 🐝",
-  "Yiyecek": "☕ 🍵 🧋 🍰 🎂 🍫 🍪 🍩 🍓 🍒 🍉 🍑 🍕 🍔 🍟 🥗 🍝 🍣 🥐 🍯",
-  "Etkinlik": "🎉 🎊 🎁 🎈 🎀 🏆 🎯 📚 ✏️ 💻 🎧 🎵 🎬 ✈️ 🏖️ 🧘 🏃 🛍️ 💐 🕯️"
-};
-const STICKERS = [
-  ["love", "❤️", "beat", "Kalp"], ["hug", "🤗", "wiggle", "Sarılma"], ["kiss", "😘", "beat", "Öpücük"], ["lol", "😂", "shake", "Kahkaha"],
-  ["party", "🥳", "bounce", "Kutlama"], ["confetti", "🎉", "pop", "Konfeti"], ["sun", "🌞", "spin", "Günaydın"], ["moon", "🌙", "float", "İyi geceler"],
-  ["flower", "🌸", "float", "Çiçek"], ["strong", "💪", "bounce", "Güçlüsün"], ["sparkle", "✨", "twinkle", "Pırıltı"], ["fire", "🔥", "flicker", "Harika"],
-  ["cry", "🥺", "wiggle", "Özledim"], ["sleep", "😴", "float", "Uykulu"], ["letter", "💌", "wiggle", "Mektup"], ["clap", "👏", "shake", "Alkış"]
+const VIEWS = [
+  ["home", "Ana Sayfa", "home"],
+  ["messages", "Mesajlar", "chat"],
+  ["affirm", "Olumlamalar", "star"],
+  ["letters", "Birbirimize", "mail"],
+  ["notes", "Notlar & Hedefler", "note"],
+  ["goals", "Hedefler", "target"],
+  ["habits", "Alışkanlıklar", "repeat"],
+  ["calendar", "Takvim & Alışkanlık", "calendar"],
+  ["journal", "Günlük", "heart"],
+  ["shopping", "Ödemelerim ve Alışveriş", "wallet"],
+  ["prayers", "Dualarımız", "moon"],
+  ["pet", "Petim", "paw"],
+  ["memories", "Anı Defteri", "camera"],
+  ["magic", "Sihirli Kutu", "gift"],
+  ["settings", "Ayarlar", "settings"],
+  ["admin", "Yönetici", "shield"]
 ];
-const stickerOf = k => STICKERS.find(s => s[0] === k);
-const msgPreview = m => m.unsent ? "Mesaj geri çekildi" : m.sticker ? (stickerOf(m.sticker) || ["", "✨"])[1] + " çıkartma" : m.photo ? "📷 Fotoğraf" + (m.text ? ": " + m.text : "") : m.audio ? "🎤 Sesli mesaj" : m.text;
-const fmtDur = s => Math.floor(s / 60) + ":" + String(Math.floor(s % 60)).padStart(2, "0");
+const TAB_MAIN = ["home", "messages", "affirm", "journal"];
+const TILES = [
+  ["pet", "Petim", "Minik tavşanın ya da ayıcığın seninle büyüsün", "paw", "#D9779A"],
+  ["journal", "Duygu Günlüğü", "Bugünün ruh hali ve şükran listesi", "heart", "#C46A8A"],
+  ["prayers", "Dualarımız", "Dualarını yaz, birlikte amin deyin", "moon", "#6F8F78"],
+  ["magic", "Sihirli Kutu", "Dokun, kalbine iyi gelen bir söz çıksın", "gift", "#E0975A"],
+  ["memories", "Anı Defteri", "Fotoğraflı güzel anılar biriktir", "camera", "#4F7FA3"],
+  ["letters", "Birbirimize", "Notlar ve sürpriz mektuplar bırak", "mail", "#C46A8A"]
+];
 
-async function sendQuickMessage(to, fields) {
-  const p = profileOf(to);
-  const ref = await db.collection("messages").add(Object.assign({ from: me.uid, fromName: me.name, to, toName: p ? p.name : "", text: "", at: Date.now(), read: false, hidden: [] }, fields));
-  pushApi("/notify-message", { id: ref.id }).catch(() => {});
-  return ref;
-}
-
-let recorder = null;
-function pickAudioType() {
-  if (typeof MediaRecorder === "undefined") return null;
-  for (const t of ["audio/mp4", "audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus"]) { try { if (MediaRecorder.isTypeSupported(t)) return t; } catch (e) {} }
-  return "";
-}
-async function startRecording(onDone) {
-  const type = pickAudioType();
-  if (type === null || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { showToast("Ses kaydı desteklenmiyor", "Bu tarayıcı ses kaydını desteklemiyor."); return; }
-  let stream;
-  try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
-  catch (e) { showToast("Mikrofona izin verilmedi", "Sesli mesaj için mikrofon iznini açman gerekiyor."); return; }
-  const opts = { audioBitsPerSecond: 24000 };
-  if (type) opts.mimeType = type;
-  let mr;
-  try { mr = new MediaRecorder(stream, opts); } catch (e) { mr = new MediaRecorder(stream); }
-  const chunks = [];
-  const start = Date.now();
-  recorder = { mr, stream, start, send: false, timer: null };
-  mr.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
-  mr.onstop = () => {
-    stream.getTracks().forEach(t => t.stop());
-    const rec = recorder;
-    recorder = null;
-    clearInterval(rec.timer);
-    const dur = (Date.now() - start) / 1000;
-    if (rec.send && dur >= 1 && chunks.length) {
-      const blob = new Blob(chunks, { type: mr.mimeType || type || "audio/webm" });
-      const fr = new FileReader();
-      fr.onload = () => {
-        if (fr.result.length > 950000) { showToast("Sesli mesaj çok uzun", "En fazla 2 dakikalık sesli mesaj gönderebilirsin."); return; }
-        onDone({ audio: fr.result, dur: Math.round(dur) });
-      };
-      fr.readAsDataURL(blob);
-    }
-    render();
+let installPrompt = null;
+function platformInfo() {
+  const ua = navigator.userAgent;
+  const ios = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  return {
+    ios,
+    android: /Android/.test(ua),
+    safari: ios && /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|GSA/.test(ua),
+    standalone: window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true
   };
-  mr.start();
-  recorder.timer = setInterval(() => {
-    const el = $("recTime");
-    const s = (Date.now() - start) / 1000;
-    if (el) el.textContent = fmtDur(s);
-    if (s >= 120) stopRecording(true);
-  }, 250);
-  render();
 }
-function stopRecording(send) {
-  if (!recorder) return;
-  recorder.send = send;
-  try { recorder.mr.stop(); } catch (e) {}
+function refreshInstallUi() {
+  const p = platformInfo();
+  const show = !p.standalone && (p.ios || p.android || !!installPrompt);
+  document.querySelectorAll("[data-install]").forEach(el => { el.hidden = !show; });
 }
-
-function insertAtCaret(el, text) {
-  const focused = document.activeElement === el;
-  const s = focused && el.selectionStart != null ? el.selectionStart : el.value.length;
-  const e = focused && el.selectionEnd != null ? el.selectionEnd : el.value.length;
-  el.value = el.value.slice(0, s) + text + el.value.slice(e);
-  const pos = s + text.length;
-  el.focus();
-  try { el.setSelectionRange(pos, pos); } catch (ex) {}
-  state.msgDraft = el.value;
-}
-
-const REACTIONS = ["❤️", "😂", "😮", "😢", "👍", "🙏"];
-function toggleReaction(m, emoji) {
-  const F = firebase.firestore;
-  const cur = (m.reactions || {})[me.uid];
-  state.msgMenu = null;
-  db.collection("messages").doc(m.id).update(new F.FieldPath("reactions", me.uid), cur === emoji ? F.FieldValue.delete() : emoji)
-    .catch(() => showToast("Tepki eklenemedi", "İnternet bağlantını kontrol et."));
-  render();
-}
-
-function seenText(p) {
-  if (!p || !p.lastSeen) return "";
-  const diff = Date.now() - p.lastSeen;
-  if (diff < 2.5 * 60000) return "Çevrimiçi";
-  const d = new Date(p.lastSeen);
-  const k = keyOf(d);
-  if (k === todayKey) return "Son görülme bugün " + fmtTime.format(d);
-  if (k === keyOf(addDays(today, -1))) return "Son görülme dün " + fmtTime.format(d);
-  return "Son görülme " + fmtShort.format(d) + " " + fmtTime.format(d);
-}
-const isOnline = p => !!(p && p.lastSeen && Date.now() - p.lastSeen < 2.5 * 60000);
-const isTypingTo = p => !!(p && p.typingTo === me.uid && Date.now() - (p.typingAt || 0) < 6000);
-
-function bubbleNode(m, opts) {
-  const mine = m.from === me.uid;
-  const d = new Date(m.at);
-  const menuOpen = state.msgMenu === m.id;
-  const content = m.unsent
-    ? h("span", { class: "unsent", text: mine && !opts.admin ? "Bu mesajı geri çektin" : "Bu mesaj geri çekildi" })
-    : m.sticker ? (st => h("span", { class: "sticker s-" + (st ? st[2] : "float"), title: st ? st[3] : "", text: st ? st[1] : "✨" }))(stickerOf(m.sticker))
-    : m.photo ? h("span", { class: "msg-media" },
-        h("img", { class: "msg-photo", src: m.photo, alt: "Fotoğraf", loading: "lazy", onclick: () => openViewer([m.photo], 0) }),
-        m.text ? h("span", { class: "msg-cap", text: m.text }) : null)
-    : m.audio ? h("span", { class: "msg-audio" }, h("span", { html: ico("mic", 16), style: "display:grid" }),
-        h("audio", { controls: true, preload: "none", src: m.audio }), m.dur ? h("small", { text: fmtDur(m.dur) }) : null)
-    : document.createTextNode(m.text);
-  const actions = [];
-  const reacts = Object.entries(m.reactions || {});
-  if (!opts.readOnly && !m.unsent) actions.push(h("div", { class: "react-row" }, REACTIONS.map(r =>
-    h("button", { type: "button", "aria-label": r + " tepkisi", "aria-pressed": (m.reactions || {})[me.uid] === r ? "true" : "false", text: r, onclick: () => toggleReaction(m, r) }))));
-  if (!opts.readOnly) {
-    if (!m.unsent && m.text) actions.push(h("button", { type: "button", text: "Kopyala", onclick: async () => { try { await navigator.clipboard.writeText(m.text); } catch (e) {} state.msgMenu = null; render(); } }));
-    if (mine && !m.unsent) actions.push(h("button", { type: "button", text: "Geri çek", onclick: async () => {
-      if (!(await ask({ title: "Mesaj geri çekilsin mi?", text: "Mesaj iki taraftan da kaldırılır, yerine geri çekildiği yazar.", ok: "Geri çek", icon: "chat" }))) return;
-      state.msgMenu = null;
-      db.collection("messages").doc(m.id).update({ unsent: true, text: "", sticker: null, photo: null, audio: null }).catch(() => showToast("Geri çekilemedi", "İnternet bağlantını kontrol et."));
-    } }));
-    actions.push(h("button", { type: "button", text: "Benden sil", onclick: () => {
-      state.msgMenu = null;
-      db.collection("messages").doc(m.id).update({ hidden: firebase.firestore.FieldValue.arrayUnion(me.uid) }).catch(() => showToast("Silinemedi", "İnternet bağlantını kontrol et."));
-    } }));
-  }
-  if (opts.admin) actions.push(h("button", { type: "button", class: "danger", text: "Kalıcı sil", onclick: async () => {
-    if (!(await ask({ title: "Mesaj kalıcı olarak silinsin mi?", text: "İki taraftan da tamamen kaldırılır. Bu işlem geri alınamaz.", ok: "Kalıcı sil", danger: true }))) return;
-    db.collection("messages").doc(m.id).delete().then(opts.after).catch(() => showToast("Silinemedi", "Firestore kurallarının güncel olduğundan emin ol."));
-  } }));
-  const isRight = opts.rightUid ? m.from === opts.rightUid : mine;
-  return h("div", { class: "msg-line" + (isRight ? " right" : "") },
-    h("div", { class: "bubble" + (isRight ? " mine" : "") + (m.sticker && !m.unsent ? " is-sticker" : "") + (reacts.length ? " has-react" : ""),
-      ondblclick: opts.readOnly || m.unsent ? null : () => toggleReaction(m, "❤️") },
-      content,
-      h("small", { text: (opts.admin ? (m.fromName || "") + ", " : "") + fmtTime.format(d) + (mine && m.read && !m.unsent && !opts.readOnly ? ", okundu" : "") }),
-      reacts.length ? h("span", { class: "reacts", title: reacts.map(([u, r]) => ((profileOf(u) || {}).name || (u === me.uid ? me.name : "")) + " " + r).join(", ") },
-        [...new Set(reacts.map(x => x[1]))].join(""), reacts.length > 1 ? h("b", { text: String(reacts.length) }) : null) : null),
-    actions.length ? h("button", { class: "msg-more", type: "button", "aria-label": "Mesaj seçenekleri", "aria-expanded": menuOpen ? "true" : "false", text: "⋯",
-      onclick: () => { state.msgMenu = menuOpen ? null : m.id; render(); } }) : null,
-    menuOpen ? h("div", { class: "msg-menu" }, actions) : null
-  );
-}
-
-function threadNode(list, opts) {
-  const box = h("div", { class: "thread" });
-  let lastDay = "";
-  if (!list.length) box.append(h("p", { class: "empty", style: "align-self:center;margin:auto", text: opts.empty || "Henüz mesaj yok." }));
-  list.forEach(m => {
-    const d = new Date(m.at);
-    const dk = keyOf(d);
-    if (dk !== lastDay) { lastDay = dk; box.append(h("div", { class: "day-sep", text: dk === todayKey ? "Bugün" : fmtDate.format(d) })); }
-    box.append(bubbleNode(m, opts));
-  });
-  setTimeout(() => { if (!opts.keepScroll) box.scrollTop = box.scrollHeight; });
-  return box;
-}
-
-async function runInBatches(list, fn) {
-  for (let i = 0; i < list.length; i += 400) {
-    const batch = db.batch();
-    list.slice(i, i + 400).forEach(m => fn(batch, db.collection("messages").doc(m.id)));
-    await batch.commit();
-  }
-}
-
-async function clearChat(thread, other, forAll) {
-  state.chatMenu = false;
-  const ok = await ask(forAll
-    ? { title: other.name + " ile sohbet herkes için silinsin mi?", text: thread.length + " mesaj iki taraftan da kalıcı olarak silinir. Bu işlem geri alınamaz.", ok: "Kalıcı sil", danger: true }
-    : { title: other.name + " ile sohbet temizlensin mi?", text: thread.length + " mesaj senin ekranından kalkar. Karşı taraf mesajları görmeye devam eder.", ok: "Temizle", danger: true });
-  if (!ok) { render(); return; }
-  try {
-    if (forAll) await runInBatches(thread, (b, ref) => b.delete(ref));
-    else await runInBatches(thread, (b, ref) => b.update(ref, { hidden: firebase.firestore.FieldValue.arrayUnion(me.uid) }));
-    state.chatWith = null;
-    showToast(forAll ? "Sohbet herkes için silindi" : "Sohbet temizlendi");
-  } catch (e) { showToast("Sohbet temizlenemedi", "İnternet bağlantını kontrol edip tekrar dene."); }
-  render();
-}
-
-async function unsendAll(mine, other) {
-  state.chatMenu = false;
-  if (!(await ask({ title: "Gönderdiğin mesajlar geri çekilsin mi?", text: other.name + " ile sohbette gönderdiğin " + mine.length + " mesaj iki taraftan da geri çekilir.", ok: "Geri çek", danger: true, icon: "chat" }))) { render(); return; }
-  try {
-    await runInBatches(mine, (b, ref) => b.update(ref, { unsent: true, text: "", sticker: null, photo: null, audio: null }));
-    showToast("Mesajların geri çekildi");
-  } catch (e) { showToast("Geri çekilemedi", "İnternet bağlantını kontrol edip tekrar dene."); }
-  render();
-}
-
-let typingTimer = null;
-let typingSentAt = 0, typingState = "";
-function sendTyping(to, on) {
-  const now = Date.now();
-  if (on) {
-    if (typingState === to && now - typingSentAt < 2500) return;
-    typingState = to; typingSentAt = now;
-    db.collection("profiles").doc(me.uid).update({ typingTo: to, typingAt: now }).catch(() => {});
-  } else if (typingState) {
-    typingState = ""; typingSentAt = 0;
-    db.collection("profiles").doc(me.uid).update({ typingTo: "", typingAt: 0 }).catch(() => {});
-  }
-}
-
-function renderMessages() {
-  const all = allMessages();
-  const withUser = uid => all.filter(m => (m.from === uid && m.to === me.uid) || (m.from === me.uid && m.to === uid));
-  const unreadFrom = uid => msgsIn.filter(m => m.from === uid && !m.read && !m.unsent && !(m.hidden || []).includes(me.uid)).length;
-  const partners = new Set(all.map(m => m.from === me.uid ? m.to : m.from));
-  if (state.chatWith) partners.add(state.chatWith);
-  const convs = [...partners].map(uid => profileOf(uid) || { uid, name: (all.find(m => m.from === uid) || {}).fromName || (all.find(m => m.to === uid) || {}).toName || "Silinmiş profil", gone: true })
-    .sort((a, b) => { const la = withUser(a.uid).slice(-1)[0], lb = withUser(b.uid).slice(-1)[0]; return (lb ? lb.at : 0) - (la ? la.at : 0); });
-
-  if (state.chatWith && !convs.some(c => c.uid === state.chatWith)) state.chatWith = null;
-  if (!state.chatWith && convs.length) {
-    const firstUnread = convs.find(c => unreadFrom(c.uid));
-    state.chatWith = (firstUnread || convs[0]).uid;
-  }
-
-  const picker = state.msgPicker ? (() => {
-    const q = (state.msgPickQ || "").toLocaleLowerCase("tr");
-    const opts = profiles.filter(p => !q || p.name.toLocaleLowerCase("tr").includes(q));
-    return h("div", { class: "picker" },
-      h("input", { class: "field", id: "pickQ", type: "search", placeholder: "Kişi ara…", value: state.msgPickQ || "", autocomplete: "off",
-        oninput: e => { state.msgPickQ = e.target.value; render(); } }),
-      h("div", { class: "people", style: "margin-top:.5rem" }, opts.length ? opts.map(p =>
-        h("button", { type: "button", onclick: () => { state.chatWith = p.uid; state.msgPicker = false; state.msgPickQ = ""; state.focus = "#msgInput"; render(); } },
-          avatar(p), h("span", { class: "meta" }, h("strong", { text: p.name }), h("span", { text: withUser(p.uid).length ? "Sohbete devam et" : "Yeni sohbet başlat" })))
-      ) : h("p", { class: "empty", text: profiles.length ? "Bu isimde kimse yok." : "Henüz başka profil yok." }))
-    );
-  })() : null;
-
-  const list = h("section", { class: "card t-peach" },
-    h("div", { class: "card-head" }, h("h2", { text: "Sohbetler" }),
-      h("button", { class: "btn primary small", type: "button", onclick: () => { state.msgPicker = !state.msgPicker; state.focus = state.msgPicker ? "#pickQ" : null; render(); } },
-        state.msgPicker ? "Kapat" : "Yeni mesaj")),
-    picker,
-    !picker ? (convs.length ? h("div", { class: "people" }, convs.map(p => {
-      const last = withUser(p.uid).slice(-1)[0];
-      const un = unreadFrom(p.uid);
-      return h("button", { type: "button", "aria-current": p.uid === state.chatWith ? "true" : "false", onclick: () => { state.chatWith = p.uid; state.msgMenu = null; state.chatMenu = false; state.focus = "#msgInput"; render(); } },
-        avatar(p),
-        h("span", { class: "meta" }, h("strong", {}, p.name, isOnline(p) ? h("i", { class: "dot-online", title: "Çevrimiçi" }) : null), h("span", { class: isTypingTo(p) ? "typing-tag" : "", text: isTypingTo(p) ? "yazıyor…" : last ? (last.from === me.uid ? "Sen: " : "") + msgPreview(last) : "Yeni sohbet" })),
-        un ? h("span", { class: "unread", text: String(un) }) : null
-      );
-    })) : h("p", { class: "empty", text: "Henüz bir sohbetin yok. Yeni mesaj'a dokunup kime yazmak istediğini seç." })) : null
-  );
-
-  let chatCard;
-  const other = convs.find(c => c.uid === state.chatWith);
-  if (!other) {
-    chatCard = h("section", { class: "card chat-empty" },
-      h("span", { class: "big-ic", html: ico("chat", 34) }),
-      h("p", { text: "Mesajlaşmak istediğin kişiyi seç." }),
-      h("button", { class: "btn primary", type: "button", text: "Yeni mesaj", onclick: () => { state.msgPicker = true; state.focus = "#pickQ"; render(); } }));
-  } else {
-    const thread = withUser(other.uid);
-    const mine = thread.filter(m => m.from === me.uid && !m.unsent);
-    const toMark = thread.filter(m => m.to === me.uid && !m.read && !markedRead.has(m.id));
-    if (toMark.length) {
-      const batch = db.batch();
-      toMark.forEach(m => { markedRead.add(m.id); batch.update(db.collection("messages").doc(m.id), { read: true }); });
-      batch.commit().catch(() => toMark.forEach(m => markedRead.delete(m.id)));
-    }
-
-    const sendMsg = async (fields) => {
-      try {
-        petAward("mesaj", 2);
-        const ref = await db.collection("messages").add(Object.assign({ from: me.uid, fromName: me.name, to: other.uid, toName: other.name, text: "", at: Date.now(), read: false, hidden: [] }, fields));
-        pushApi("/notify-message", { id: ref.id }).catch(() => {});
-      } catch (e) { showToast("Mesaj gönderilemedi", "İnternet bağlantını kontrol edip tekrar dene."); return false; }
-      return true;
-    };
-    const send = async () => {
-      const input = $("msgInput");
-      const text = input.value.trim();
-      if (!text) return;
-      input.value = ""; state.msgDraft = "";
-      sendTyping(other.uid, false);
-      if (!(await sendMsg({ text }))) { input.value = text; state.msgDraft = text; }
-    };
-
-    const tab = state.emojiTab || "Yüzler";
-    const panel = state.emojiOpen ? h("div", { class: "emoji-panel" },
-      h("div", { class: "emoji-tabs" }, Object.keys(EMOJIS).concat(["Çıkartmalar"]).map(t =>
-        h("button", { type: "button", "aria-pressed": t === tab ? "true" : "false", text: t, onclick: () => { state.emojiTab = t; render(); } }))),
-      tab === "Çıkartmalar"
-        ? h("div", { class: "sticker-grid" }, STICKERS.map(([k, em, anim, label]) =>
-            h("button", { type: "button", title: label, "aria-label": label + " çıkartması gönder", onclick: async () => { state.emojiOpen = false; await sendMsg({ sticker: k }); render(); } },
-              h("span", { class: "sticker s-" + anim, text: em }), h("small", { text: label }))))
-        : h("div", { class: "emoji-grid" }, EMOJIS[tab].split(" ").map(em =>
-            h("button", { type: "button", text: em, "aria-label": em, onmousedown: e => e.preventDefault(), onclick: () => insertAtCaret($("msgInput"), em) })))
-    ) : null;
-
-    chatCard = h("section", { class: "card" },
-      h("div", { class: "thread-head" }, avatar(other), h("div", { style: "flex:1;min-width:0" }, h("strong", { text: other.name }), other.gone ? h("div", { class: "tag", text: "Bu profil artık yok" })
-          : isTypingTo(other) ? h("div", { class: "tag typing-tag", text: "yazıyor…" })
-          : seenText(other) ? h("div", { class: "tag" + (isOnline(other) ? " online" : ""), text: seenText(other) }) : null),
-        thread.length ? h("div", { class: "chat-tools" },
-          h("button", { class: "btn small", type: "button", "aria-expanded": state.chatMenu ? "true" : "false", onclick: () => { state.chatMenu = !state.chatMenu; render(); } },
-            h("span", { html: ico("trash", 15), style: "display:inline-grid;vertical-align:-2px;margin-right:.35rem" }), "Sohbeti temizle"),
-          state.chatMenu ? h("div", { class: "chat-menu" },
-            h("button", { type: "button", onclick: () => clearChat(thread, other, false) },
-              h("strong", { text: "Benden temizle" }), h("span", { text: "Mesajlar sadece senin ekranından kalkar, " + other.name + " görmeye devam eder." })),
-            mine.length ? h("button", { type: "button", onclick: () => unsendAll(mine, other) },
-              h("strong", { text: "Gönderdiklerimi geri çek" }), h("span", { text: "Senin gönderdiğin " + mine.length + " mesaj iki taraftan da geri çekilir." })) : null,
-            me.isAdmin ? h("button", { type: "button", class: "danger", onclick: () => clearChat(thread, other, true) },
-              h("strong", { text: "Herkes için kalıcı sil" }), h("span", { text: "Sohbetin tamamı iki taraftan da tamamen silinir." })) : null
-          ) : null
-        ) : null),
-      (() => {
-        const box = threadNode(thread, { empty: other.name + " ile henüz mesajın yok. İlk mesajı sen yaz ♡", keepScroll: !!state.msgMenu });
-        if (isTypingTo(other)) {
-          box.append(h("div", { class: "msg-line" }, h("div", { class: "bubble typing" }, h("i"), h("i"), h("i"))));
-          clearTimeout(typingTimer);
-          typingTimer = setTimeout(() => { if (state.view === "messages") scheduleRender(); }, 6200 - (Date.now() - (other.typingAt || 0)));
-        }
-        return box;
-      })(),
-      other.gone ? h("p", { class: "empty", text: "Bu profile artık mesaj gönderilemiyor." }) : h("div", {},
-        panel,
-        recorder ? h("div", { class: "composer recording" },
-          h("span", { class: "rec-dot" }),
-          h("span", { class: "rec-label" }, "Kaydediliyor ", h("b", { id: "recTime", text: fmtDur((Date.now() - recorder.start) / 1000) })),
-          h("button", { class: "btn", type: "button", text: "İptal", onclick: () => stopRecording(false) }),
-          h("button", { class: "btn primary", type: "button", "aria-label": "Sesli mesajı gönder", html: ico("send", 18), onclick: () => stopRecording(true) })
-        ) :
-        h("form", { class: "composer", onsubmit: e => { e.preventDefault(); send(); } },
-          h("button", { class: "icon-btn emoji-btn", type: "button", "aria-label": "Emoji ve çıkartmalar", "aria-pressed": state.emojiOpen ? "true" : "false", text: "😊",
-            onclick: () => { state.emojiOpen = !state.emojiOpen; render(); } }),
-          h("label", { class: "icon-btn media-btn", "aria-label": "Fotoğraf gönder", title: "Fotoğraf gönder" },
-            h("span", { html: ico("image", 20), style: "display:grid" }),
-            h("input", { type: "file", accept: "image/*", hidden: true, onchange: async e => {
-              const f = e.target.files[0];
-              e.target.value = "";
-              if (!f) return;
-              showToast("Fotoğraf gönderiliyor…");
-              try {
-                let photo = await resizeImage(f, 1100, 0.72);
-                if (photo.length > 900000) photo = await resizeImage(f, 800, 0.6);
-                const cap = $("msgInput") ? $("msgInput").value.trim() : "";
-                if (await sendMsg({ photo, text: cap }) && cap) { $("msgInput").value = ""; state.msgDraft = ""; }
-                $("toast").hidden = true;
-              } catch (ex) { showToast("Fotoğraf gönderilemedi", "Başka bir fotoğraf dene."); }
-            } })),
-          h("button", { class: "icon-btn media-btn", type: "button", "aria-label": "Sesli mesaj kaydet", title: "Sesli mesaj", html: ico("mic", 20),
-            onclick: () => startRecording(fields => sendMsg(fields)) }),
-          h("textarea", { id: "msgInput", class: "field", rows: "1", placeholder: other.name + " için bir mesaj yaz…", "aria-label": "Mesaj",
-            oninput: e => { state.msgDraft = e.target.value; sendTyping(other.uid, !!e.target.value.trim()); },
-            onblur: () => sendTyping(other.uid, false),
-            onkeydown: e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } } }, state.msgDraft || ""),
-          h("button", { class: "btn primary", type: "submit", "aria-label": "Gönder", html: ico("send", 18) })
-        )
-      )
-    );
-  }
-
-  return h("div", {}, pageHead("Mesajlar", "Kime yazmak istediğini seç ve sohbete başla."), h("div", { class: "chat" }, list, chatCard));
-}
-
-async function loadAdminChats() {
-  state.adminChatsLoading = true;
-  try {
-    const snap = await db.collection("messages").get();
-    state.adminChats = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
-  } catch (e) { state.adminChats = null; showToast("Mesajlar yüklenemedi", "Firestore kurallarının güncel olduğundan emin ol."); }
-  state.adminChatsLoading = false;
-  if (state.view === "admin") render();
-}
-
-function adminChatsCard() {
-  const msgs = state.adminChats;
-  let body;
-  if (!msgs) {
-    body = [h("p", { class: "empty", text: "Profiller arasındaki tüm sohbetleri buradan görebilir, uygunsuz mesajları kalıcı olarak silebilirsin." }),
-      h("button", { class: "btn primary", type: "button", style: "align-self:flex-start;margin-top:.9rem", text: state.adminChatsLoading ? "Yükleniyor…" : "Sohbetleri göster", onclick: loadAdminChats })];
-  } else {
-    const pairs = new Map();
-    msgs.forEach(m => {
-      const key = [m.from, m.to].sort().join("|");
-      if (!pairs.has(key)) pairs.set(key, []);
-      pairs.get(key).push(m);
-    });
-    const nameOf = (uid, m) => (profileOf(uid) || {}).name || (m.from === uid ? m.fromName : m.toName) || "?";
-    const list = [...pairs.entries()].map(([k, arr]) => { arr.sort((a, b) => a.at - b.at); return { k, arr, last: arr[arr.length - 1] }; }).sort((a, b) => b.last.at - a.last.at);
-    const sel = list.find(x => x.k === state.adminChat);
-    body = [
-      h("div", { class: "row", style: "justify-content:space-between;margin-bottom:.6rem" },
-        h("span", { class: "tag", text: list.length + " sohbet, " + msgs.length + " mesaj" }),
-        h("button", { class: "btn small", type: "button", text: "Yenile", onclick: loadAdminChats })),
-      h("div", { class: "chat admin-chat" },
-        h("div", { class: "people" }, list.length ? list.map(x => {
-          const [a, b] = x.k.split("|");
-          return h("button", { type: "button", "aria-current": x.k === state.adminChat ? "true" : "false", onclick: () => { state.adminChat = x.k; render(); } },
-            h("span", { class: "meta" }, h("strong", { text: nameOf(a, x.last) + " ve " + nameOf(b, x.last) }), h("span", { text: msgPreview(x.last) })));
-        }) : h("p", { class: "empty", text: "Henüz hiç mesaj yok." })),
-        sel ? threadNode(sel.arr, { readOnly: true, admin: true, rightUid: sel.k.split("|")[0], after: loadAdminChats, keepScroll: false })
-            : h("p", { class: "empty", style: "align-self:center", text: "Görmek istediğin sohbeti seç." })
-      )
-    ];
-  }
-  return card({ title: "Sohbetler (yönetici görünümü)", icon: "chat", span: "span-12", body });
-}
-
-let toastTimer = null;
-function showToast(title, body, action, actionLabel) {
-  const t = $("toast");
-  t.replaceChildren(
-    h("span", { class: "ti", html: ico(action ? "chat" : "bell", 20) }),
-    h("div", { style: "flex:1;min-width:0" },
-      h("strong", { text: title }),
-      body ? h("p", { text: body }) : null,
-      action ? h("button", { class: "btn primary", type: "button", style: "padding:.45rem .9rem;font-size:.85rem", text: actionLabel || "Aç", onclick: () => { t.hidden = true; action(); } }) : null
-    ),
-    h("button", { class: "icon-btn x", type: "button", "aria-label": "Kapat", html: ico("x", 18), onclick: () => { t.hidden = true; } })
-  );
-  t.hidden = false;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { t.hidden = true; }, 9000);
-}
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installPrompt = e; refreshInstallUi(); });
+window.addEventListener("appinstalled", () => {
+  installPrompt = null;
+  refreshInstallUi();
+  if (typeof showToast === "function") showToast("Neriii yüklendi ♡", "Artık ana ekranından açabilirsin.");
+});
