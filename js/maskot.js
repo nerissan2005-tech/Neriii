@@ -135,9 +135,9 @@ function petSVG(o) {
   const heart = (x, y, s, fill) => '<path transform="translate(' + x + ' ' + y + ') scale(' + s + ')" d="M0 6C-7 1-10-4-6.5-7.5-4-10 0-8 0-5c0-3 4-5 6.5-2.5C10-4 7 1 0 6z" fill="' + fill + '"/>';
   if (w.back === "wings") back = '<path d="M62 168c-34-4-52-38-40-50 10-10 32 6 42 28zM138 168c34-4 52-38 40-50-10-10-32 6-42 28z" fill="#fff" stroke="#E7DDF0" stroke-width="3"/>';
   if (sp === "bunny") {
-    ears = '<g class="ear-l"><path d="M72 70C52 46 48 4 64 0c15-3 26 36 24 66" ' + fur + '/><path d="M74 62C60 42 58 14 66 10c8-2 15 26 14 50" fill="url(#' + id + 'e)"/></g>' +
-      '<g class="ear-r"><path d="M122 64c4-26 30-40 52-32 18 7 12 30-6 31-16 1-30 4-38 14" ' + fur + '/><path d="M128 60c6-18 24-26 40-22 11 3 8 16-4 17-14 1-26 2-34 8" fill="url(#' + id + 'e)"/></g>';
-    extra = '<path d="M90 56q3-11 9-2q4-10 10 0" fill="none" stroke="' + line + '" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>';
+    ears = '<g class="ear-l"><path d="M82 74C60 54 48 8 63-3c15-10 36 34 35 70" ' + fur + '/><path d="M84 64C68 48 58 16 66 7c9-7 25 28 24 54" fill="url(#' + id + 'e)"/></g>' +
+      '<g class="ear-r"><path d="M118 74c22-20 34-66 19-77-15-10-36 34-35 70" ' + fur + '/><path d="M116 64c16-16 26-48 18-57-9-7-25 28-24 54" fill="url(#' + id + 'e)"/></g>';
+    extra = '<path d="M91 58q4-9 9-1q5-9 10 0" fill="none" stroke="' + line + '" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>';
   } else {
     ears = '<g class="ear-l"><circle cx="50" cy="52" r="22" ' + fur + '/><circle cx="50" cy="54" r="12" fill="#F7BACB"/></g>' +
       '<g class="ear-r"><circle cx="150" cy="52" r="22" ' + fur + '/><circle cx="150" cy="54" r="12" fill="#F7BACB"/></g>';
@@ -181,6 +181,51 @@ function petSVG(o) {
     '<linearGradient id="' + id + 'e" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFD3E0"/><stop offset="1" stop-color="#FFA9C2"/></linearGradient></defs>';
   const face = '<g class="eyes">' + eyes + '</g>' + cheeks + nose + mouth + faceAcc;
   if (sp === "bunny") {
+    const eye = (x, y, mirror) => {
+      const o = mirror ? 1 : -1;
+      return '<ellipse cx="' + x + '" cy="' + y + '" rx="13.5" ry="15" fill="#1C1A3A"/>' +
+        '<ellipse cx="' + x + '" cy="' + (y + 1) + '" rx="11.5" ry="13" fill="url(#' + id + 'i)"/>' +
+        '<circle cx="' + (x + .5) + '" cy="' + (y + 2.5) + '" r="6.2" fill="#12122E"/>' +
+        '<path d="M' + (x - 8) + ' ' + (y + 8) + 'q8 6 16 0" fill="none" stroke="#9FC1FF" stroke-width="2" stroke-linecap="round" opacity=".8"/>' +
+        (emo === "love" ? heart(x + 4, y - 5, .75, "#fff") : '<circle cx="' + (x + 4.5) + '" cy="' + (y - 4.5) + '" r="4.8" fill="#fff"/>') +
+        '<circle cx="' + (x - 4.5) + '" cy="' + (y + 5) + '" r="2.1" fill="#fff" opacity=".9"/>' +
+        '<path d="M' + (x - 14.5) + ' ' + (y - 3) + 'q14.5-17 29 0" fill="none" stroke="#1C1A3A" stroke-width="3.6" stroke-linecap="round"/>' +
+        '<path d="M' + (x + o * 13) + ' ' + (y - 6) + 'q' + (o * 5) + ' -2 ' + (o * 8) + ' -7M' + (x + o * 9.5) + ' ' + (y - 10.5) + 'q' + (o * 3) + ' -3 ' + (o * 4.5) + ' -8" fill="none" stroke="#1C1A3A" stroke-width="2.6" stroke-linecap="round"/>';
+    };
+    const closed = (x, mirror) => {
+      const o = mirror ? 1 : -1;
+      return '<path d="M' + (x - 12) + ' 103q12 10 24 0" fill="none" stroke="#1C1A3A" stroke-width="3.6" stroke-linecap="round"/>' +
+        '<path d="M' + (x + o * 11) + ' 105l' + (o * 5) + ' 4M' + (x + o * 6) + ' 108l' + (o * 3) + ' 5" stroke="#1C1A3A" stroke-width="2.4" stroke-linecap="round"/>';
+    };
+    let be = "";
+    if (emo === "asleep") be = closed(78, false) + closed(122, true);
+    else {
+      be = eye(78, 102, false) + eye(122, 102, true);
+      if (emo === "sleepy") be += '<path d="M63 99q15-18 30 0z" fill="' + c + '"/><path d="M107 99q15-18 30 0z" fill="' + c + '"/><path d="M64 99h28M108 99h28" stroke="#1C1A3A" stroke-width="3.4" stroke-linecap="round"/>';
+    }
+    const brows = emo === "sad" ? '<path d="M68 80q8-6 16 0M116 80q8-6 16 0" fill="none" stroke="' + line + '" stroke-width="2.6" stroke-linecap="round" transform="rotate(0)"/><path d="M72 82l10-5M128 82l-10-5" stroke="' + line + '" stroke-width="2.6" stroke-linecap="round"/>'
+      : '<path d="M71 76q7-4 14-1M115 75q7-3 14 1" fill="none" stroke="' + line + '" stroke-width="2" stroke-linecap="round" opacity=".75"/>';
+    const tear = emo === "sad" ? '<path d="M64 116q-5 9 0 13q5-4 0-13z" fill="#9AD4FF"/>' : "";
+    const bNose = '<path d="M94.5 121q5.5-3.5 11 0q-2 6-5.5 7q-3.5-1-5.5-7z" fill="#F7A1B4" stroke="#E07A95" stroke-width="1.6" stroke-linejoin="round"/><ellipse cx="98" cy="122" rx="1.8" ry="1.1" fill="#fff" opacity=".7"/>';
+    let bMouth;
+    if (emo === "love") bMouth = '<path d="M100 128v2"/><path d="M92 131q8 11 16 0z" fill="#F0607E" stroke="#1C1A3A" stroke-width="2.4" stroke-linejoin="round"/>';
+    else if (emo === "sad") bMouth = '<path d="M100 128v3M93 136q7-5 14 0" fill="none" stroke="#1C1A3A" stroke-width="2.6" stroke-linecap="round"/>';
+    else if (emo === "hungry") bMouth = '<path d="M100 128v2" stroke="#1C1A3A" stroke-width="2.4" stroke-linecap="round"/><ellipse cx="100" cy="134" rx="4.5" ry="5" fill="#F0607E" stroke="#1C1A3A" stroke-width="2.2"/><path d="M106 135q-2 9 2 11q4-3-2-11z" fill="#9AD4FF"/>';
+    else bMouth = '<path d="M100 128v3M92 131q4 5 8 0q4 5 8 0" fill="none" stroke="#1C1A3A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>';
+    const bCheeks = '<ellipse cx="60" cy="122" rx="14" ry="9" fill="url(#' + id + 'c)"/><ellipse cx="140" cy="122" rx="14" ry="9" fill="url(#' + id + 'c)"/>';
+    const bFace = brows + '<g class="eyes">' + be + '</g>' + tear + bCheeks + bNose + bMouth + faceAcc;
+    const foot = x => '<ellipse cx="' + x + '" cy="203" rx="21" ry="13" ' + furB + '/><ellipse cx="' + x + '" cy="206" rx="8.5" ry="6" fill="#F4A3B6"/><circle cx="' + (x - 9) + '" cy="198" r="3.2" fill="#F4A3B6"/><circle cx="' + x + '" cy="195.5" r="3.2" fill="#F4A3B6"/><circle cx="' + (x + 9) + '" cy="198" r="3.2" fill="#F4A3B6"/>';
+    const bunnyDefs = defs.replace('</defs>', '<radialGradient id="' + id + 'i" cx=".45" cy=".35" r=".75"><stop offset="0" stop-color="#7D9BEA"/><stop offset=".6" stop-color="#3D55A8"/><stop offset="1" stop-color="#22306E"/></radialGradient><radialGradient id="' + id + 'c"><stop offset="0" stop-color="#FF9EBB" stop-opacity=".75"/><stop offset="1" stop-color="#FF9EBB" stop-opacity="0"/></radialGradient></defs>');
+    return '<svg viewBox="0 -8 200 228" aria-hidden="true">' + bunnyDefs + back +
+      '<ellipse cx="100" cy="215" rx="46" ry="6" fill="#000" opacity=".1"/>' +
+      '<path d="M100 146c34 0 46 30 42 56H58c-4-26 8-56 42-56z" ' + furB + '/><path d="M100 154c16 0 24 16 23 34H77c-1-18 7-34 23-34z" fill="' + light + '" opacity=".75"/>' +
+      foot(62) + foot(138) +
+      '<path d="M84 176c-5 10-6 24-4 34 1 4 15 4 16 0 1-10 0-24-3-34zM116 176c5 10 6 24 4 34-1 4-15 4-16 0-1-10 0-24 3-34z" ' + furB + ' class="arm-l"/>' +
+      ears + '<path d="M100 54c35 0 56 22 58 48 9 9 10 30-2 40-13 15-32 20-56 20s-43-5-56-20c-12-10-11-31-2-40 2-26 23-48 58-48z" ' + fur + '/>' +
+      '<path d="M44 140q-6 6-1 12M156 140q6 6 1 12M52 148q-3 6 2 10M148 148q3 6-2 10" fill="none" stroke="' + line + '" stroke-width="2" stroke-linecap="round"/>' + extra +
+      '<g transform="translate(0 6)">' + bFace + '</g>' + acc + night + '</svg>';
+  }
+  if (false) {
     const bean = (x) => '<ellipse cx="' + x + '" cy="207" rx="6" ry="4" fill="#FFB3C7"/><circle cx="' + (x - 6) + '" cy="200" r="2.2" fill="#FFB3C7"/><circle cx="' + x + '" cy="198" r="2.2" fill="#FFB3C7"/><circle cx="' + (x + 6) + '" cy="200" r="2.2" fill="#FFB3C7"/>';
     const carrot = emo === "asleep" ? "" : '<g transform="translate(101 170) rotate(-24) scale(1.25)"><path d="M-5-12h10l-5 30z" fill="#FF9A3C" stroke="#E07A1E" stroke-width="1.8" stroke-linejoin="round"/><path d="M-3-3h4M-2 5h3" stroke="#E07A1E" stroke-width="1.4" stroke-linecap="round"/><path d="M0-12c-6-8-10-6-8-1M0-12c0-9 4-11 5-4M0-12c6-7 10-4 7 0" fill="none" stroke="#5DBB63" stroke-width="2.6" stroke-linecap="round"/></g>';
     return '<svg viewBox="0 -8 200 228" aria-hidden="true">' + defs + back +
