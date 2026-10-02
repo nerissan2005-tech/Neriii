@@ -34,6 +34,7 @@ const ICONS = {
   download: "M12 4v11M7 10l5 5 5-5M5 20h14",
   check: "M5 12.5l4.5 4.5L19 7.5",
   share: "M12 3v12M8 7l4-4 4 4M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1",
+  wallet: "M4 7h15a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12v3M16 13.5h.01",
   moon: "M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5z",
   sun: "M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"
 };
@@ -57,7 +58,7 @@ const VIEWS = [
   ["habits", "Alışkanlıklar", "repeat"],
   ["calendar", "Takvim & Alışkanlık", "calendar"],
   ["journal", "Günlük", "heart"],
-  ["shopping", "Alışveriş Listesi", "cart"],
+  ["shopping", "Ödemelerim ve Alışveriş", "wallet"],
   ["prayers", "Dualarımız", "moon"],
   ["pet", "Petim", "paw"],
   ["memories", "Anı Defteri", "camera"],
