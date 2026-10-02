@@ -24,9 +24,9 @@ const DAILY = [["olumlama", "Günün olumlamasını oku"], ["dua", "Bir dua ya d
 const PET_TASKS = [
   ["olumlama", "Günün olumlaması", 10, 10], ["dua", "Dua ve sureler", 10, 30], ["gunluk", "Günlük", 20, 20],
   ["besle", "Besle", 10, 30], ["sev", "Sev", 5, 15], ["sihir", "Sihirli Kutu", 10, 10], ["mesaj", "Mesaj", 2, 10],
-  ["gorev", "Plan işleri", 5, 20], ["aliskanlik", "Alışkanlıklar", 5, 20], ["ani", "Anı", 15, 15], ["kalp", "Arkadaş sevgisi", 5, 50], ["bonus", "Tüm görevler bonusu", 30, 30]
+  ["gorev", "Plan işleri", 5, 20], ["aliskanlik", "Alışkanlıklar", 5, 20], ["uyku", "Güzel uyku", 15, 15], ["ani", "Anı", 15, 15], ["kalp", "Arkadaş sevgisi", 5, 50], ["bonus", "Tüm görevler bonusu", 30, 30]
 ];
-const EMO_TEXT = { happy: "mutlu 😊", love: "çok mutlu 🥰", sad: "üzgün 🥺", sleepy: "uykulu 😴", hungry: "aç " };
+const EMO_TEXT = { happy: "mutlu 😊", love: "çok mutlu 🥰", sad: "üzgün 🥺", sleepy: "uykulu 😴", hungry: "aç ", asleep: "mışıl mışıl uyuyor 💤" };
 let petState = null;
 let petSaveTimer = null;
 let petRenderTimer = null;
@@ -93,66 +93,96 @@ function petAward(kind, amount, cap) {
 }
 
 function petNeeds(p) {
-  const now = Date.now();
+  const now = p.sleeping && p.sleepAt ? p.sleepAt : Date.now();
   return {
     hunger: Math.round(clamp(100 - (now - (p.fedAt || now)) / 3600000 * 5, 0, 100)),
     love: Math.round(clamp(100 - (now - (p.pettedAt || now)) / 3600000 * 4, 0, 100))
   };
 }
 function petEmotion(p, ownMood) {
+  if (p.sleeping) return "asleep";
   const n = petNeeds(p);
   const mood = ownMood !== undefined ? ownMood : (p === petState && typeof journalOf === "function" ? ((journalOf(todayKey) || {}).mood || "") : "");
   if (n.hunger < 30) return "hungry";
   if (mood === "Zor bir gün" || n.love < 25) return "sad";
-  if (mood === "Yorgun") return "sleepy";
+  if (mood === "Yorgun" || isBedtime()) return "sleepy";
   if (mood === "Harika" || (p.day && p.day.date === todayKey && dailyDone(p) === DAILY.length)) return "love";
   return "happy";
 }
-const otherEmotion = p => p.day && p.day.date !== todayKey && p.lastActive !== todayKey ? "sad" : (p.mood || "happy");
+const isBedtime = () => { const hr = new Date().getHours(); return hr >= 22 || hr < 6; };
+const otherEmotion = p => p.sleeping ? "asleep" : p.day && p.day.date !== todayKey && p.lastActive !== todayKey ? "sad" : (p.mood || "happy");
+
+function shade(hex, amt) {
+  const n = parseInt(hex.slice(1), 16);
+  const f = v => Math.round(clamp(amt < 0 ? v * (1 + amt) : v + (255 - v) * amt, 0, 255));
+  const r = f(n >> 16), g = f((n >> 8) & 255), b = f(n & 255);
+  return "#" + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
+}
 
 function petSVG(o) {
   const sp = o.species === "bear" ? "bear" : "bunny";
   const c = o.color || PET_COLORS[sp][0][0];
   const emo = o.emotion || "happy";
   const w = o.wear || {};
-  const ink = "#2B1B2E";
-  const dy = sp === "bear" ? 6 : 0;
-  const top = sp === "bear" ? 46 : 54;
-  let back = "", ears = "", face = "", eyes = "", mouth = "", acc = "";
-  if (w.back === "wings") back = '<path d="M56 160c-34-8-48-44-34-54 12-8 32 12 40 34zM144 160c34-8 48-44 34-54-12-8-32 12-40 34z" fill="#fff" stroke="#E7DDF0" stroke-width="3"/>';
-  if (sp === "bunny") ears = '<g><ellipse cx="78" cy="40" rx="14" ry="38" fill="' + c + '" stroke="rgba(0,0,0,.08)" stroke-width="2" transform="rotate(-10 78 72)" class="ear-l"/><ellipse cx="78" cy="42" rx="6.5" ry="27" fill="#FFB8CC" transform="rotate(-10 78 72)" class="ear-l"/><ellipse cx="122" cy="40" rx="14" ry="38" fill="' + c + '" stroke="rgba(0,0,0,.08)" stroke-width="2" transform="rotate(10 122 72)" class="ear-r"/><ellipse cx="122" cy="42" rx="6.5" ry="27" fill="#FFB8CC" transform="rotate(10 122 72)" class="ear-r"/></g>';
-  else ears = '<g><circle cx="56" cy="58" r="19" fill="' + c + '" stroke="rgba(0,0,0,.08)" stroke-width="2" class="ear-l"/><circle cx="56" cy="58" r="10" fill="#F4B7C4" class="ear-l"/><circle cx="144" cy="58" r="19" fill="' + c + '" stroke="rgba(0,0,0,.08)" stroke-width="2" class="ear-r"/><circle cx="144" cy="58" r="10" fill="#F4B7C4" class="ear-r"/></g>';
-  const heart = (x, y, s, fill) => '<path d="M' + x + ' ' + (y + 5 * s) + 'c' + (-7 * s) + ' ' + (-5 * s) + ' ' + (-9 * s) + ' ' + (-11 * s) + ' ' + (-5 * s) + ' ' + (-13 * s) + ' ' + (2 * s) + ' ' + (-1 * s) + ' ' + (4 * s) + ' 0 ' + (5 * s) + ' ' + (2 * s) + ' ' + (1 * s) + ' ' + (-2 * s) + ' ' + (3 * s) + ' ' + (-3 * s) + ' ' + (5 * s) + ' ' + (-2 * s) + ' ' + (4 * s) + ' ' + (2 * s) + ' ' + (2 * s) + ' ' + (8 * s) + ' ' + (-5 * s) + ' ' + (13 * s) + 'z" fill="' + fill + '"/>';
-  if (emo === "love") eyes = heart(80, 98, 1.1, "#E0457F") + heart(120, 98, 1.1, "#E0457F");
-  else if (emo === "happy") eyes = '<path d="M72 102q8-10 16 0M112 102q8-10 16 0" fill="none" stroke="' + ink + '" stroke-width="5" stroke-linecap="round"/>';
-  else if (emo === "sleepy") eyes = '<path d="M72 102q8 5 16 0M112 102q8 5 16 0" fill="none" stroke="' + ink + '" stroke-width="5" stroke-linecap="round"/><text x="150" y="58" font-size="20" font-weight="700" fill="#8E8BB8" font-family="sans-serif">z</text><text x="164" y="42" font-size="14" font-weight="700" fill="#8E8BB8" font-family="sans-serif">z</text>';
-  else eyes = '<ellipse cx="80" cy="100" rx="6.5" ry="8" fill="' + ink + '"/><ellipse cx="120" cy="100" rx="6.5" ry="8" fill="' + ink + '"/><circle cx="82.5" cy="96.5" r="2.6" fill="#fff"/><circle cx="122.5" cy="96.5" r="2.6" fill="#fff"/>';
-  if (emo === "sad") eyes += '<path d="M70 86l17 6M130 86l-17 6" stroke="' + ink + '" stroke-width="4" stroke-linecap="round"/><path d="M76 110q-4 9 0 13q4-4 0-13z" fill="#8ECBFF"/>';
-  if (sp === "bear") face = '<ellipse cx="100" cy="120" rx="24" ry="17" fill="#FFF4E8" opacity=".92"/><ellipse cx="100" cy="112" rx="8" ry="6" fill="#3A2530"/>';
-  else face = '<ellipse cx="100" cy="113" rx="5" ry="4" fill="#F27BA5"/>';
-  const my = 118 + dy;
-  if (emo === "love") mouth = '<path d="M91 ' + my + 'q9 12 18 0z" fill="#E0455F" stroke="' + ink + '" stroke-width="3" stroke-linejoin="round"/>';
-  else if (emo === "sad") mouth = '<path d="M93 ' + (my + 6) + 'q7-6 14 0" fill="none" stroke="' + ink + '" stroke-width="4" stroke-linecap="round"/>';
-  else if (emo === "sleepy" || emo === "hungry") mouth = '<ellipse cx="100" cy="' + (my + 3) + '" rx="4" ry="5" fill="' + ink + '"/>' + (emo === "hungry" ? '<path d="M106 ' + (my + 5) + 'q-2 9 2 11q3-3-2-11z" fill="#9FD3FF"/>' : "");
-  else mouth = '<path d="M93 ' + my + 'q3.5 5 7 0q3.5 5 7 0" fill="none" stroke="' + ink + '" stroke-width="3.5" stroke-linecap="round"/>';
-  if (w.neck === "scarf") acc += '<path d="M60 146q40 18 80 0v13q-40 18-80 0z" fill="#E0455F"/><path d="M72 154l-6 30 15-3 3-23z" fill="#C93450"/>';
-  if (w.neck === "bowtie") acc += '<path d="M100 152l-18-10v20zM100 152l18-10v20z" fill="#8459AE"/><circle cx="100" cy="152" r="5" fill="#6A3F94"/>';
-  if (w.neck === "necklace") acc += '<path d="M74 144q26 22 52 0" fill="none" stroke="#FFC94A" stroke-width="3"/>' + heart(100, 158, .8, "#E0457F");
-  if (w.face === "hglasses") acc += '<g opacity=".95">' + heart(80, 96, 1.6, "rgba(255,120,170,.35)") + heart(120, 96, 1.6, "rgba(255,120,170,.35)") + '</g><path d="M90 100h20" stroke="#E0457F" stroke-width="3"/>';
-  if (w.face === "sun") acc += '<rect x="66" y="91" width="28" height="18" rx="8" fill="#2B1B2E"/><rect x="106" y="91" width="28" height="18" rx="8" fill="#2B1B2E"/><path d="M94 98h12" stroke="#2B1B2E" stroke-width="3"/><path d="M72 96l8-1" stroke="#fff" stroke-width="2" opacity=".6"/>';
-  if (w.head === "bow") acc += '<g transform="translate(' + (sp === "bunny" ? 138 : 140) + ' ' + (top + 6) + ') rotate(18)"><path d="M0 0l-18-12v24zM0 0l18-12v24z" fill="#F27BA5"/><circle r="6" fill="#E0457F"/></g>';
-  if (w.head === "flower") acc += [[66, 10], [83, 3], [100, 0], [117, 3], [134, 10]].map(([x, d], i) => '<circle cx="' + x + '" cy="' + (top + d) + '" r="9" fill="' + ["#FFB3C7", "#FFE08A", "#C8A8FF", "#9FE3B8", "#FFB3C7"][i] + '"/><circle cx="' + x + '" cy="' + (top + d) + '" r="3.5" fill="#FFD25E"/>').join("");
-  if (w.head === "party") acc += '<path d="M100 ' + (top - 42) + 'L84 ' + (top + 4) + 'H116z" fill="#8ECBFF"/><path d="M92 ' + (top - 18) + 'h16M88 ' + (top - 6) + 'h24" stroke="#fff" stroke-width="4"/><circle cx="100" cy="' + (top - 44) + '" r="7" fill="#FFD166"/>';
-  if (w.head === "crown") acc += '<path d="M78 ' + (top + 2) + 'l6-24 12 14 4-18 4 18 12-14 6 24z" fill="#FFC94A" stroke="#E0A020" stroke-width="3" stroke-linejoin="round"/><circle cx="100" cy="' + (top - 10) + '" r="4" fill="#E0457F"/>';
-  if (w.head === "halo") acc += '<ellipse cx="100" cy="' + (sp === "bunny" ? 6 : 30) + '" rx="30" ry="7" fill="none" stroke="#FFD25E" stroke-width="6"/>';
-  return '<svg viewBox="0 0 200 220" aria-hidden="true">' + back +
-    '<ellipse cx="100" cy="212" rx="44" ry="6" fill="#000" opacity=".1"/>' +
-    '<ellipse cx="78" cy="203" rx="15" ry="9" fill="' + c + '" stroke="rgba(0,0,0,.08)" stroke-width="2"/><ellipse cx="122" cy="203" rx="15" ry="9" fill="' + c + '" stroke="rgba(0,0,0,.08)" stroke-width="2"/>' +
-    '<ellipse cx="100" cy="172" rx="46" ry="38" fill="' + c + '" stroke="rgba(0,0,0,.08)" stroke-width="2"/><ellipse cx="100" cy="178" rx="27" ry="24" fill="#fff" opacity=".5"/>' +
-    '<ellipse cx="58" cy="168" rx="10" ry="15" fill="' + c + '" stroke="rgba(0,0,0,.08)" stroke-width="2" transform="rotate(20 58 168)" class="arm-l"/><ellipse cx="142" cy="168" rx="10" ry="15" fill="' + c + '" stroke="rgba(0,0,0,.08)" stroke-width="2" transform="rotate(-20 142 168)" class="arm-r"/>' +
-    ears + '<circle cx="100" cy="104" r="56" fill="' + c + '" stroke="rgba(0,0,0,.08)" stroke-width="2"/>' +
-    '<ellipse cx="68" cy="118" rx="10" ry="6" fill="#FFB3C7" opacity=".85"/><ellipse cx="132" cy="118" rx="10" ry="6" fill="#FFB3C7" opacity=".85"/>' +
-    face + '<g class="eyes">' + eyes + '</g>' + mouth + acc + '</svg>';
+  const id = "p" + Math.random().toString(36).slice(2, 8);
+  const line = shade(c, -0.22);
+  const light = shade(c, 0.45);
+  const ink = "#3A2433";
+  const fur = 'fill="url(#' + id + 'f)" stroke="' + line + '" stroke-width="2.5"';
+  const furB = 'fill="url(#' + id + 'b)" stroke="' + line + '" stroke-width="2.5"';
+  const top = sp === "bear" ? 40 : 46;
+  let back = "", ears = "", eyes = "", mouth = "", acc = "", extra = "";
+  const heart = (x, y, s, fill) => '<path transform="translate(' + x + ' ' + y + ') scale(' + s + ')" d="M0 6C-7 1-10-4-6.5-7.5-4-10 0-8 0-5c0-3 4-5 6.5-2.5C10-4 7 1 0 6z" fill="' + fill + '"/>';
+  if (w.back === "wings") back = '<path d="M62 168c-34-4-52-38-40-50 10-10 32 6 42 28zM138 168c34-4 52-38 40-50-10-10-32 6-42 28z" fill="#fff" stroke="#E7DDF0" stroke-width="3"/>';
+  if (sp === "bunny") {
+    ears = '<g class="ear-l"><path d="M70 64C56 40 54 8 68 4c12-3 20 26 20 52" ' + fur + '/><path d="M72 56C63 38 62 16 68 12c6-2 11 18 12 40" fill="#FFC2D3"/></g>' +
+      '<g class="ear-r"><path d="M130 64c14-24 16-56 2-60-12-3-20 26-20 52" ' + fur + '/><path d="M128 56c9-18 10-40 4-44-6-2-11 18-12 40" fill="#FFC2D3"/></g>';
+    extra = '<path d="M94 40q4-10 8 0M100 38q4-12 9-2" fill="none" stroke="' + line + '" stroke-width="2.5" stroke-linecap="round"/>';
+  } else {
+    ears = '<g class="ear-l"><circle cx="50" cy="52" r="22" ' + fur + '/><circle cx="50" cy="54" r="12" fill="#F7BACB"/></g>' +
+      '<g class="ear-r"><circle cx="150" cy="52" r="22" ' + fur + '/><circle cx="150" cy="54" r="12" fill="#F7BACB"/></g>';
+  }
+  const openEyes = (big) => {
+    const ry = big ? 13 : 11, rx = big ? 10.5 : 9;
+    return '<ellipse cx="76" cy="104" rx="' + rx + '" ry="' + ry + '" fill="' + ink + '"/><ellipse cx="124" cy="104" rx="' + rx + '" ry="' + ry + '" fill="' + ink + '"/>' +
+      '<circle cx="80" cy="98" r="4.2" fill="#fff"/><circle cx="128" cy="98" r="4.2" fill="#fff"/><circle cx="72.5" cy="109" r="2" fill="#fff" opacity=".9"/><circle cx="120.5" cy="109" r="2" fill="#fff" opacity=".9"/>';
+  };
+  if (emo === "love") eyes = heart(76, 104, 1.45, "#F0457F") + heart(124, 104, 1.45, "#F0457F") + '<path d="M44 82l3 6 6 3-6 3-3 6-3-6-6-3 6-3zM158 80l2.5 5 5 2.5-5 2.5-2.5 5-2.5-5-5-2.5 5-2.5z" fill="#FFD166"/>';
+  else if (emo === "happy") eyes = '<path d="M66 108q10-14 20 0M114 108q10-14 20 0" fill="none" stroke="' + ink + '" stroke-width="5.5" stroke-linecap="round"/>';
+  else if (emo === "sleepy") eyes = '<path d="M66 104q10 4 20 0M114 104q10 4 20 0" fill="none" stroke="' + ink + '" stroke-width="5" stroke-linecap="round"/><path d="M68 98q8-3 16 0M116 98q8-3 16 0" fill="none" stroke="' + line + '" stroke-width="3" stroke-linecap="round" opacity=".6"/>';
+  else if (emo === "asleep") eyes = '<path d="M66 104q10 9 20 0M114 104q10 9 20 0" fill="none" stroke="' + ink + '" stroke-width="5" stroke-linecap="round"/>';
+  else eyes = openEyes(emo === "sad" || emo === "hungry");
+  if (emo === "sad") eyes += '<path d="M64 88q9-6 18 0M118 88q9-6 18 0" fill="none" stroke="' + line + '" stroke-width="3.5" stroke-linecap="round"/><path d="M66 116q-5 10 0 14q5-4 0-14z" fill="#9AD4FF"/>';
+  const cheeks = '<ellipse cx="62" cy="124" rx="11" ry="7" fill="#FF9EBB" opacity=".75"/><ellipse cx="138" cy="124" rx="11" ry="7" fill="#FF9EBB" opacity=".75"/>' +
+    '<path d="M57 122l3-4M62 123l3-4M67 124l3-4M133 124l3-4M138 123l3-4M143 122l3-4" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".8"/>';
+  const muzzle = sp === "bear" ? '<ellipse cx="100" cy="126" rx="21" ry="15" fill="' + light + '" stroke="' + line + '" stroke-width="2" opacity=".95"/>' : "";
+  const nose = sp === "bear" ? '<path d="M93 118q7-5 14 0q-2 7-7 8q-5-1-7-8z" fill="' + ink + '"/><ellipse cx="98" cy="119" rx="2" ry="1.2" fill="#fff" opacity=".6"/>' : '<path d="M96 117q4-3 8 0q-1 4-4 5q-3-1-4-5z" fill="#F27BA5"/>';
+  const my = sp === "bear" ? 129 : 124;
+  if (emo === "love" || emo === "happy") mouth = '<path d="M93 ' + my + 'q7 11 14 0z" fill="#E8506E" stroke="' + ink + '" stroke-width="2.5" stroke-linejoin="round"/><path d="M96 ' + (my + 4) + 'q4 4 8 0" fill="#FF9AB0"/>';
+  else if (emo === "sad") mouth = '<path d="M93 ' + (my + 5) + 'q7-6 14 0" fill="none" stroke="' + ink + '" stroke-width="3.5" stroke-linecap="round"/>';
+  else if (emo === "hungry") mouth = '<ellipse cx="100" cy="' + (my + 3) + '" rx="5" ry="6" fill="#E8506E" stroke="' + ink + '" stroke-width="2.5"/><path d="M107 ' + (my + 4) + 'q-2 10 2 12q4-3-2-12z" fill="#9AD4FF"/>';
+  else mouth = '<path d="M92 ' + my + 'q4 5 8 0q4 5 8 0" fill="none" stroke="' + ink + '" stroke-width="3" stroke-linecap="round"/>';
+  const night = emo === "asleep" ? '<g class="zzz" font-family="sans-serif" font-weight="800" fill="#8E8BD8"><text x="146" y="58" font-size="22">Z</text><text x="164" y="38" font-size="16">z</text><text x="176" y="22" font-size="12">z</text></g>' : emo === "sleepy" ? '<g font-family="sans-serif" font-weight="800" fill="#A9A6D8"><text x="152" y="52" font-size="16">z</text></g>' : "";
+  if (w.neck === "scarf") acc += '<path d="M62 154q38 16 76 0v12q-38 16-76 0z" fill="#F06283"/><path d="M74 162l-6 26 13-2 3-22z" fill="#D9486B"/><path d="M66 158q34 14 68 0" stroke="#fff" stroke-width="2.5" stroke-dasharray="5 7" fill="none" opacity=".7"/>';
+  if (w.neck === "bowtie") acc += '<path d="M100 160l-17-10v20zM100 160l17-10v20z" fill="#8E6BD8"/><circle cx="100" cy="160" r="5" fill="#6E4BC0"/>';
+  if (w.neck === "necklace") acc += '<path d="M74 152q26 22 52 0" fill="none" stroke="#FFC94A" stroke-width="3"/>' + heart(100, 168, .9, "#F0457F");
+  if (w.face === "hglasses") acc += heart(76, 102, 2.2, "rgba(255,120,170,.35)") + heart(124, 102, 2.2, "rgba(255,120,170,.35)") + '<path d="M88 102h24" stroke="#F0457F" stroke-width="3"/>';
+  if (w.face === "sun") acc += '<rect x="60" y="94" width="32" height="20" rx="9" fill="#2B1B2E"/><rect x="108" y="94" width="32" height="20" rx="9" fill="#2B1B2E"/><path d="M92 101h16" stroke="#2B1B2E" stroke-width="3"/><path d="M66 99l9-1" stroke="#fff" stroke-width="2.5" opacity=".6"/>';
+  if (w.head === "bow") acc += '<g transform="translate(' + (sp === "bunny" ? 140 : 146) + ' ' + (top + 8) + ') rotate(18)"><path d="M0 0c-8-10-22-12-22 0s14 10 22 0zM0 0c8-10 22-12 22 0S8 10 0 0z" fill="#FF8FB5" stroke="#E86B98" stroke-width="2"/><circle r="6" fill="#F0457F"/></g>';
+  if (w.head === "flower") acc += [[64, 12], [81, 4], [100, 1], [119, 4], [136, 12]].map(([x, d], i) => '<circle cx="' + x + '" cy="' + (top + d) + '" r="9.5" fill="' + ["#FFB3C7", "#FFE08A", "#C8A8FF", "#9FE3B8", "#FFB3C7"][i] + '"/><circle cx="' + x + '" cy="' + (top + d) + '" r="3.8" fill="#FFD25E"/>').join("");
+  if (w.head === "party") acc += '<path d="M100 ' + (top - 44) + 'L82 ' + (top + 4) + 'H118z" fill="#8ECBFF" stroke="#6BB0EA" stroke-width="2"/><path d="M93 ' + (top - 22) + 'h14M88 ' + (top - 8) + 'h24" stroke="#fff" stroke-width="4"/><circle cx="100" cy="' + (top - 46) + '" r="7" fill="#FFD166"/>';
+  if (w.head === "crown") acc += '<path d="M78 ' + (top + 4) + 'l5-26 12 15 5-19 5 19 12-15 5 26z" fill="#FFCF5C" stroke="#E0A020" stroke-width="3" stroke-linejoin="round"/><circle cx="100" cy="' + (top - 8) + '" r="4" fill="#F0457F"/>';
+  if (w.head === "halo") acc += '<ellipse cx="100" cy="' + (sp === "bunny" ? 0 : 20) + '" rx="30" ry="7" fill="none" stroke="#FFD25E" stroke-width="6"/>';
+  if (emo === "asleep" && !w.head) acc += '<path d="M60 52q40-46 84-4" fill="#7C8CE0"/><path d="M60 52q42-16 84-4q-40 6-84 4z" fill="#fff"/><path d="M144 48q14 4 18 24" fill="none" stroke="#7C8CE0" stroke-width="7" stroke-linecap="round"/><circle cx="162" cy="76" r="7" fill="#fff"/>';
+  return '<svg viewBox="0 -8 200 228" aria-hidden="true"><defs>' +
+    '<radialGradient id="' + id + 'f" cx=".38" cy=".3" r=".8"><stop offset="0" stop-color="' + light + '"/><stop offset=".55" stop-color="' + c + '"/><stop offset="1" stop-color="' + shade(c, -0.08) + '"/></radialGradient>' +
+    '<radialGradient id="' + id + 'b" cx=".5" cy=".35" r=".7"><stop offset="0" stop-color="' + light + '"/><stop offset="1" stop-color="' + c + '"/></radialGradient></defs>' +
+    back + '<ellipse cx="100" cy="214" rx="40" ry="6" fill="#000" opacity=".1"/>' +
+    '<ellipse cx="80" cy="205" rx="14" ry="9" ' + furB + '/><ellipse cx="120" cy="205" rx="14" ry="9" ' + furB + '/>' +
+    '<ellipse cx="100" cy="180" rx="40" ry="31" ' + furB + '/><ellipse cx="100" cy="186" rx="23" ry="18" fill="' + light + '" opacity=".8"/>' +
+    '<circle cx="88" cy="174" r="10" ' + furB + ' class="arm-l"/><circle cx="112" cy="174" r="10" ' + furB + ' class="arm-r"/>' +
+    ears + '<ellipse cx="100" cy="100" rx="66" ry="60" ' + fur + '/>' + extra + muzzle +
+    '<g class="eyes">' + eyes + '</g>' + cheeks + nose + mouth + acc + night + '</svg>';
 }
 
 function petSay(stage, text) {
@@ -197,8 +227,33 @@ function petView(p, opts) {
   return { wrap, btn, emo };
 }
 
+function sleepPet() {
+  const p = myPet();
+  if (p.sleeping) return;
+  p.sleeping = true;
+  p.sleepAt = Date.now();
+  savePet();
+  showToast(p.name + " uyudu 🌙", "Sen uyurken o da dinlenecek, acıkmayacak. Sabah uyandırmayı unutma ♡");
+  render();
+}
+function wakePet() {
+  const p = myPet();
+  if (!p.sleeping) return;
+  const slept = Date.now() - (p.sleepAt || Date.now());
+  p.fedAt = (p.fedAt || Date.now()) + slept;
+  p.pettedAt = (p.pettedAt || Date.now()) + slept;
+  p.sleeping = false;
+  p.sleepAt = 0;
+  if (slept >= 5 * 3600000) { p.pettedAt = Date.now(); petAward("uyku", 15); }
+  savePet();
+  showToast("Günaydın " + p.name + "! ☀️", slept >= 5 * 3600000 ? "Güzel bir uyku çekti, +15 puan kazandın" : "Biraz kestirdi, şimdi enerji dolu");
+  render();
+}
+const sleepBtn = (p, small) => h("button", { class: "btn" + (small ? " small light-btn" : ""), type: "button", text: p.sleeping ? "Uyandır ☀️" : "Uyut 🌙", onclick: () => p.sleeping ? wakePet() : sleepPet() });
+
 function feedPet(stage) {
   const p = myPet();
+  if (p.sleeping) { petSay(stage, "Şşş… " + p.name + " uyuyor 🤫"); return; }
   const n = petNeeds(p);
   const food = PET_FOOD[p.species];
   if (n.hunger >= 90) { petSay(stage, "Karnım tok 😋 Biraz sonra tekrar"); return; }
@@ -209,6 +264,7 @@ function feedPet(stage) {
 }
 function lovePet(stage) {
   const p = myPet();
+  if (p.sleeping) { petSay(stage, "Şşş… tatlı rüyalar görüyor 💤"); petBurst(stage, "💤", 3); return; }
   p.pettedAt = Date.now();
   petAward("sev", 5);
   petBurst(stage, "💗", 8);
@@ -217,7 +273,7 @@ function lovePet(stage) {
 
 function petStageEl(p, big, interactive) {
   const v = petView(p);
-  const stage = h("div", { class: "pet-stage" + (big ? " big" : ""), "data-fx": p.effect || "" }, v.wrap);
+  const stage = h("div", { class: "pet-stage" + (big ? " big" : "") + (p.sleeping ? " night" : ""), "data-fx": p.sleeping ? "💤" : (p.effect || "") }, v.wrap);
   if (interactive) v.btn.addEventListener("click", () => { v.wrap.classList.remove("hop"); void v.wrap.offsetWidth; v.wrap.classList.add("hop"); setTimeout(() => v.wrap.classList.remove("hop"), 700); lovePet(stage); });
   return stage;
 }
@@ -242,8 +298,9 @@ function petCard() {
     needBar("Tokluk", n.hunger, n.hunger < 30 ? "low" : ""),
     needBar("Sevgi", n.love, n.love < 30 ? "low" : ""),
     h("div", { class: "row", style: "justify-content:center;margin-top:.5rem;gap:.4rem" },
-      h("button", { class: "btn small light-btn", type: "button", text: "Besle " + PET_FOOD[p.species][0], onclick: () => feedPet(stage) }),
-      h("button", { class: "btn small light-btn", type: "button", text: "Sev 💗", onclick: () => lovePet(stage) })),
+      p.sleeping ? null : h("button", { class: "btn small light-btn", type: "button", text: "Besle " + PET_FOOD[p.species][0], onclick: () => feedPet(stage) }),
+      p.sleeping ? null : h("button", { class: "btn small light-btn", type: "button", text: "Sev 💗", onclick: () => lovePet(stage) }),
+      p.sleeping || isBedtime() ? sleepBtn(p, true) : null),
     h("button", { class: "more", type: "button", text: p.name + "'e git", onclick: () => go("pet") })
   );
 }
@@ -352,7 +409,7 @@ function renderPet() {
   const st = petStage(p.xp), nx = nextStage(p.xp);
   const stage = petStageEl(p, true, true);
   const food = PET_FOOD[p.species];
-  const status = emo === "hungry" ? p.name + " acıkmış, onu besle " + food[0] : emo === "sad" ? p.name + " biraz üzgün, onu sev 🥺" : p.name + " şu an " + EMO_TEXT[emo];
+  const status = p.sleeping ? p.name + " mışıl mışıl uyuyor 💤 Uyurken acıkmıyor" : emo === "hungry" ? p.name + " acıkmış, onu besle " + food[0] : emo === "sad" ? p.name + " biraz üzgün, onu sev 🥺" : isBedtime() ? p.name + " uykulu, uyku vakti geldi 🌙" : p.name + " şu an " + EMO_TEXT[emo];
 
   const main = h("section", { class: "card pet-main span-8" },
     h("div", { class: "pet-head" },
@@ -368,8 +425,9 @@ function renderPet() {
       needBar("Büyüme", nx ? Math.round((p.xp - st[0]) / (nx[0] - st[0]) * 100) : 100, "grow")),
     h("p", { class: "tag", style: "text-align:center;margin:.3rem 0 0", text: nx ? nx[1] + " olmasına " + (nx[0] - p.xp) + " puan kaldı" : "Kocaman oldu! 🌈" }),
     h("div", { class: "row", style: "justify-content:center;margin-top:1rem" },
-      h("button", { class: "btn primary", type: "button", text: "Besle " + food[0], onclick: () => feedPet(stage) }),
-      h("button", { class: "btn", type: "button", text: "Sev 💗", onclick: () => lovePet(stage) }),
+      p.sleeping ? null : h("button", { class: "btn primary", type: "button", text: "Besle " + food[0], onclick: () => feedPet(stage) }),
+      p.sleeping ? null : h("button", { class: "btn", type: "button", text: "Sev 💗", onclick: () => lovePet(stage) }),
+      h("button", { class: "btn" + (p.sleeping || isBedtime() ? " primary" : ""), type: "button", text: p.sleeping ? "Uyandır ☀️" : "Uyut 🌙", onclick: () => p.sleeping ? wakePet() : sleepPet() }),
       h("button", { class: "btn", type: "button", text: p.partner ? "Paylaşılıyor 💞" : "Paylaş 💞", onclick: choosePartner }))
   );
 
@@ -445,7 +503,10 @@ function petCarePrompt() {
   try { last = Number(localStorage.getItem("neriii-pet-prompt") || 0); } catch (e) {}
   if (Date.now() - last < 3 * 3600000) return;
   const n = petNeeds(p);
-  if (p.species && n.hunger >= 60 && n.love >= 60) return;
+  const hr = new Date().getHours();
+  const morning = p.sleeping && hr >= 6 && hr < 13;
+  const bedtime = !p.sleeping && isBedtime();
+  if (p.species && !morning && !bedtime && (p.sleeping || (n.hunger >= 60 && n.love >= 60))) return;
   try { localStorage.setItem("neriii-pet-prompt", String(Date.now())); } catch (e) {}
   const root = $("dialog");
   const close = () => { root.classList.remove("show"); setTimeout(() => { root.hidden = true; root.replaceChildren(); }, 160); };
@@ -456,6 +517,16 @@ function petCarePrompt() {
         h("h2", { text: "Minik bir dost seni bekliyor!" }),
         h("p", { text: "Bir tavşan ya da ayıcık seç, ona baktıkça büyüsün 🐰🐻" }),
         h("div", { class: "dlg-actions" }, h("button", { class: "btn", type: "button", text: "Sonra", onclick: close }), h("button", { class: "btn primary", type: "button", text: "Hadi seçelim", onclick: () => { close(); go("pet"); } }))));
+  } else if (morning || bedtime) {
+    const box = h("div", { class: "pet-stage" + (p.sleeping ? " night" : "") }, petView(p, { scale: .85 }).wrap);
+    root.replaceChildren(h("div", { class: "dlg-back", onclick: close }),
+      h("div", { class: "dlg dlg-wide pet-prompt", role: "dialog", "aria-modal": "true", "aria-label": p.name },
+        box,
+        h("h2", { text: morning ? "Günaydın! ☀️" : p.name + "'in uykusu geldi 😴" }),
+        h("p", { text: morning ? p.name + " hâlâ uyuyor. Uyandıralım mı?" : "Sen de uyumadan önce onu uyutalım mı? Uyurken acıkmaz 🌙" }),
+        h("div", { class: "dlg-actions" },
+          h("button", { class: "btn", type: "button", text: "Sonra", onclick: close }),
+          h("button", { class: "btn primary", type: "button", text: morning ? "Uyandır ☀️" : "Uyut 🌙", onclick: () => { close(); morning ? wakePet() : sleepPet(); } }))));
   } else {
     const food = PET_FOOD[p.species];
     const hungry = n.hunger < 60;
