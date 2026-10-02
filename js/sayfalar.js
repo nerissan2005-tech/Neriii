@@ -367,88 +367,90 @@ function togglePrayed(id) {
   render();
 }
 
-function builtinPrayers() {
+function prayerCard(o) {
   const done = prayedToday();
+  const read = done.includes(o.id);
   const open = state.mealOpen || {};
-  return h("section", { class: "builtin" },
-    h("div", { class: "builtin-head" },
-      h("h3", { text: "Sureler ve dualar" }),
-      h("span", { class: "tag", text: "Bugün " + done.filter(id => BUILTIN_PRAYERS.some(p => p.id === id)).length + " / " + BUILTIN_PRAYERS.length + " okundu" })),
-    h("div", { class: "prayer-list" }, BUILTIN_PRAYERS.map(p => {
-      const read = done.includes(p.id);
-      return h("article", { class: "prayer builtin-card" + (read ? " read" : ""), id: "dua-" + p.id },
-        h("div", { class: "prayer-head" },
-          h("span", { class: "prayer-ic", html: ico("moon", 18) }),
-          h("div", { style: "flex:1;min-width:0" }, h("h3", { text: p.title }), h("span", { class: "tag", text: p.sub })),
-          h("span", { class: "who mine", text: p.kind })),
-        h("div", { class: "okunus" }, p.lines.map(l => h("p", { text: l }))),
-        open[p.id] ? h("p", { class: "meal", text: p.meal }) : null,
-        h("div", { class: "prayer-foot" },
-          h("button", { class: "amin" + (read ? " on" : ""), type: "button", "aria-pressed": read ? "true" : "false", onclick: () => togglePrayed(p.id) }, read ? "✓ Bugün okudum" : "🤲 Okudum"),
-          h("button", { class: "more", type: "button", style: "margin:0;padding:0", text: open[p.id] ? "Anlamını gizle" : "Anlamını göster",
-            onclick: () => { state.mealOpen = Object.assign({}, open, { [p.id]: !open[p.id] }); render(); } }))
-      );
-    }))
+  return h("article", { class: "prayer builtin-card" + (read ? " read" : ""), id: "dua-" + o.id },
+    h("div", { class: "prayer-head" },
+      h("span", { class: "prayer-ic", html: ico("moon", 18) }),
+      h("div", { style: "flex:1;min-width:0" }, o.titleEl || h("h3", { text: o.title }), h("div", { class: "prayer-sub" }, h("span", { class: "tag", text: o.sub }), o.who || null)),
+      o.badge ? h("span", { class: "who mine", text: o.badge }) : null,
+      o.tools && o.tools.some(Boolean) ? h("div", { class: "prayer-tools" }, o.tools) : null),
+    o.body,
+    o.meal && open[o.id] ? h("p", { class: "meal", text: o.meal }) : null,
+    h("div", { class: "prayer-foot" },
+      h("button", { class: "amin" + (read ? " on" : ""), type: "button", "aria-pressed": read ? "true" : "false", onclick: () => togglePrayed(o.id) }, read ? "✓ Bugün okudum" : "📖 Okudum"),
+      o.amin || null,
+      o.meal ? h("button", { class: "more", type: "button", style: "margin:0;padding:0", text: open[o.id] ? "Anlamını gizle" : "Anlamını göster",
+        onclick: () => { state.mealOpen = Object.assign({}, open, { [o.id]: !open[o.id] }); render(); } }) : null)
   );
 }
 
 function renderPrayers() {
   const all = listOf("prayer").sort((a, b) => (b.at || 0) - (a.at || 0));
   const f = state.prayerCat || "Tümü";
-  const shown = all.filter(p => f === "Tümü" || p.cat === f);
   const form = h("form", { onsubmit: e => {
     e.preventDefault();
     const title = $("prTitle").value.trim(), text = $("prText").value.trim();
     if (!title && !text) return;
     addItem("prayer", { title: title || "Dua", text, cat: $("prCat").value, amins: {} }, getVis("prayer"));
     $("prTitle").value = ""; $("prText").value = "";
+    state.prayerCat = "Tümü";
   } },
     h("div", { class: "row" },
       h("input", { class: "field", id: "prTitle", type: "text", placeholder: "Duanın adı, örn. Sabah duası", "aria-label": "Duanın adı", autocomplete: "off" }),
       h("select", { id: "prCat", "aria-label": "Kategori" }, PRAYER_CATS.map(c => h("option", { text: c })))),
-    h("textarea", { id: "prText", rows: "4", style: "margin-top:.6rem", placeholder: "Duanı buraya yaz…", "aria-label": "Dua" }),
+    h("textarea", { id: "prText", rows: "3", style: "margin-top:.6rem", placeholder: "Duanı buraya yaz…", "aria-label": "Dua" }),
     h("div", { class: "row", style: "justify-content:space-between;align-items:flex-start;margin-top:.4rem" },
       visPicker("prayer"),
       h("button", { class: "btn primary", type: "submit", style: "margin-top:.5rem", text: "Duayı ekle" }))
   );
 
-  const cats = ["Tümü"].concat(PRAYER_CATS.filter(c => all.some(p => p.cat === c)));
-  const chips = cats.length > 2 ? h("div", { class: "chips" }, cats.map(c =>
-    h("button", { type: "button", "aria-pressed": c === f ? "true" : "false", onclick: () => { state.prayerCat = c; render(); } }, c,
-      h("small", { text: String(c === "Tümü" ? all.length : all.filter(p => p.cat === c).length) })))) : null;
-
-  const cardsEl = shown.length ? h("div", { class: "prayer-list" }, shown.map(p => {
+  const userCards = all.filter(p => f === "Tümü" || p.cat === f).map(p => {
     const amins = Object.keys(p.amins || {});
     const mineAmin = amins.includes(me.uid);
     const editing = state.prayerEdit === p.id && isMine(p);
-    return h("article", { class: "prayer" },
-      h("div", { class: "prayer-head" },
-        h("span", { class: "prayer-ic", html: ico("moon", 18) }),
-        editing
-          ? h("input", { class: "field live", id: "pe-t-" + p.id, value: p.title || "", "aria-label": "Duanın adı", oninput: e => updItem(p, { title: e.target.value }, true) })
-          : h("h3", { text: p.title || "Dua" }),
-        h("span", { class: "tag", text: p.cat || "" }),
-        whoTag(p), visBtn(p),
+    const lines = (p.text || "").split("\n").map(x => x.trim()).filter(Boolean);
+    return prayerCard({
+      id: p.id,
+      title: p.title || "Dua",
+      titleEl: editing ? h("input", { class: "field live", id: "pe-t-" + p.id, value: p.title || "", "aria-label": "Duanın adı", oninput: e => updItem(p, { title: e.target.value }, true) }) : null,
+      sub: p.cat || "Dua",
+      who: whoTag(p),
+      tools: [visBtn(p),
         isMine(p) ? h("button", { class: "icon-btn sm", type: "button", "aria-label": editing ? "Düzenlemeyi bitir" : "Düzenle", html: ico(editing ? "check" : "note", 16),
           onclick: () => { flushItems(); state.prayerEdit = editing ? null : p.id; state.focus = editing ? null : "#pe-x-" + p.id; render(); } }) : null,
-        delBtn(p, p.title, "Bu dua silinsin mi?")),
-      editing
+        delBtn(p, p.title, "Bu dua silinsin mi?")],
+      body: editing
         ? h("textarea", { class: "live", id: "pe-x-" + p.id, rows: "5", "aria-label": "Dua", oninput: e => updItem(p, { text: e.target.value }, true) }, p.text || "")
-        : p.text ? h("p", { class: "prayer-text", text: p.text }) : null,
-      h("div", { class: "prayer-foot" },
+        : lines.length ? h("div", { class: "okunus" }, lines.map(l => h("p", { text: l }))) : null,
+      amin: h("span", { class: "row", style: "gap:.5rem" },
         h("button", { class: "amin" + (mineAmin ? " on" : ""), type: "button", "aria-pressed": mineAmin ? "true" : "false", onclick: () => toggleAmin(p) }, "🤲 ", mineAmin ? "Amin dedin" : "Amin"),
         amins.length ? h("span", { class: "tag", title: amins.map(u => u === me.uid ? me.name : nameOfUid(u)).join(", "),
           text: amins.length === 1 && mineAmin ? "Sen amin dedin" : amins.length + " kişi amin dedi" }) : null)
-    );
-  })) : h("p", { class: "empty", text: all.length ? "Bu kategoride dua yok." : "Henüz dua eklenmedi. Aşağıdan ilk duayı sen yaz ♡" });
+    });
+  });
+  const builtinCards = (f === "Tümü" || f === "Sureler") ? BUILTIN_PRAYERS.map(p => prayerCard({ id: p.id, title: p.title, sub: p.sub, badge: p.kind, body: h("div", { class: "okunus" }, p.lines.map(l => h("p", { text: l }))), meal: p.meal })) : [];
+  const shownCards = (f === "Sureler" ? [] : userCards).concat(builtinCards);
+
+  const cats = ["Tümü", "Sureler"].concat(PRAYER_CATS.filter(c => all.some(p => p.cat === c)));
+  const chips = h("div", { class: "chips" }, cats.map(c =>
+    h("button", { type: "button", "aria-pressed": c === f ? "true" : "false", onclick: () => { state.prayerCat = c; render(); } }, c === "Sureler" ? "Sureler ve dualar" : c,
+      h("small", { text: String(c === "Tümü" ? all.length + BUILTIN_PRAYERS.length : c === "Sureler" ? BUILTIN_PRAYERS.length : all.filter(p => p.cat === c).length) }))));
+
+  const ids = all.map(p => p.id).concat(BUILTIN_PRAYERS.map(p => p.id));
+  const readN = prayedToday().filter(id => ids.includes(id)).length;
 
   return h("div", {},
-    pageHead("Dualarımız", "Sureleri ve duaları oku, kendi dualarını yaz, istersen sevdiklerinle paylaş ve birlikte amin deyin."),
-    h("h3", { class: "section-title", text: "Bizim dualarımız" }),
-    h("div", { style: "margin-bottom:1.25rem" }, chips, cardsEl),
+    pageHead("Dualarımız", "Duanı yaz, sureleri ve duaları oku, istersen sevdiklerinle paylaş ve birlikte amin deyin."),
     h("div", { class: "grid" },
       h("section", { class: "card span-12 t-sage" }, doodle("moon"), h("h3", { class: "form-title", text: "Yeni dua ekle" }), form)),
-    h("div", { style: "margin-top:2.25rem" }, builtinPrayers())
+    h("div", { class: "builtin-head", style: "margin-top:1.75rem" },
+      h("h3", { text: "Dualarımız" }),
+      h("span", { class: "tag", text: "Bugün " + readN + " / " + ids.length + " okundu" })),
+    chips,
+    shownCards.length ? h("div", { class: "prayer-list" }, shownCards) : h("p", { class: "empty", text: "Bu kategoride dua yok." })
   );
 }
 
