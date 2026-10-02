@@ -959,3 +959,41 @@ input.switch:checked::after { transform: translateX(1.2rem); border: 0; width: 1
 .emo-badge { animation: badgefloat 2.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
 @keyframes badgefloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 @media (prefers-reduced-motion: reduce) { .emo-badge { animation: none; } }
+
+/* Ödemelerim ve Alışveriş */
+.fin-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; position: relative; }
+.fin-stat { display: grid; gap: .15rem; align-content: start; padding: .2rem .1rem; }
+.fin-l { font-size: .78rem; color: var(--muted); font-weight: 700; letter-spacing: .03em; }
+.fin-v { font-size: 1.45rem; line-height: 1.15; overflow-wrap: anywhere; }
+.fin-stat small { font-size: .78rem; color: var(--muted); }
+.fin-stat.pos .fin-v, .pos { color: #3E8E6E; }
+.fin-stat.neg .fin-v, .neg { color: #C0455F; }
+.pay-main { display: grid; gap: .1rem; min-width: 0; flex: 1; }
+.pay-name { font-weight: 600; overflow-wrap: anywhere; }
+.pay-sub { font-size: .76rem; color: var(--muted); }
+.pay-sub.soon { color: #B9702E; font-weight: 700; }
+.pay-sub.late { color: #C0455F; font-weight: 700; }
+.pay-amt { font-weight: 700; font-size: .9rem; white-space: nowrap; color: var(--plum); }
+.pay-total { margin: .6rem 0 0; font-weight: 700; font-size: .92rem; position: relative; }
+.pay-form { margin-bottom: .9rem; position: relative; }
+.pay-done-title { margin: 1rem 0 .2rem; font-size: .78rem; color: var(--muted); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; position: relative; }
+.plan { display: grid; gap: .9rem; position: relative; }
+.plan-top { display: flex; justify-content: space-between; gap: .5rem; font-size: .92rem; margin-bottom: .3rem; }
+.plan-left { display: block; margin-top: .25rem; font-size: .8rem; font-weight: 700; }
+.bar.over i { background: #C0455F; }
+.mini-title { margin: 1rem 0 .5rem; font-size: .78rem; color: var(--muted); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+@media (max-width: 700px) { .fin-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Ana sayfa: telefon düzeni */
+.t-m { display: none; }
+.m-only { display: none !important; }
+@media (min-width: 701px) { .m-pay { display: none !important; } }
+@media (max-width: 700px) {
+  .t-d { display: none; } .t-m { display: inline; }
+  .m-only { display: block !important; }
+  .m-hero { order: 1; } .m-mood { order: 2; } .m-pet { order: 3; } .m-plan { order: 4; } .m-habits { order: 5; }
+  .m-notes { order: 6; } .m-pay { order: 7; } .m-aff { order: 8; } .m-shop { order: 9; } .m-weather { order: 10; }
+  .m-goals, .m-cal { display: none !important; }
+  .home-stack { display: contents; }
+  .home-stack > * { grid-column: span 12 !important; }
+}
