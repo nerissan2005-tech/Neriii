@@ -131,13 +131,13 @@ function petSVG(o) {
   const fur = 'fill="url(#' + id + 'f)" stroke="' + line + '" stroke-width="2.5"';
   const furB = 'fill="url(#' + id + 'b)" stroke="' + line + '" stroke-width="2.5"';
   const top = sp === "bear" ? 40 : 46;
-  let back = "", ears = "", eyes = "", mouth = "", acc = "", extra = "";
+  let back = "", ears = "", eyes = "", mouth = "", acc = "", extra = "", faceAcc = "";
   const heart = (x, y, s, fill) => '<path transform="translate(' + x + ' ' + y + ') scale(' + s + ')" d="M0 6C-7 1-10-4-6.5-7.5-4-10 0-8 0-5c0-3 4-5 6.5-2.5C10-4 7 1 0 6z" fill="' + fill + '"/>';
   if (w.back === "wings") back = '<path d="M62 168c-34-4-52-38-40-50 10-10 32 6 42 28zM138 168c34-4 52-38 40-50-10-10-32 6-42 28z" fill="#fff" stroke="#E7DDF0" stroke-width="3"/>';
   if (sp === "bunny") {
-    ears = '<g class="ear-l"><path d="M70 64C56 40 54 8 68 4c12-3 20 26 20 52" ' + fur + '/><path d="M72 56C63 38 62 16 68 12c6-2 11 18 12 40" fill="#FFC2D3"/></g>' +
-      '<g class="ear-r"><path d="M130 64c14-24 16-56 2-60-12-3-20 26-20 52" ' + fur + '/><path d="M128 56c9-18 10-40 4-44-6-2-11 18-12 40" fill="#FFC2D3"/></g>';
-    extra = '<path d="M94 40q4-10 8 0M100 38q4-12 9-2" fill="none" stroke="' + line + '" stroke-width="2.5" stroke-linecap="round"/>';
+    ears = '<g class="ear-l"><path d="M72 70C52 46 48 4 64 0c15-3 26 36 24 66" ' + fur + '/><path d="M74 62C60 42 58 14 66 10c8-2 15 26 14 50" fill="url(#' + id + 'e)"/></g>' +
+      '<g class="ear-r"><path d="M122 64c4-26 30-40 52-32 18 7 12 30-6 31-16 1-30 4-38 14" ' + fur + '/><path d="M128 60c6-18 24-26 40-22 11 3 8 16-4 17-14 1-26 2-34 8" fill="url(#' + id + 'e)"/></g>';
+    extra = '<path d="M90 56q3-11 9-2q4-10 10 0" fill="none" stroke="' + line + '" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>';
   } else {
     ears = '<g class="ear-l"><circle cx="50" cy="52" r="22" ' + fur + '/><circle cx="50" cy="54" r="12" fill="#F7BACB"/></g>' +
       '<g class="ear-r"><circle cx="150" cy="52" r="22" ' + fur + '/><circle cx="150" cy="54" r="12" fill="#F7BACB"/></g>';
@@ -156,33 +156,50 @@ function petSVG(o) {
   const cheeks = '<ellipse cx="62" cy="124" rx="11" ry="7" fill="#FF9EBB" opacity=".75"/><ellipse cx="138" cy="124" rx="11" ry="7" fill="#FF9EBB" opacity=".75"/>' +
     '<path d="M57 122l3-4M62 123l3-4M67 124l3-4M133 124l3-4M138 123l3-4M143 122l3-4" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".8"/>';
   const muzzle = sp === "bear" ? '<ellipse cx="100" cy="126" rx="21" ry="15" fill="' + light + '" stroke="' + line + '" stroke-width="2" opacity=".95"/>' : "";
-  const nose = sp === "bear" ? '<path d="M93 118q7-5 14 0q-2 7-7 8q-5-1-7-8z" fill="' + ink + '"/><ellipse cx="98" cy="119" rx="2" ry="1.2" fill="#fff" opacity=".6"/>' : '<path d="M96 117q4-3 8 0q-1 4-4 5q-3-1-4-5z" fill="#F27BA5"/>';
+  const nose = sp === "bear" ? '<path d="M93 118q7-5 14 0q-2 7-7 8q-5-1-7-8z" fill="' + ink + '"/><ellipse cx="98" cy="119" rx="2" ry="1.2" fill="#fff" opacity=".6"/>' : '<path d="M95.5 116.5q4.5-3 9 0q-1.5 4.5-4.5 5.5q-3-1-4.5-5.5z" fill="#F27BA5"/><ellipse cx="98.5" cy="117.5" rx="1.6" ry="1" fill="#fff" opacity=".7"/>';
   const my = sp === "bear" ? 129 : 124;
   if (emo === "love" || emo === "happy") mouth = '<path d="M93 ' + my + 'q7 11 14 0z" fill="#E8506E" stroke="' + ink + '" stroke-width="2.5" stroke-linejoin="round"/><path d="M96 ' + (my + 4) + 'q4 4 8 0" fill="#FF9AB0"/>';
   else if (emo === "sad") mouth = '<path d="M93 ' + (my + 5) + 'q7-6 14 0" fill="none" stroke="' + ink + '" stroke-width="3.5" stroke-linecap="round"/>';
   else if (emo === "hungry") mouth = '<ellipse cx="100" cy="' + (my + 3) + '" rx="5" ry="6" fill="#E8506E" stroke="' + ink + '" stroke-width="2.5"/><path d="M107 ' + (my + 4) + 'q-2 10 2 12q4-3-2-12z" fill="#9AD4FF"/>';
   else mouth = '<path d="M92 ' + my + 'q4 5 8 0q4 5 8 0" fill="none" stroke="' + ink + '" stroke-width="3" stroke-linecap="round"/>';
+  if (sp === "bunny" && (emo === "happy" || emo === "sleepy")) mouth = '<path d="M100 ' + (my - 2) + 'v3" stroke="' + ink + '" stroke-width="2.5" stroke-linecap="round"/><path d="M92 ' + (my + 1) + 'q4 5 8 0q4 5 8 0" fill="none" stroke="' + ink + '" stroke-width="3" stroke-linecap="round"/><rect x="96.6" y="' + (my + 3.5) + '" width="6.8" height="5" rx="1.6" fill="#fff" stroke="' + ink + '" stroke-width="1.6"/><path d="M100 ' + (my + 3.5) + 'v5" stroke="' + ink + '" stroke-width="1.2"/>';
   const night = emo === "asleep" ? '<g class="zzz" font-family="sans-serif" font-weight="800" fill="#8E8BD8"><text x="146" y="58" font-size="22">Z</text><text x="164" y="38" font-size="16">z</text><text x="176" y="22" font-size="12">z</text></g>' : emo === "sleepy" ? '<g font-family="sans-serif" font-weight="800" fill="#A9A6D8"><text x="152" y="52" font-size="16">z</text></g>' : "";
   if (w.neck === "scarf") acc += '<path d="M62 154q38 16 76 0v12q-38 16-76 0z" fill="#F06283"/><path d="M74 162l-6 26 13-2 3-22z" fill="#D9486B"/><path d="M66 158q34 14 68 0" stroke="#fff" stroke-width="2.5" stroke-dasharray="5 7" fill="none" opacity=".7"/>';
   if (w.neck === "bowtie") acc += '<path d="M100 160l-17-10v20zM100 160l17-10v20z" fill="#8E6BD8"/><circle cx="100" cy="160" r="5" fill="#6E4BC0"/>';
   if (w.neck === "necklace") acc += '<path d="M74 152q26 22 52 0" fill="none" stroke="#FFC94A" stroke-width="3"/>' + heart(100, 168, .9, "#F0457F");
-  if (w.face === "hglasses") acc += heart(76, 102, 2.2, "rgba(255,120,170,.35)") + heart(124, 102, 2.2, "rgba(255,120,170,.35)") + '<path d="M88 102h24" stroke="#F0457F" stroke-width="3"/>';
-  if (w.face === "sun") acc += '<rect x="60" y="94" width="32" height="20" rx="9" fill="#2B1B2E"/><rect x="108" y="94" width="32" height="20" rx="9" fill="#2B1B2E"/><path d="M92 101h16" stroke="#2B1B2E" stroke-width="3"/><path d="M66 99l9-1" stroke="#fff" stroke-width="2.5" opacity=".6"/>';
+  if (w.face === "hglasses") faceAcc += heart(76, 102, 2.2, "rgba(255,120,170,.35)") + heart(124, 102, 2.2, "rgba(255,120,170,.35)") + '<path d="M88 102h24" stroke="#F0457F" stroke-width="3"/>';
+  if (w.face === "sun") faceAcc += '<rect x="60" y="94" width="32" height="20" rx="9" fill="#2B1B2E"/><rect x="108" y="94" width="32" height="20" rx="9" fill="#2B1B2E"/><path d="M92 101h16" stroke="#2B1B2E" stroke-width="3"/><path d="M66 99l9-1" stroke="#fff" stroke-width="2.5" opacity=".6"/>';
   if (w.head === "bow") acc += '<g transform="translate(' + (sp === "bunny" ? 140 : 146) + ' ' + (top + 8) + ') rotate(18)"><path d="M0 0c-8-10-22-12-22 0s14 10 22 0zM0 0c8-10 22-12 22 0S8 10 0 0z" fill="#FF8FB5" stroke="#E86B98" stroke-width="2"/><circle r="6" fill="#F0457F"/></g>';
   if (w.head === "flower") acc += [[64, 12], [81, 4], [100, 1], [119, 4], [136, 12]].map(([x, d], i) => '<circle cx="' + x + '" cy="' + (top + d) + '" r="9.5" fill="' + ["#FFB3C7", "#FFE08A", "#C8A8FF", "#9FE3B8", "#FFB3C7"][i] + '"/><circle cx="' + x + '" cy="' + (top + d) + '" r="3.8" fill="#FFD25E"/>').join("");
   if (w.head === "party") acc += '<path d="M100 ' + (top - 44) + 'L82 ' + (top + 4) + 'H118z" fill="#8ECBFF" stroke="#6BB0EA" stroke-width="2"/><path d="M93 ' + (top - 22) + 'h14M88 ' + (top - 8) + 'h24" stroke="#fff" stroke-width="4"/><circle cx="100" cy="' + (top - 46) + '" r="7" fill="#FFD166"/>';
   if (w.head === "crown") acc += '<path d="M78 ' + (top + 4) + 'l5-26 12 15 5-19 5 19 12-15 5 26z" fill="#FFCF5C" stroke="#E0A020" stroke-width="3" stroke-linejoin="round"/><circle cx="100" cy="' + (top - 8) + '" r="4" fill="#F0457F"/>';
   if (w.head === "halo") acc += '<ellipse cx="100" cy="' + (sp === "bunny" ? 0 : 20) + '" rx="30" ry="7" fill="none" stroke="#FFD25E" stroke-width="6"/>';
   if (emo === "asleep" && !w.head) acc += '<path d="M60 52q40-46 84-4" fill="#7C8CE0"/><path d="M60 52q42-16 84-4q-40 6-84 4z" fill="#fff"/><path d="M144 48q14 4 18 24" fill="none" stroke="#7C8CE0" stroke-width="7" stroke-linecap="round"/><circle cx="162" cy="76" r="7" fill="#fff"/>';
-  return '<svg viewBox="0 -8 200 228" aria-hidden="true"><defs>' +
+  const defs = '<defs>' +
     '<radialGradient id="' + id + 'f" cx=".38" cy=".3" r=".8"><stop offset="0" stop-color="' + light + '"/><stop offset=".55" stop-color="' + c + '"/><stop offset="1" stop-color="' + shade(c, -0.08) + '"/></radialGradient>' +
-    '<radialGradient id="' + id + 'b" cx=".5" cy=".35" r=".7"><stop offset="0" stop-color="' + light + '"/><stop offset="1" stop-color="' + c + '"/></radialGradient></defs>' +
-    back + '<ellipse cx="100" cy="214" rx="40" ry="6" fill="#000" opacity=".1"/>' +
+    '<radialGradient id="' + id + 'b" cx=".5" cy=".35" r=".7"><stop offset="0" stop-color="' + light + '"/><stop offset="1" stop-color="' + c + '"/></radialGradient>' +
+    '<linearGradient id="' + id + 'e" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFD3E0"/><stop offset="1" stop-color="#FFA9C2"/></linearGradient></defs>';
+  const face = '<g class="eyes">' + eyes + '</g>' + cheeks + nose + mouth + faceAcc;
+  if (sp === "bunny") {
+    const bean = (x) => '<ellipse cx="' + x + '" cy="207" rx="6" ry="4" fill="#FFB3C7"/><circle cx="' + (x - 6) + '" cy="200" r="2.2" fill="#FFB3C7"/><circle cx="' + x + '" cy="198" r="2.2" fill="#FFB3C7"/><circle cx="' + (x + 6) + '" cy="200" r="2.2" fill="#FFB3C7"/>';
+    const carrot = emo === "asleep" ? "" : '<g transform="translate(101 170) rotate(-24) scale(1.25)"><path d="M-5-12h10l-5 30z" fill="#FF9A3C" stroke="#E07A1E" stroke-width="1.8" stroke-linejoin="round"/><path d="M-3-3h4M-2 5h3" stroke="#E07A1E" stroke-width="1.4" stroke-linecap="round"/><path d="M0-12c-6-8-10-6-8-1M0-12c0-9 4-11 5-4M0-12c6-7 10-4 7 0" fill="none" stroke="#5DBB63" stroke-width="2.6" stroke-linecap="round"/></g>';
+    return '<svg viewBox="0 -8 200 228" aria-hidden="true">' + defs + back +
+      '<ellipse cx="100" cy="214" rx="38" ry="6" fill="#000" opacity=".1"/>' +
+      '<circle cx="138" cy="194" r="12" fill="#fff" stroke="' + line + '" stroke-width="2"/>' +
+      '<path d="M100 148c32 0 44 26 40 48-3 14-77 14-80 0-4-22 8-48 40-48z" ' + furB + '/><ellipse cx="100" cy="186" rx="22" ry="17" fill="' + light + '" opacity=".85"/>' +
+      '<ellipse cx="82" cy="204" rx="15" ry="10" ' + furB + '/><ellipse cx="118" cy="204" rx="15" ry="10" ' + furB + '/>' + bean(82) + bean(118) +
+      '<ellipse cx="88" cy="180" rx="10" ry="9" ' + furB + ' class="arm-l"/><ellipse cx="112" cy="180" rx="10" ry="9" ' + furB + ' class="arm-r"/>' + carrot +
+      ears + '<path d="M100 50c46 0 68 30 66 64-2 32-30 46-66 46s-64-14-66-46c-2-34 20-64 66-64z" ' + fur + '/>' +
+      '<path d="M38 128q-8 2-6 8q4 2 8-2M162 128q8 2 6 8q-4 2-8-2" fill="' + c + '" stroke="' + line + '" stroke-width="2" stroke-linejoin="round"/>' + extra +
+      '<g transform="translate(0 6)">' + face + '</g>' + acc + night + '</svg>';
+  }
+  return '<svg viewBox="0 -8 200 228" aria-hidden="true">' + defs + back +
+    '<ellipse cx="100" cy="214" rx="40" ry="6" fill="#000" opacity=".1"/>' +
     '<ellipse cx="80" cy="205" rx="14" ry="9" ' + furB + '/><ellipse cx="120" cy="205" rx="14" ry="9" ' + furB + '/>' +
     '<ellipse cx="100" cy="180" rx="40" ry="31" ' + furB + '/><ellipse cx="100" cy="186" rx="23" ry="18" fill="' + light + '" opacity=".8"/>' +
     '<circle cx="88" cy="174" r="10" ' + furB + ' class="arm-l"/><circle cx="112" cy="174" r="10" ' + furB + ' class="arm-r"/>' +
     ears + '<ellipse cx="100" cy="100" rx="66" ry="60" ' + fur + '/>' + extra + muzzle +
-    '<g class="eyes">' + eyes + '</g>' + cheeks + nose + mouth + acc + night + '</svg>';
+    face + acc + night + '</svg>';
 }
 
 function petSay(stage, text) {
