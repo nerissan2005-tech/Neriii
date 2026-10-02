@@ -1,5 +1,5 @@
-const CACHE = "neriii-v4";
-const SW_VERSION = 4;
+const CACHE = "neriii-v5";
+const SW_VERSION = 5;
 
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", e => e.waitUntil(
