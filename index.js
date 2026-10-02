@@ -11,6 +11,7 @@ const ROOT_EMAIL = (process.env.ROOT_EMAIL || "neriii@nerii.app").toLowerCase();
 const CRON_KEY = process.env.CRON_KEY || "";
 const allowed = (process.env.ALLOWED_ORIGIN || "").split(",").map(s => s.trim()).filter(Boolean);
 const DAY_MS = 86400000;
+const PRAYER_NAMES = ["İnşirah Suresi'ni", "Yunus Duası'nı", "Hz. Musa'nın duasını", "İhlas Suresi'ni", "Kevser Suresi'ni", "Felak Suresi'ni", "Nas Suresi'ni"];
 
 const app = express();
 app.use(cors({ origin: (origin, cb) => cb(null, !origin || !allowed.length || allowed.includes(origin)) }));
@@ -49,11 +50,11 @@ function localParts(tz) {
 }
 const utcDay = k => { const [y, m, d] = k.split("-").map(Number); return Date.UTC(y, m - 1, d); };
 
-async function sendTo(uid, data) {
+async function sendTo(uid, data, details) {
   const col = db.collection("userdata").doc(uid).collection("tokens");
   const snap = await col.get();
   const docs = snap.docs.filter(d => d.data().token);
-  if (!docs.length) return 0;
+  if (!docs.length) return details ? { tokens: 0, sent: 0, errors: [] } : 0;
   const payload = {};
   Object.entries(data).forEach(([k, v]) => { if (v != null) payload[k] = String(v); });
   const res = await messaging.sendEachForMulticast({
@@ -67,6 +68,7 @@ async function sendTo(uid, data) {
     if (code === "messaging/registration-token-not-registered" || code === "messaging/invalid-registration-token" || code === "messaging/invalid-argument") dead.push(docs[i].ref.delete());
   });
   await Promise.all(dead);
+  if (details) return { tokens: docs.length, sent: res.successCount, errors: [...new Set(res.responses.filter(r => r.error).map(r => r.error.code))] };
   return res.successCount;
 }
 
@@ -76,6 +78,17 @@ async function authUser(req) {
 }
 
 app.get("/", (req, res) => res.json({ ok: true }));
+
+app.post("/test-push", async (req, res) => {
+  let user;
+  try { user = await authUser(req); } catch (e) { return res.status(401).json({ error: "oturum" }); }
+  try {
+    const r = await sendTo(user.uid, { title: "Neriii ♡", body: "Bildirimler bu cihazda çalışıyor 🎉", view: "settings", tag: "test" }, true);
+    res.json(Object.assign({ ok: true }, r));
+  } catch (e) {
+    res.status(500).json({ error: "gonderilemedi", detail: String(e.code || e.message || e) });
+  }
+});
 
 app.post("/notify-message", async (req, res) => {
   try {
@@ -89,7 +102,7 @@ app.post("/notify-message", async (req, res) => {
     await m.ref.update({ pushed: true });
     const st = await db.collection("userdata").doc(d.to).collection("notify").doc("settings").get();
     if (st.exists && st.data().msgOn === false) return res.json({ ok: true, sent: 0 });
-    const body = d.sticker ? "Sana bir çıkartma gönderdi ✨" : (d.text || "").slice(0, 140);
+    const body = d.sticker ? "Sana bir çıkartma gönderdi ✨" : d.photo ? "📷 Fotoğraf gönderdi" + (d.text ? ": " + d.text.slice(0, 100) : "") : d.audio ? "🎤 Sesli mesaj gönderdi" : (d.text || "").slice(0, 140);
     const sent = await sendTo(d.to, { title: (d.fromName || "Neriii") + " sana yazdı", body, view: "messages", chatWith: d.from, tag: "msg-" + d.from });
     res.json({ ok: true, sent });
   } catch (e) {
@@ -132,18 +145,28 @@ app.get("/tick", async (req, res) => {
       const st = await ref.get();
       if (!st.exists) continue;
       const s = st.data();
-      if (!s.affOn || !/^\d{2}:\d{2}$/.test(s.affTime || "")) continue;
       const now = localParts(s.tz);
-      const [hh, mm] = s.affTime.split(":").map(Number);
-      const target = hh * 60 + mm;
-      if (s.lastAff === now.date || now.minutes < target || now.minutes > target + 20) continue;
-      await ref.set({ lastAff: now.date }, { merge: true });
-      const ud = await db.collection("userdata").doc(p.id).get();
-      let start = now.date;
-      try { start = JSON.parse(ud.data().json).affStart || now.date; } catch (e) {}
-      const idx = Math.max(0, Math.round((utcDay(now.date) - utcDay(start)) / DAY_MS));
-      const a = affAt(idx);
-      sent += await sendTo(p.id, { title: "Günün olumlaması ✨ " + a.cat, body: a.text, view: "affirm", tag: "olumlama" });
+      const due = (time, last) => {
+        if (!/^\d{2}:\d{2}$/.test(time || "") || last === now.date) return false;
+        const [hh, mm] = time.split(":").map(Number);
+        const target = hh * 60 + mm;
+        return now.minutes >= target && now.minutes <= target + 20;
+      };
+      if (s.affOn !== false && due(s.affTime || "07:45", s.lastAff)) {
+        await ref.set({ lastAff: now.date }, { merge: true });
+        const ud = await db.collection("userdata").doc(p.id).get();
+        let start = now.date;
+        try { start = JSON.parse(ud.data().json).affStart || now.date; } catch (e) {}
+        const idx = Math.max(0, Math.round((utcDay(now.date) - utcDay(start)) / DAY_MS));
+        const a = affAt(idx);
+        sent += await sendTo(p.id, { title: "Günün olumlaması ✨ " + a.cat, body: a.text, view: "affirm", tag: "olumlama" });
+      }
+      if (s.prayOn !== false && due(s.prayTime || "21:00", s.lastPray)) {
+        await ref.set({ lastPray: now.date }, { merge: true });
+        const idx = Math.round(utcDay(now.date) / DAY_MS);
+        const name = PRAYER_NAMES[((idx % PRAYER_NAMES.length) + PRAYER_NAMES.length) % PRAYER_NAMES.length];
+        sent += await sendTo(p.id, { title: "Duanı okumayı unutma 🤲", body: "Bugün " + name + " okumaya ne dersin? Kalbine huzur olsun.", view: "prayers", tag: "dua" });
+      }
     }
     res.json({ ok: true, sent });
   } catch (e) {
