@@ -254,6 +254,7 @@ async function startApp(user) {
       setter(m);
       itemsCache = null;
       if (firstItems < 2) firstItems++;
+      checkLetters();
       if (!["messages", "settings"].includes(state.view)) scheduleRender(); else updateHeader();
     };
     unsubs.push(itemsCol().where("vis", "==", "public").onSnapshot(onItems("pub", m => { pubItems = m; }), () => {}));
@@ -299,7 +300,7 @@ function logout() {
   setTimeout(() => auth.signOut().then(() => { history.replaceState(null, "", location.pathname); location.reload(); }), 300);
 }
 
-const RENDER = { home: renderHome, notes: renderNotes, goals: renderGoals, habits: renderHabits, calendar: renderCalendar, journal: renderJournal, affirm: renderAffirm, messages: renderMessages, shopping: renderShopping, prayers: renderPrayers, pet: renderPet, memories: renderMemories, magic: renderMagic, settings: renderSettings, admin: renderAdmin };
+const RENDER = { home: renderHome, letters: renderLetters, notes: () => withTabs(renderNotes(), TABS_NOTES), goals: () => withTabs(renderGoals(), TABS_NOTES), habits: () => withTabs(renderHabits(), TABS_CAL), calendar: () => withTabs(renderCalendar(), TABS_CAL), journal: renderJournal, affirm: renderAffirm, messages: renderMessages, shopping: renderShopping, prayers: renderPrayers, pet: renderPet, memories: renderMemories, magic: renderMagic, settings: renderSettings, admin: renderAdmin };
 
 
 function greeting() {
@@ -484,7 +485,7 @@ function notify(title, body, tag, view, chatWith) {
 function openSheet() {
   const sh = $("sheet");
   const close = () => { sh.classList.remove("show"); setTimeout(() => { sh.hidden = true; sh.replaceChildren(); }, 200); };
-  const items = VIEWS.filter(([v]) => !TAB_MAIN.includes(v) && (v !== "admin" || (me && me.isAdmin)));
+  const items = VIEWS.filter(([v]) => !TAB_MAIN.includes(v) && !NAV_HIDE.includes(v) && (v !== "admin" || (me && me.isAdmin)));
   sh.replaceChildren(
     h("div", { class: "sheet-back", onclick: close }),
     h("div", { class: "sheet-panel", role: "dialog", "aria-modal": "true", "aria-label": "Diğer bölümler" },
@@ -508,7 +509,7 @@ $("tabbar").append(...TAB_MAIN.map(v => {
   return h("button", { type: "button", "data-view": v, onclick: () => go(v) }, h("span", { class: "ti-ic", html: ico(icon, 22) }), h("span", { class: "ti-l", text: v === "affirm" ? "Olumlama" : v === "home" ? "Ana Sayfa" : label }));
 }), h("button", { type: "button", "data-view": "more", onclick: openSheet }, h("span", { class: "ti-ic", html: ico("menu", 22) }), h("span", { class: "ti-l", text: "Daha fazla" })));
 
-$("nav").append(...VIEWS.map(([v, label, icon]) =>
+$("nav").append(...VIEWS.filter(([v]) => !NAV_HIDE.includes(v)).map(([v, label, icon]) =>
   h("button", { type: "button", "data-view": v, title: label, hidden: v === "admin", onclick: () => go(v) }, h("span", { html: ico(icon, 21), style: "display:grid" }), h("span", { class: "lbl", text: label }))
 ));
 $("nav").append(h("button", { type: "button", class: "logout", title: "Çıkış yap", onclick: logout }, h("span", { html: ico("logout", 21), style: "display:grid" }), h("span", { class: "lbl", text: "Çıkış yap" })));
