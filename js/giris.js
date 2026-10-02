@@ -297,7 +297,16 @@ function logout() {
   flushItems();
   unsubs.forEach(u => u());
   unsubs = [];
-  setTimeout(() => auth.signOut().then(() => { history.replaceState(null, "", location.pathname); location.reload(); }), 300);
+  const dropPush = async () => {
+    let had = false;
+    try { had = !!localStorage.getItem("neriii-push-id"); } catch (e) {}
+    await unregisterPush();
+    if (had) { try { localStorage.setItem("neriii-push-id", "local"); } catch (e) {} }
+  };
+  setTimeout(() => {
+    Promise.race([dropPush(), new Promise(r => setTimeout(r, 2500))]).catch(() => {}).then(() =>
+      auth.signOut().then(() => { history.replaceState(null, "", location.pathname); location.reload(); }));
+  }, 300);
 }
 
 const RENDER = { home: renderHome, letters: renderLetters, notes: () => withTabs(renderNotes(), TABS_NOTES), goals: () => withTabs(renderGoals(), TABS_NOTES), habits: () => withTabs(renderHabits(), TABS_CAL), calendar: () => withTabs(renderCalendar(), TABS_CAL), journal: renderJournal, affirm: renderAffirm, messages: renderMessages, shopping: renderShopping, prayers: renderPrayers, pet: renderPet, memories: renderMemories, magic: renderMagic, settings: renderSettings, admin: renderAdmin };
