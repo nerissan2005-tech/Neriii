@@ -1,4 +1,5 @@
 const ICONS = {
+  paw: "M4.2 10.5a1.8 2.2 0 1 0 3.6 0a1.8 2.2 0 1 0-3.6 0zM16.2 10.5a1.8 2.2 0 1 0 3.6 0a1.8 2.2 0 1 0-3.6 0zM7.7 6.5a1.8 2.2 0 1 0 3.6 0a1.8 2.2 0 1 0-3.6 0zM12.7 6.5a1.8 2.2 0 1 0 3.6 0a1.8 2.2 0 1 0-3.6 0zM12 12.5c-3 0-5.5 3.2-5.5 5.3 0 1.5 1.1 2.4 2.5 2.4 1.2 0 2-.6 3-.6s1.8.6 3 .6c1.4 0 2.5-.9 2.5-2.4 0-2.1-2.5-5.3-5.5-5.3z",
   ghost: "M6 20v-9a6 6 0 0 1 12 0v9l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5zM10 10h.01M14 10h.01",
   home: "M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z",
   note: "M7 3h7l5 5v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM14 3v5h5M9 13h6M9 17h4",
@@ -56,7 +57,7 @@ const VIEWS = [
   ["journal", "Günlük", "heart"],
   ["shopping", "Alışveriş Listesi", "cart"],
   ["prayers", "Dualarımız", "moon"],
-  ["pet", "Hayaletim", "ghost"],
+  ["pet", "Petim", "paw"],
   ["memories", "Anı Defteri", "camera"],
   ["magic", "Sihirli Kutu", "gift"],
   ["settings", "Ayarlar", "settings"],
@@ -64,7 +65,7 @@ const VIEWS = [
 ];
 const TAB_MAIN = ["home", "messages", "affirm", "journal"];
 const TILES = [
-  ["pet", "Hayaletim", "Sevimli hayaletin seninle büyüsün", "ghost", "#8C6BB1"],
+  ["pet", "Petim", "Minik tavşanın ya da ayıcığın seninle büyüsün", "paw", "#D9779A"],
   ["journal", "Duygu Günlüğü", "Bugünün ruh hali ve şükran listesi", "heart", "#C46A8A"],
   ["prayers", "Dualarımız", "Dualarını yaz, birlikte amin deyin", "moon", "#6F8F78"],
   ["magic", "Sihirli Kutu", "Dokun, kalbine iyi gelen bir söz çıksın", "gift", "#E0975A"],
