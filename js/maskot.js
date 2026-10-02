@@ -247,6 +247,137 @@ function petSVGDrawn(o) {
     face + acc + night + '</svg>';
 }
 
+function bunnyDrawn(o) {
+  const sp = "bear";
+  const c = o.color || PET_COLORS.bunny[0][0];
+  const emo = o.emotion || "happy";
+  const w = o.wear || {};
+  const id = "p" + Math.random().toString(36).slice(2, 8);
+  const line = shade(c, -0.22);
+  const light = shade(c, 0.45);
+  const ink = "#3A2433";
+  const fur = 'fill="url(#' + id + 'f)" stroke="' + line + '" stroke-width="2.5"';
+  const furB = 'fill="url(#' + id + 'b)" stroke="' + line + '" stroke-width="2.5"';
+  const top = sp === "bear" ? 40 : 46;
+  let back = "", ears = "", eyes = "", mouth = "", acc = "", extra = "", faceAcc = "";
+  const heart = (x, y, s, fill) => '<path transform="translate(' + x + ' ' + y + ') scale(' + s + ')" d="M0 6C-7 1-10-4-6.5-7.5-4-10 0-8 0-5c0-3 4-5 6.5-2.5C10-4 7 1 0 6z" fill="' + fill + '"/>';
+  if (w.back === "wings") back = '<path d="M62 168c-34-4-52-38-40-50 10-10 32 6 42 28zM138 168c34-4 52-38 40-50-10-10-32 6-42 28z" fill="#fff" stroke="#E7DDF0" stroke-width="3"/>';
+  if (sp === "bunny") {
+    ears = '<g class="ear-l"><path d="M82 74C60 54 48 8 63-3c15-10 36 34 35 70" ' + fur + '/><path d="M84 64C68 48 58 16 66 7c9-7 25 28 24 54" fill="url(#' + id + 'e)"/></g>' +
+      '<g class="ear-r"><path d="M118 74c22-20 34-66 19-77-15-10-36 34-35 70" ' + fur + '/><path d="M116 64c16-16 26-48 18-57-9-7-25 28-24 54" fill="url(#' + id + 'e)"/></g>';
+    extra = '<path d="M91 58q4-9 9-1q5-9 10 0" fill="none" stroke="' + line + '" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>';
+  } else {
+    ears = '<g transform="translate(0 7)"><g class="ear-l"><path d="M76 58C62 34 56-2 69-8c14-6 28 28 25 62" ' + fur + '/><path d="M78 50C68 30 64 6 71 1c8-4 17 22 15 46" fill="#FFC2D3"/></g>' +
+      '<g class="ear-r"><path d="M124 58c14-24 20-60 7-66-14-6-28 28-25 62" ' + fur + '/><path d="M122 50c10-20 14-44 7-49-8-4-17 22-15 46" fill="#FFC2D3"/></g></g>';
+    extra = '<path d="M90 43q4-9 9-1q5-9 10 0" fill="none" stroke="' + line + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>';
+  }
+  const openEyes = (big) => {
+    const ry = big ? 13 : 11, rx = big ? 10.5 : 9;
+    return '<ellipse cx="76" cy="104" rx="' + rx + '" ry="' + ry + '" fill="' + ink + '"/><ellipse cx="124" cy="104" rx="' + rx + '" ry="' + ry + '" fill="' + ink + '"/>' +
+      '<circle cx="80" cy="98" r="4.2" fill="#fff"/><circle cx="128" cy="98" r="4.2" fill="#fff"/><circle cx="72.5" cy="109" r="2" fill="#fff" opacity=".9"/><circle cx="120.5" cy="109" r="2" fill="#fff" opacity=".9"/>';
+  };
+  if (emo === "love") eyes = heart(76, 104, 1.45, "#F0457F") + heart(124, 104, 1.45, "#F0457F") + '<path d="M44 82l3 6 6 3-6 3-3 6-3-6-6-3 6-3zM158 80l2.5 5 5 2.5-5 2.5-2.5 5-2.5-5-5-2.5 5-2.5z" fill="#FFD166"/>';
+  else if (emo === "happy") eyes = openEyes(true);
+  else if (emo === "sleepy") eyes = '<path d="M66 104q10 4 20 0M114 104q10 4 20 0" fill="none" stroke="' + ink + '" stroke-width="5" stroke-linecap="round"/><path d="M68 98q8-3 16 0M116 98q8-3 16 0" fill="none" stroke="' + line + '" stroke-width="3" stroke-linecap="round" opacity=".6"/>';
+  else if (emo === "asleep") eyes = '<path d="M66 104q10 9 20 0M114 104q10 9 20 0" fill="none" stroke="' + ink + '" stroke-width="5" stroke-linecap="round"/>';
+  else eyes = openEyes(emo === "sad" || emo === "hungry");
+  if (["happy", "sad", "hungry"].includes(emo)) eyes += '<path d="M64.5 99q11.5-16 23 0M112.5 99q11.5-16 23 0" fill="none" stroke="' + ink + '" stroke-width="3.4" stroke-linecap="round"/><path d="M65 98q-5-1-8-6M67.5 93q-3-3-4-9M135 98q5-1 8-6M132.5 93q3-3 4-9" fill="none" stroke="' + ink + '" stroke-width="2.5" stroke-linecap="round"/>';
+  if (emo === "asleep") eyes += '<path d="M66 106l-4 4M70 108l-2 5M134 106l4 4M130 108l2 5" stroke="' + ink + '" stroke-width="2.2" stroke-linecap="round"/>';
+  if (emo === "sad") eyes += '<path d="M64 88q9-6 18 0M118 88q9-6 18 0" fill="none" stroke="' + line + '" stroke-width="3.5" stroke-linecap="round"/><path d="M66 116q-5 10 0 14q5-4 0-14z" fill="#9AD4FF"/>';
+  const cheeks = '<ellipse cx="62" cy="124" rx="11" ry="7" fill="#FF9EBB" opacity=".75"/><ellipse cx="138" cy="124" rx="11" ry="7" fill="#FF9EBB" opacity=".75"/>' +
+    '<path d="M57 122l3-4M62 123l3-4M67 124l3-4M133 124l3-4M138 123l3-4M143 122l3-4" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".8"/>';
+  const muzzle = '<ellipse cx="100" cy="125" rx="17" ry="12" fill="' + light + '" opacity=".9"/>';
+  const nose = '<path d="M94.5 117.5q5.5-3.5 11 0q-2 6-5.5 7q-3.5-1-5.5-7z" fill="#F48FAA" stroke="#E07A95" stroke-width="1.5" stroke-linejoin="round"/><ellipse cx="98" cy="118.5" rx="1.8" ry="1.1" fill="#fff" opacity=".7"/>';
+  const my = sp === "bear" ? 129 : 124;
+  if (emo === "love" || emo === "happy") mouth = '<path d="M93 ' + my + 'q7 11 14 0z" fill="#E8506E" stroke="' + ink + '" stroke-width="2.5" stroke-linejoin="round"/><path d="M96 ' + (my + 4) + 'q4 4 8 0" fill="#FF9AB0"/>';
+  else if (emo === "sad") mouth = '<path d="M93 ' + (my + 5) + 'q7-6 14 0" fill="none" stroke="' + ink + '" stroke-width="3.5" stroke-linecap="round"/>';
+  else if (emo === "hungry") mouth = '<ellipse cx="100" cy="' + (my + 3) + '" rx="5" ry="6" fill="#E8506E" stroke="' + ink + '" stroke-width="2.5"/><path d="M107 ' + (my + 4) + 'q-2 10 2 12q4-3-2-12z" fill="#9AD4FF"/>';
+  else mouth = '<path d="M92 ' + my + 'q4 5 8 0q4 5 8 0" fill="none" stroke="' + ink + '" stroke-width="3" stroke-linecap="round"/>';
+  if (sp === "bunny" && (emo === "happy" || emo === "sleepy")) mouth = '<path d="M100 ' + (my - 2) + 'v3" stroke="' + ink + '" stroke-width="2.5" stroke-linecap="round"/><path d="M92 ' + (my + 1) + 'q4 5 8 0q4 5 8 0" fill="none" stroke="' + ink + '" stroke-width="3" stroke-linecap="round"/><rect x="96.6" y="' + (my + 3.5) + '" width="6.8" height="5" rx="1.6" fill="#fff" stroke="' + ink + '" stroke-width="1.6"/><path d="M100 ' + (my + 3.5) + 'v5" stroke="' + ink + '" stroke-width="1.2"/>';
+  const night = emo === "asleep" ? '<g class="zzz" font-family="sans-serif" font-weight="800" fill="#8E8BD8"><text x="146" y="58" font-size="22">Z</text><text x="164" y="38" font-size="16">z</text><text x="176" y="22" font-size="12">z</text></g>' : emo === "sleepy" ? '<g font-family="sans-serif" font-weight="800" fill="#A9A6D8"><text x="152" y="52" font-size="16">z</text></g>' : "";
+  if (w.neck === "scarf") acc += '<path d="M62 154q38 16 76 0v12q-38 16-76 0z" fill="#F06283"/><path d="M74 162l-6 26 13-2 3-22z" fill="#D9486B"/><path d="M66 158q34 14 68 0" stroke="#fff" stroke-width="2.5" stroke-dasharray="5 7" fill="none" opacity=".7"/>';
+  if (w.neck === "bowtie") acc += '<path d="M100 160l-17-10v20zM100 160l17-10v20z" fill="#8E6BD8"/><circle cx="100" cy="160" r="5" fill="#6E4BC0"/>';
+  if (w.neck === "necklace") acc += '<path d="M74 152q26 22 52 0" fill="none" stroke="#FFC94A" stroke-width="3"/>' + heart(100, 168, .9, "#F0457F");
+  if (w.face === "hglasses") faceAcc += heart(76, 102, 2.2, "rgba(255,120,170,.35)") + heart(124, 102, 2.2, "rgba(255,120,170,.35)") + '<path d="M88 102h24" stroke="#F0457F" stroke-width="3"/>';
+  if (w.face === "sun") faceAcc += '<rect x="60" y="94" width="32" height="20" rx="9" fill="#2B1B2E"/><rect x="108" y="94" width="32" height="20" rx="9" fill="#2B1B2E"/><path d="M92 101h16" stroke="#2B1B2E" stroke-width="3"/><path d="M66 99l9-1" stroke="#fff" stroke-width="2.5" opacity=".6"/>';
+  if (w.head === "bow") acc += '<g transform="translate(' + (sp === "bunny" ? 140 : 146) + ' ' + (top + 8) + ') rotate(18)"><path d="M0 0c-8-10-22-12-22 0s14 10 22 0zM0 0c8-10 22-12 22 0S8 10 0 0z" fill="#FF8FB5" stroke="#E86B98" stroke-width="2"/><circle r="6" fill="#F0457F"/></g>';
+  if (w.head === "flower") acc += [[64, 12], [81, 4], [100, 1], [119, 4], [136, 12]].map(([x, d], i) => '<circle cx="' + x + '" cy="' + (top + d) + '" r="9.5" fill="' + ["#FFB3C7", "#FFE08A", "#C8A8FF", "#9FE3B8", "#FFB3C7"][i] + '"/><circle cx="' + x + '" cy="' + (top + d) + '" r="3.8" fill="#FFD25E"/>').join("");
+  if (w.head === "party") acc += '<path d="M100 ' + (top - 44) + 'L82 ' + (top + 4) + 'H118z" fill="#8ECBFF" stroke="#6BB0EA" stroke-width="2"/><path d="M93 ' + (top - 22) + 'h14M88 ' + (top - 8) + 'h24" stroke="#fff" stroke-width="4"/><circle cx="100" cy="' + (top - 46) + '" r="7" fill="#FFD166"/>';
+  if (w.head === "crown") acc += '<path d="M78 ' + (top + 4) + 'l5-26 12 15 5-19 5 19 12-15 5 26z" fill="#FFCF5C" stroke="#E0A020" stroke-width="3" stroke-linejoin="round"/><circle cx="100" cy="' + (top - 8) + '" r="4" fill="#F0457F"/>';
+  if (w.head === "halo") acc += '<ellipse cx="100" cy="' + -4 + '" rx="30" ry="7" fill="none" stroke="#FFD25E" stroke-width="6"/>';
+  if (emo === "asleep" && !w.head) acc += '<path d="M60 52q40-46 84-4" fill="#7C8CE0"/><path d="M60 52q42-16 84-4q-40 6-84 4z" fill="#fff"/><path d="M144 48q14 4 18 24" fill="none" stroke="#7C8CE0" stroke-width="7" stroke-linecap="round"/><circle cx="162" cy="76" r="7" fill="#fff"/>';
+  const defs = '<defs>' +
+    '<radialGradient id="' + id + 'f" cx=".38" cy=".3" r=".8"><stop offset="0" stop-color="' + light + '"/><stop offset=".55" stop-color="' + c + '"/><stop offset="1" stop-color="' + shade(c, -0.08) + '"/></radialGradient>' +
+    '<radialGradient id="' + id + 'b" cx=".5" cy=".35" r=".7"><stop offset="0" stop-color="' + light + '"/><stop offset="1" stop-color="' + c + '"/></radialGradient>' +
+    '<linearGradient id="' + id + 'e" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFD3E0"/><stop offset="1" stop-color="#FFA9C2"/></linearGradient></defs>';
+  const face = '<g class="eyes">' + eyes + '</g>' + cheeks + nose + mouth + faceAcc;
+  if (sp === "bunny") {
+    const eye = (x, y, mirror) => {
+      const o = mirror ? 1 : -1;
+      return '<ellipse cx="' + x + '" cy="' + y + '" rx="13.5" ry="15" fill="#1C1A3A"/>' +
+        '<ellipse cx="' + x + '" cy="' + (y + 1) + '" rx="11.5" ry="13" fill="url(#' + id + 'i)"/>' +
+        '<circle cx="' + (x + .5) + '" cy="' + (y + 2.5) + '" r="6.2" fill="#12122E"/>' +
+        '<path d="M' + (x - 8) + ' ' + (y + 8) + 'q8 6 16 0" fill="none" stroke="#9FC1FF" stroke-width="2" stroke-linecap="round" opacity=".8"/>' +
+        (emo === "love" ? heart(x + 4, y - 5, .75, "#fff") : '<circle cx="' + (x + 4.5) + '" cy="' + (y - 4.5) + '" r="4.8" fill="#fff"/>') +
+        '<circle cx="' + (x - 4.5) + '" cy="' + (y + 5) + '" r="2.1" fill="#fff" opacity=".9"/>' +
+        '<path d="M' + (x - 14.5) + ' ' + (y - 3) + 'q14.5-17 29 0" fill="none" stroke="#1C1A3A" stroke-width="3.6" stroke-linecap="round"/>' +
+        '<path d="M' + (x + o * 13) + ' ' + (y - 6) + 'q' + (o * 5) + ' -2 ' + (o * 8) + ' -7M' + (x + o * 9.5) + ' ' + (y - 10.5) + 'q' + (o * 3) + ' -3 ' + (o * 4.5) + ' -8" fill="none" stroke="#1C1A3A" stroke-width="2.6" stroke-linecap="round"/>';
+    };
+    const closed = (x, mirror) => {
+      const o = mirror ? 1 : -1;
+      return '<path d="M' + (x - 12) + ' 103q12 10 24 0" fill="none" stroke="#1C1A3A" stroke-width="3.6" stroke-linecap="round"/>' +
+        '<path d="M' + (x + o * 11) + ' 105l' + (o * 5) + ' 4M' + (x + o * 6) + ' 108l' + (o * 3) + ' 5" stroke="#1C1A3A" stroke-width="2.4" stroke-linecap="round"/>';
+    };
+    let be = "";
+    if (emo === "asleep") be = closed(78, false) + closed(122, true);
+    else {
+      be = eye(78, 102, false) + eye(122, 102, true);
+      if (emo === "sleepy") be += '<path d="M63 99q15-18 30 0z" fill="' + c + '"/><path d="M107 99q15-18 30 0z" fill="' + c + '"/><path d="M64 99h28M108 99h28" stroke="#1C1A3A" stroke-width="3.4" stroke-linecap="round"/>';
+    }
+    const brows = emo === "sad" ? '<path d="M68 80q8-6 16 0M116 80q8-6 16 0" fill="none" stroke="' + line + '" stroke-width="2.6" stroke-linecap="round" transform="rotate(0)"/><path d="M72 82l10-5M128 82l-10-5" stroke="' + line + '" stroke-width="2.6" stroke-linecap="round"/>'
+      : '<path d="M71 76q7-4 14-1M115 75q7-3 14 1" fill="none" stroke="' + line + '" stroke-width="2" stroke-linecap="round" opacity=".75"/>';
+    const tear = emo === "sad" ? '<path d="M64 116q-5 9 0 13q5-4 0-13z" fill="#9AD4FF"/>' : "";
+    const bNose = '<path d="M94.5 121q5.5-3.5 11 0q-2 6-5.5 7q-3.5-1-5.5-7z" fill="#F7A1B4" stroke="#E07A95" stroke-width="1.6" stroke-linejoin="round"/><ellipse cx="98" cy="122" rx="1.8" ry="1.1" fill="#fff" opacity=".7"/>';
+    let bMouth;
+    if (emo === "love") bMouth = '<path d="M100 128v2"/><path d="M92 131q8 11 16 0z" fill="#F0607E" stroke="#1C1A3A" stroke-width="2.4" stroke-linejoin="round"/>';
+    else if (emo === "sad") bMouth = '<path d="M100 128v3M93 136q7-5 14 0" fill="none" stroke="#1C1A3A" stroke-width="2.6" stroke-linecap="round"/>';
+    else if (emo === "hungry") bMouth = '<path d="M100 128v2" stroke="#1C1A3A" stroke-width="2.4" stroke-linecap="round"/><ellipse cx="100" cy="134" rx="4.5" ry="5" fill="#F0607E" stroke="#1C1A3A" stroke-width="2.2"/><path d="M106 135q-2 9 2 11q4-3-2-11z" fill="#9AD4FF"/>';
+    else bMouth = '<path d="M100 128v3M92 131q4 5 8 0q4 5 8 0" fill="none" stroke="#1C1A3A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>';
+    const bCheeks = '<ellipse cx="60" cy="122" rx="14" ry="9" fill="url(#' + id + 'c)"/><ellipse cx="140" cy="122" rx="14" ry="9" fill="url(#' + id + 'c)"/>';
+    const bFace = brows + '<g class="eyes">' + be + '</g>' + tear + bCheeks + bNose + bMouth + faceAcc;
+    const foot = x => '<ellipse cx="' + x + '" cy="203" rx="21" ry="13" ' + furB + '/><ellipse cx="' + x + '" cy="206" rx="8.5" ry="6" fill="#F4A3B6"/><circle cx="' + (x - 9) + '" cy="198" r="3.2" fill="#F4A3B6"/><circle cx="' + x + '" cy="195.5" r="3.2" fill="#F4A3B6"/><circle cx="' + (x + 9) + '" cy="198" r="3.2" fill="#F4A3B6"/>';
+    const bunnyDefs = defs.replace('</defs>', '<radialGradient id="' + id + 'i" cx=".45" cy=".35" r=".75"><stop offset="0" stop-color="#7D9BEA"/><stop offset=".6" stop-color="#3D55A8"/><stop offset="1" stop-color="#22306E"/></radialGradient><radialGradient id="' + id + 'c"><stop offset="0" stop-color="#FF9EBB" stop-opacity=".75"/><stop offset="1" stop-color="#FF9EBB" stop-opacity="0"/></radialGradient></defs>');
+    return '<svg viewBox="0 -8 200 228" aria-hidden="true">' + bunnyDefs + back +
+      '<ellipse cx="100" cy="215" rx="46" ry="6" fill="#000" opacity=".1"/>' +
+      '<path d="M100 146c34 0 46 30 42 56H58c-4-26 8-56 42-56z" ' + furB + '/><path d="M100 154c16 0 24 16 23 34H77c-1-18 7-34 23-34z" fill="' + light + '" opacity=".75"/>' +
+      foot(62) + foot(138) +
+      '<path d="M84 176c-5 10-6 24-4 34 1 4 15 4 16 0 1-10 0-24-3-34zM116 176c5 10 6 24 4 34-1 4-15 4-16 0-1-10 0-24 3-34z" ' + furB + ' class="arm-l"/>' +
+      ears + '<path d="M100 54c35 0 56 22 58 48 9 9 10 30-2 40-13 15-32 20-56 20s-43-5-56-20c-12-10-11-31-2-40 2-26 23-48 58-48z" ' + fur + '/>' +
+      '<path d="M44 140q-6 6-1 12M156 140q6 6 1 12M52 148q-3 6 2 10M148 148q3 6-2 10" fill="none" stroke="' + line + '" stroke-width="2" stroke-linecap="round"/>' + extra +
+      '<g transform="translate(0 6)">' + bFace + '</g>' + acc + night + '</svg>';
+  }
+  if (false) {
+    const bean = (x) => '<ellipse cx="' + x + '" cy="207" rx="6" ry="4" fill="#FFB3C7"/><circle cx="' + (x - 6) + '" cy="200" r="2.2" fill="#FFB3C7"/><circle cx="' + x + '" cy="198" r="2.2" fill="#FFB3C7"/><circle cx="' + (x + 6) + '" cy="200" r="2.2" fill="#FFB3C7"/>';
+    const carrot = emo === "asleep" ? "" : '<g transform="translate(101 170) rotate(-24) scale(1.25)"><path d="M-5-12h10l-5 30z" fill="#FF9A3C" stroke="#E07A1E" stroke-width="1.8" stroke-linejoin="round"/><path d="M-3-3h4M-2 5h3" stroke="#E07A1E" stroke-width="1.4" stroke-linecap="round"/><path d="M0-12c-6-8-10-6-8-1M0-12c0-9 4-11 5-4M0-12c6-7 10-4 7 0" fill="none" stroke="#5DBB63" stroke-width="2.6" stroke-linecap="round"/></g>';
+    return '<svg viewBox="0 -8 200 228" aria-hidden="true">' + defs + back +
+      '<ellipse cx="100" cy="214" rx="38" ry="6" fill="#000" opacity=".1"/>' +
+      '<circle cx="138" cy="194" r="12" fill="#fff" stroke="' + line + '" stroke-width="2"/>' +
+      '<path d="M100 148c32 0 44 26 40 48-3 14-77 14-80 0-4-22 8-48 40-48z" ' + furB + '/><ellipse cx="100" cy="186" rx="22" ry="17" fill="' + light + '" opacity=".85"/>' +
+      '<ellipse cx="82" cy="204" rx="15" ry="10" ' + furB + '/><ellipse cx="118" cy="204" rx="15" ry="10" ' + furB + '/>' + bean(82) + bean(118) +
+      '<ellipse cx="88" cy="180" rx="10" ry="9" ' + furB + ' class="arm-l"/><ellipse cx="112" cy="180" rx="10" ry="9" ' + furB + ' class="arm-r"/>' + carrot +
+      ears + '<path d="M100 50c46 0 68 30 66 64-2 32-30 46-66 46s-64-14-66-46c-2-34 20-64 66-64z" ' + fur + '/>' +
+      '<path d="M38 128q-8 2-6 8q4 2 8-2M162 128q8 2 6 8q-4 2-8-2" fill="' + c + '" stroke="' + line + '" stroke-width="2" stroke-linejoin="round"/>' + extra +
+      '<g transform="translate(0 6)">' + face + '</g>' + acc + night + '</svg>';
+  }
+  return '<svg viewBox="0 -8 200 228" aria-hidden="true">' + defs + back +
+    '<ellipse cx="100" cy="214" rx="40" ry="6" fill="#000" opacity=".1"/>' +
+    '<ellipse cx="80" cy="205" rx="14" ry="9" ' + furB + '/><ellipse cx="120" cy="205" rx="14" ry="9" ' + furB + '/>' +
+    '<ellipse cx="100" cy="180" rx="40" ry="31" ' + furB + '/><ellipse cx="100" cy="186" rx="23" ry="18" fill="' + light + '" opacity=".8"/>' +
+    '<circle cx="88" cy="174" r="10" ' + furB + ' class="arm-l"/><circle cx="112" cy="174" r="10" ' + furB + ' class="arm-r"/>' +
+    ears + '<ellipse cx="100" cy="100" rx="66" ry="60" ' + fur + '/>' + extra + muzzle +
+    face + acc + night + '</svg>';
+}
+
 function bunnySVG(o) {
   const c = o.color || PET_COLORS.bunny[0][0];
   const emo = o.emotion || "happy";
@@ -284,7 +415,7 @@ function bunnySVG(o) {
 }
 
 function petSVG(o) {
-  return o.species === "bear" ? petSVGDrawn(o) : bunnySVG(o);
+  return o.species === "bear" ? petSVGDrawn(o) : bunnyDrawn(o);
 }
 
 function petSay(stage, text) {
@@ -487,7 +618,7 @@ function petSetup() {
       h("div", { class: "species-pick" }, Object.entries(PET_SPECIES).map(([k, label]) =>
         h("button", { type: "button", class: "species" + (pick.species === k ? " on" : ""), onclick: () => { pick.species = k; pick.color = ""; render(); } },
           h("span", { html: petSVG({ species: k, emotion: "happy", color: k === pick.species ? pick.color : "" }) }), h("strong", { text: label })))),
-      h("h3", { text: pick.species === "bunny" ? "2. Parıltı rengini seç" : "2. Rengini seç" }),
+      h("h3", { text: "2. Rengini seç" }),
       h("div", { class: "swatches" }, colors.map(([hex, label]) =>
         h("button", { type: "button", class: "swatch" + (pick.color === hex ? " on" : ""), title: label, "aria-label": label, style: "--c:" + hex, onclick: () => { pick.color = hex; render(); } }))),
       h("h3", { text: "3. Ona bir isim ver" }),
@@ -562,7 +693,7 @@ function renderPet() {
 
   const look = card({ title: "Görünüm ve efekt", icon: "star", span: "span-12", tint: "t-peach",
     body: [
-      h("h3", { class: "form-title", text: p.species === "bunny" ? "Parıltı rengi" : "Renk" }),
+      h("h3", { class: "form-title", text: "Renk" }),
       h("div", { class: "swatches" }, PET_COLORS[p.species].map(([hex, label]) =>
         h("button", { type: "button", class: "swatch" + (p.color === hex ? " on" : ""), title: label, "aria-label": label, style: "--c:" + hex, onclick: () => { p.color = hex; savePet(); render(); } }))),
       h("h3", { class: "form-title", style: "margin-top:1rem", text: "Etrafına saçılan efekt" }),
