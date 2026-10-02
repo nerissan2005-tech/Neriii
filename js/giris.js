@@ -262,6 +262,7 @@ async function startApp(user) {
   };
   startItems();
   go(location.hash.slice(1) || "home");
+  setTimeout(petCarePrompt, 2200);
   unsubs.push(db.collection("config").doc("site").onSnapshot(d => {
     site = d.exists ? d.data() : {};
     if (state.view === "home") scheduleRender();
