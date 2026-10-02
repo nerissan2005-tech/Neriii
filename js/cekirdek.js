@@ -304,8 +304,9 @@ function render() {
     const on = b.dataset.view === state.view || (b.dataset.view === "more" && more);
     if (on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
   });
+  const navView = (typeof NAV_ALIAS !== "undefined" && NAV_ALIAS[state.view]) || state.view;
   document.querySelectorAll("#nav button").forEach(b => {
-    if (b.dataset.view === state.view) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+    if (b.dataset.view === navView) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
   });
   const act = document.activeElement;
   const keepId = act && act.id && $("view").contains(act) ? act.id : null;
