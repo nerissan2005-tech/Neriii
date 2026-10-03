@@ -58,7 +58,7 @@ const VIEWS = [
   ["habits", "Alışkanlıklar", "repeat"],
   ["calendar", "Takvim & Alışkanlık", "calendar"],
   ["journal", "Günlük", "heart"],
-  ["shopping", "Ödemelerim ve Alışveriş", "wallet"],
+  ["shopping", "Ödemelerim - Alışveriş", "wallet"],
   ["prayers", "Dualarımız", "moon"],
   ["pet", "Petim", "paw"],
   ["memories", "Anı Defteri", "camera"],
