@@ -960,29 +960,22 @@ input.switch:checked::after { transform: translateX(1.2rem); border: 0; width: 1
 @keyframes badgefloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 @media (prefers-reduced-motion: reduce) { .emo-badge { animation: none; } }
 
-/* Ödemelerim ve Alışveriş */
-.fin-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; position: relative; }
-.fin-stat { display: grid; gap: .15rem; align-content: start; padding: .2rem .1rem; }
-.fin-l { font-size: .78rem; color: var(--muted); font-weight: 700; letter-spacing: .03em; }
-.fin-v { font-size: 1.45rem; line-height: 1.15; overflow-wrap: anywhere; }
-.fin-stat small { font-size: .78rem; color: var(--muted); }
-.fin-stat.pos .fin-v, .pos { color: #3E8E6E; }
-.fin-stat.neg .fin-v, .neg { color: #C0455F; }
+/* Ödemelerim - Alışveriş */
+.pos { color: #3E8E6E; }
+.neg { color: #C0455F; }
+.pay-sum { display: grid; gap: .4rem; margin: 1rem 0 .4rem; padding: .9rem 1rem; border-radius: 1rem; background: rgba(127,127,127,.12); position: relative; }
+.pay-line { display: flex; justify-content: space-between; gap: 1rem; margin: 0; align-items: baseline; }
+.pay-line.big { font-size: 1.25rem; margin-top: .25rem; padding-top: .55rem; border-top: 1px dashed rgba(127,127,127,.35); }
+.pay-rows { list-style: none; margin: .7rem 0 0; padding: 0; position: relative; }
+.pay-rows li { display: flex; align-items: center; gap: .6rem; padding: .6rem 0; border-bottom: 1px solid rgba(127,127,127,.2); }
 .pay-main { display: grid; gap: .1rem; min-width: 0; flex: 1; }
 .pay-name { font-weight: 600; overflow-wrap: anywhere; }
 .pay-sub { font-size: .76rem; color: var(--muted); }
-.pay-sub.soon { color: #B9702E; font-weight: 700; }
-.pay-sub.late { color: #C0455F; font-weight: 700; }
-.pay-amt { font-weight: 700; font-size: .9rem; white-space: nowrap; color: var(--plum); }
-.pay-total { margin: .6rem 0 0; font-weight: 700; font-size: .92rem; position: relative; }
-.pay-form { margin-bottom: .9rem; position: relative; }
-.pay-done-title { margin: 1rem 0 .2rem; font-size: .78rem; color: var(--muted); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; position: relative; }
-.plan { display: grid; gap: .9rem; position: relative; }
-.plan-top { display: flex; justify-content: space-between; gap: .5rem; font-size: .92rem; margin-bottom: .3rem; }
-.plan-left { display: block; margin-top: .25rem; font-size: .8rem; font-weight: 700; }
-.bar.over i { background: #C0455F; }
+.pay-amt { font-weight: 700; white-space: nowrap; }
+.pay-home { display: grid; gap: .2rem; position: relative; }
+.pay-home strong { font-size: 1.6rem; line-height: 1.1; }
+.pay-home small { color: var(--muted); font-size: .8rem; }
 .mini-title { margin: 1rem 0 .5rem; font-size: .78rem; color: var(--muted); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
-@media (max-width: 700px) { .fin-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 /* Ana sayfa: telefon düzeni */
 .t-m { display: none; }
