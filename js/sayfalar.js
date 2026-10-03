@@ -128,22 +128,18 @@ function renderHome() {
       : h("p", { class: "empty", text: "Ulaşmak istediğin ilk hedefi ekle." })]
   }));
 
-  const payAll = payOpen();
-  const payInc = sumAmt(myIncomes());
-  const payCur = payPlan(1)[0];
-  const payDebtAll = payAll.reduce((t, p) => t + payDebt(p), 0);
+  const pt = payTotals();
   const payCard = card({
     title: "Ödemelerim", icon: "wallet", tint: "t-sage", span: "span-3 m-pay", doodle: "leaf",
-    onAdd: () => go("shopping", { shopTab: "pay", focus: "#payName" }),
-    body: [
-      payInc ? h("p", { class: "pay-total " + (payInc - payCur.total >= 0 ? "pos" : "neg"), style: "margin:0 0 .5rem", text: "Maaştan kalan: " + fmtMoney.format(payInc - payCur.total) }) : null,
-      payAll.length
-        ? h("ul", { class: "checks pay-list" }, payAll.slice(0, 4).map(p => payRow(p, true)))
-        : h("p", { class: "empty", text: "Faturalarını ve taksitlerini ekle, unutma ♡" }),
-      payDebtAll > 0 ? h("p", { class: "pay-total", text: "Toplam borcum: " + fmtMoney.format(payDebtAll) }) : null
-    ]
+    onAdd: () => go("shopping", { shopTab: "pay" }),
+    body: [pt.salary
+      ? h("div", { class: "pay-home" },
+          h("small", { text: "Kalan maaşım" }),
+          h("strong", { class: pt.left >= 0 ? "pos" : "neg", text: fmtMoney.format(pt.left) }),
+          h("small", { text: "Maaş " + fmtMoney.format(pt.salary) + " · Ödenen " + fmtMoney.format(pt.spent) }))
+      : h("p", { class: "empty", text: "Maaşını girerek başla, ödediklerini ekle; kalanı otomatik hesaplansın ♡" })]
   });
-  payCard.append(h("button", { class: "more", type: "button", text: "Tüm ödemeler", onclick: () => go("shopping", { shopTab: "pay" }) }));
+  payCard.append(h("button", { class: "more", type: "button", text: "Ödemelerim", onclick: () => go("shopping", { shopTab: "pay" }) }));
   grid.append(payCard);
 
   grid.append(card({ title: "Takvim", icon: "calendar", span: "span-3 m-cal", more: ["Tüm etkinlikler", "calendar"], body: [monthGrid(false)] }));
@@ -378,11 +374,6 @@ function renderCalendar() {
 }
 
 const fmtMoney = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 2 });
-const myPays = () => listOf("payment").filter(isMine);
-const myIncomes = () => listOf("income").filter(isMine);
-const sumAmt = a => a.reduce((s, x) => s + (Number(x.amount) || 0), 0);
-const payDebt = p => (Number(p.amount) || 0) * (p.months > 0 ? p.months : 1);
-const payOpen = () => myPays().filter(p => !p.done).sort((a, b) => (a.due || "9999-99-99").localeCompare(b.due || "9999-99-99") || (a.at || 0) - (b.at || 0));
 
 function parseMoney(v) {
   let s = String(v || "").replace(/[₺\s]/g, "");
@@ -393,203 +384,75 @@ function parseMoney(v) {
   return isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : 0;
 }
 
-function nextMonthKey(k, day) {
-  const d = fromKey(k);
-  const want = day || d.getDate();
-  const n = new Date(d.getFullYear(), d.getMonth() + 1, 1);
-  const last = new Date(n.getFullYear(), n.getMonth() + 1, 0).getDate();
-  n.setDate(Math.min(want, last));
-  return keyOf(n);
+function payData() {
+  if (!data.pay || typeof data.pay !== "object") data.pay = { salary: 0, rows: [] };
+  if (!Array.isArray(data.pay.rows)) data.pay.rows = [];
+  return data.pay;
 }
 
-function payDue(p) {
-  if (!p.due) return null;
-  const diff = Math.round((fromKey(p.due) - today) / 86400000);
-  if (p.done) return { text: fmtShort.format(fromKey(p.due)), cls: "" };
-  if (diff < 0) return { text: fmtShort.format(fromKey(p.due)) + ", " + (-diff) + " gün gecikti", cls: " late" };
-  if (diff === 0) return { text: "Bugün", cls: " soon" };
-  if (diff === 1) return { text: "Yarın", cls: " soon" };
-  if (diff <= 3) return { text: diff + " gün sonra", cls: " soon" };
-  return { text: fmtShort.format(fromKey(p.due)), cls: "" };
+function payTotals() {
+  const d = payData();
+  const salary = Number(d.salary) || 0;
+  const spent = d.rows.reduce((s, r) => s + (Number(r.amount) || 0), 0);
+  return { salary, spent, left: Math.round((salary - spent) * 100) / 100 };
 }
 
-function setPaid(p, on) {
-  const patch = { done: on, paidAt: on ? Date.now() : 0 };
-  const left = p.months > 0 ? p.months : 0;
-  if (on && p.repeat && p.due && !p.spawned && isMine(p) && (left === 0 || left > 1)) {
-    patch.spawned = true;
-    addItem("payment", { text: p.text, amount: p.amount || 0, due: nextMonthKey(p.due, p.day), day: p.day || fromKey(p.due).getDate(), repeat: true, months: left > 1 ? left - 1 : 0, done: false, spawned: false, paidAt: 0 }, "private");
-  }
-  updItem(p, patch);
+function payLine(label, value, cls) {
+  return h("p", { class: "pay-line" + (cls ? " " + cls : "") }, h("span", { text: label }), h("strong", { text: value }));
 }
 
-function payPlan(n) {
-  const base = new Date(today.getFullYear(), today.getMonth(), 1);
-  const rows = Array.from({ length: n }, (_, i) => {
-    const d = new Date(base.getFullYear(), base.getMonth() + i, 1);
-    return { key: d.getFullYear() + "-" + pad(d.getMonth() + 1), d, total: 0, paid: 0 };
-  });
-  const idx = {};
-  rows.forEach((r, i) => { idx[r.key] = i; });
-  myPays().forEach(p => {
-    const amt = Number(p.amount) || 0;
-    if (!amt) return;
-    if (p.done) {
-      if (!p.paidAt) return;
-      const mk = keyOf(new Date(p.paidAt)).slice(0, 7);
-      if (mk in idx) { rows[idx[mk]].total += amt; rows[idx[mk]].paid += amt; }
-      return;
-    }
-    let mk = (p.due || todayKey).slice(0, 7);
-    if (mk < rows[0].key) mk = rows[0].key;
-    let [y, m] = mk.split("-").map(Number);
-    const times = p.repeat ? (p.months > 0 ? p.months : n) : 1;
-    for (let c = 0; c < times; c++) {
-      const k = y + "-" + pad(m);
-      if (k in idx) rows[idx[k]].total += amt;
-      m++; if (m > 12) { m = 1; y++; }
-    }
-  });
-  return rows;
-}
-
-function payRow(p, compact) {
-  const due = payDue(p);
-  const sub = [due && due.text, p.repeat ? (p.months > 0 ? p.months + " taksit kaldı" : "Her ay") : null].filter(Boolean).join(" · ");
-  return h("li", { class: "pay-row" + (p.done ? " done" : "") },
-    h("label", {},
-      h("input", { type: "checkbox", checked: !!p.done, onchange: e => setPaid(p, e.target.checked) }),
-      h("span", { class: "pay-main" },
-        h("span", { class: "pay-name", text: p.text }),
-        sub ? h("small", { class: "pay-sub" + (due ? due.cls : ""), text: sub }) : null)),
-    p.amount ? h("span", { class: "pay-amt", text: fmtMoney.format(p.amount) }) : null,
-    compact ? null : delBtn(p, p.text, "Bu ödeme silinsin mi?")
-  );
-}
-
-function statBox(label, value, sub, cls) {
-  return h("div", { class: "fin-stat" + (cls ? " " + cls : "") },
-    h("span", { class: "fin-l", text: label }),
-    h("strong", { class: "fin-v", text: value }),
-    sub ? h("small", { text: sub }) : null);
-}
-
-function financeSummary() {
-  const incomes = myIncomes();
-  const income = sumAmt(incomes);
-  const cur = payPlan(1)[0];
-  const open = payOpen();
-  const debt = open.reduce((s, p) => s + payDebt(p), 0);
-  const left = income - cur.total;
-  return h("section", { class: "card span-12" },
-    h("div", { class: "fin-stats" },
-      statBox("Aylık gelirim", income ? fmtMoney.format(income) : "—", incomes.length ? "Maaş ve diğer gelirler" : "Aşağıdan maaşını ekle"),
-      statBox("Bu ayki ödemelerim", fmtMoney.format(cur.total), "Ödenen " + fmtMoney.format(cur.paid) + " · Kalan " + fmtMoney.format(cur.total - cur.paid)),
-      statBox("Maaştan kalan", income ? fmtMoney.format(left) : "—", income ? (left >= 0 ? "Bu ay harcamana kalan" : "Bu ay gelirini aşıyor") : "Maaş eklenince hesaplanır", income ? (left >= 0 ? "pos" : "neg") : ""),
-      statBox("Toplam borcum", fmtMoney.format(debt), open.length ? open.length + " açık ödeme, taksitler dahil" : "Açık ödeme yok")
-    )
-  );
-}
-
-function incomeCard() {
-  const list = myIncomes();
+function renderPayPane() {
+  const d = payData();
+  const t = payTotals();
+  const rows = d.rows.slice().sort((a, b) => (b.at || 0) - (a.at || 0));
   const msg = h("p", { class: "err" });
-  const form = h("form", { class: "pay-form", onsubmit: e => {
+
+  const salaryForm = h("form", { class: "row", onsubmit: e => {
     e.preventDefault();
-    const name = $("incName").value.trim() || "Maaş";
-    const amount = parseMoney($("incAmt").value);
-    if (!amount) { msg.textContent = "Tutarı yaz."; return; }
-    const day = Math.min(31, Math.max(0, parseInt($("incDay").value, 10) || 0));
-    msg.textContent = "";
-    addItem("income", { text: name, amount, day }, "private");
-    $("incName").value = ""; $("incAmt").value = ""; $("incDay").value = "";
-    showToast("Gelir eklendi ♡");
+    d.salary = parseMoney($("paySalary").value);
+    save();
+    showToast("Maaşın kaydedildi ♡");
+    render();
   } },
-    h("div", { class: "row" },
-      h("input", { class: "field", id: "incName", type: "text", placeholder: "Maaş", "aria-label": "Gelir adı", autocomplete: "off" }),
-      h("input", { class: "field", id: "incAmt", type: "text", inputmode: "decimal", placeholder: "Tutar (₺)", "aria-label": "Tutar", autocomplete: "off", style: "flex:none;width:7.5rem;min-width:0" })),
-    h("div", { class: "row", style: "margin-top:.6rem" },
-      h("input", { class: "field", id: "incDay", type: "number", min: "1", max: "31", placeholder: "Ayın kaçında yatıyor? (isteğe bağlı)", "aria-label": "Maaş günü", style: "min-width:0" }),
-      h("button", { class: "btn primary", type: "submit", text: "Ekle" })),
-    msg);
-  return card({
-    title: "Maaşım ve gelirlerim", icon: "wallet", tint: "t-peach", span: "", doodle: "leaf",
-    body: [
-      form,
-      list.length ? h("ul", { class: "checks pay-list" }, list.map(i => h("li", { class: "pay-row" },
-        h("span", { class: "pay-main" }, h("span", { class: "pay-name", text: i.text }), i.day ? h("small", { class: "pay-sub", text: "Her ayın " + i.day + ". günü" }) : null),
-        h("span", { class: "pay-amt", text: fmtMoney.format(i.amount || 0) }),
-        delBtn(i, i.text, "Bu gelir silinsin mi?")))) : h("p", { class: "empty", text: "Maaşını ekle, kalan tutarı otomatik hesaplayayım." }),
-      list.length ? h("p", { class: "pay-total", text: "Aylık toplam: " + fmtMoney.format(sumAmt(list)) }) : null
-    ]
-  });
-}
+    h("input", { class: "field", id: "paySalary", type: "text", inputmode: "decimal", placeholder: "Örn. 25000", "aria-label": "Toplam maaş", autocomplete: "off", value: d.salary ? String(d.salary).replace(".", ",") : "" }),
+    h("button", { class: "btn primary", type: "submit", text: "Kaydet" }));
 
-function planCard() {
-  const income = sumAmt(myIncomes());
-  const rows = payPlan(6).filter((r, i) => i === 0 || r.total > 0);
-  return card({
-    title: "Ödeme planım", icon: "calendar", tint: "t-lilac", span: "",
-    body: [
-      h("div", { class: "plan" }, rows.map(r => {
-        const left = income - r.total;
-        const pct = income ? Math.min(100, Math.round(r.total / income * 100)) : 0;
-        return h("div", { class: "plan-row" },
-          h("div", { class: "plan-top" }, h("strong", { text: fmtMonth.format(r.d) }), h("span", { text: fmtMoney.format(r.total) })),
-          income ? h("div", { class: "bar" + (left < 0 ? " over" : "") }, h("i", { style: "width:" + pct + "%" })) : null,
-          income ? h("small", { class: "plan-left " + (left >= 0 ? "pos" : "neg"), text: left >= 0 ? "Maaştan kalan " + fmtMoney.format(left) : fmtMoney.format(-left) + " açık" }) : null);
-      })),
-      h("p", { class: "empty", style: "margin-top:.8rem", text: "Her ay tekrarlayan ödemeler ve taksitler plana kendiliğinden eklenir." })
-    ]
-  });
-}
-
-function paymentsCard() {
-  const open = payOpen();
-  const paid = myPays().filter(p => p.done).sort((a, b) => (b.paidAt || 0) - (a.paidAt || 0));
-  const msg = h("p", { class: "err" });
-  const form = h("form", { class: "pay-form", onsubmit: e => {
+  const addForm = h("form", { onsubmit: e => {
     e.preventDefault();
-    const name = $("payName").value.trim();
-    if (!name) { msg.textContent = "Ödemenin adını yaz."; return; }
     const amount = parseMoney($("payAmt").value);
-    if (!amount) { msg.textContent = "Tutarı yaz."; return; }
-    const type = $("payType").value;
-    const due = $("payDue").value || "";
-    const months = type === "inst" ? Math.max(0, parseInt($("payMonths").value, 10) || 0) : 0;
-    if (type === "inst" && months < 1) { msg.textContent = "Kaç taksit kaldığını yaz."; return; }
-    if (type !== "once" && !due) { msg.textContent = "Tekrarlayan ödeme için bir tarih seç."; return; }
-    msg.textContent = "";
-    addItem("payment", { text: name, amount, due, day: due ? fromKey(due).getDate() : 0, repeat: type !== "once", months, done: false, spawned: false, paidAt: 0 }, "private");
-    $("payName").value = ""; $("payAmt").value = ""; $("payDue").value = ""; $("payMonths").value = ""; $("payType").value = "once"; $("payMonthsWrap").hidden = true;
-    showToast("Ödeme eklendi ♡");
+    if (!amount) { msg.textContent = "Ödediğin tutarı yaz."; return; }
+    d.rows.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), text: $("payWhat").value.trim() || "Ödeme", amount, at: Date.now() });
+    save();
+    render();
+    setTimeout(() => { const el = $("payWhat"); if (el) el.focus(); }, 60);
   } },
     h("div", { class: "row" },
-      h("input", { class: "field", id: "payName", type: "text", placeholder: "Örn. Kredi kartı, elektrik faturası", "aria-label": "Ödeme adı", autocomplete: "off" }),
+      h("input", { class: "field", id: "payWhat", type: "text", placeholder: "Nereye ödedin? Örn. Kira", "aria-label": "Nereye ödedin", autocomplete: "off" }),
       h("input", { class: "field", id: "payAmt", type: "text", inputmode: "decimal", placeholder: "Tutar (₺)", "aria-label": "Tutar", autocomplete: "off", style: "flex:none;width:7.5rem;min-width:0" })),
-    h("div", { class: "row", style: "margin-top:.6rem" },
-      h("select", { id: "payType", "aria-label": "Ödeme türü", onchange: e => { $("payMonthsWrap").hidden = e.target.value !== "inst"; } },
-        h("option", { value: "once", text: "Tek seferlik" }),
-        h("option", { value: "monthly", text: "Her ay (fatura, abonelik)" }),
-        h("option", { value: "inst", text: "Taksit / borç" })),
-      h("span", { id: "payMonthsWrap", hidden: true },
-        h("input", { class: "field", id: "payMonths", type: "number", min: "1", max: "120", placeholder: "Kaç taksit kaldı?", "aria-label": "Kalan taksit", style: "min-width:0;width:9rem" })),
-      h("input", { class: "field", id: "payDue", type: "date", style: "flex:none;min-width:0", "aria-label": "Ödeme tarihi" })),
-    h("p", { class: "tag", style: "margin-top:.4rem", text: "Tarih: son ödeme günü (taksitte sıradaki taksit günü)." }),
-    h("div", { class: "row", style: "margin-top:.5rem" }, h("button", { class: "btn primary", type: "submit", text: "Ödemeyi ekle" })),
+    h("div", { class: "row", style: "margin-top:.6rem" }, h("button", { class: "btn primary", type: "submit", text: "Ödemeyi ekle" })),
     msg);
-  const doneMine = paid.filter(canDel);
-  return card({
-    title: "Ödemelerim", icon: "wallet", tint: "t-sage", span: "span-7", doodle: "basket",
+
+  return h("div", { style: "max-width:42rem" }, card({
+    title: "Maaşım ve ödemelerim", icon: "wallet", tint: "t-sage", span: "", doodle: "leaf",
     body: [
-      form,
-      open.length ? h("ul", { class: "checks pay-list" }, open.map(p => payRow(p))) : h("p", { class: "empty", text: "Yaklaşan ödeme yok. Faturalarını, borçlarını ve taksitlerini ekle, unutma ♡" }),
-      paid.length ? h("p", { class: "pay-done-title", text: "Ödenenler" }) : null,
-      paid.length ? h("ul", { class: "checks pay-list" }, paid.slice(0, 8).map(p => payRow(p))) : null,
-      doneMine.length ? h("button", { class: "btn", type: "button", style: "margin-top:1rem;align-self:flex-start;position:relative", text: "Ödenenleri temizle (" + doneMine.length + ")",
-        onclick: async () => { if (await ask({ title: "Ödenenler temizlensin mi?", text: "İşaretlenen " + doneMine.length + " ödeme listeden kaldırılacak.", ok: "Temizle", icon: "wallet" })) doneMine.forEach(i => delItem(i)); } }) : null
+      h("label", { class: "lbl", for: "paySalary", style: "margin-top:0", text: "Toplam maaşım" }),
+      salaryForm,
+      h("div", { class: "pay-sum" },
+        payLine("Maaşım", fmtMoney.format(t.salary)),
+        payLine("Ödediklerim", fmtMoney.format(t.spent)),
+        payLine("Kalan maaşım", fmtMoney.format(t.left), "big " + (t.left >= 0 ? "pos" : "neg"))),
+      h("label", { class: "lbl", text: "Ödeme ekle" }),
+      addForm,
+      rows.length ? h("ul", { class: "pay-rows" }, rows.map(r => h("li", {},
+        h("span", { class: "pay-main" }, h("span", { class: "pay-name", text: r.text }), h("small", { class: "pay-sub", text: fmtShort.format(new Date(r.at || Date.now())) })),
+        h("span", { class: "pay-amt", text: fmtMoney.format(r.amount || 0) }),
+        h("button", { class: "icon-btn", type: "button", "aria-label": "Sil", html: ico("trash", 16), onclick: async () => {
+          if (await ask({ title: "Bu ödeme silinsin mi?", text: (r.text || "Ödeme") + " · " + fmtMoney.format(r.amount || 0), ok: "Sil", icon: "trash" })) { d.rows = d.rows.filter(x => x.id !== r.id); save(); render(); }
+        } })))) : h("p", { class: "empty", text: "Henüz ödeme eklemedin. Ödedikçe buraya yaz, kalan maaşın kendiliğinden hesaplansın ♡" }),
+      rows.length ? h("button", { class: "btn", type: "button", style: "margin-top:1rem;align-self:flex-start;position:relative", text: "Yeni aya başla (ödemeleri temizle)",
+        onclick: async () => { if (await ask({ title: "Ödemeler temizlensin mi?", text: "Maaşın kalır, eklediğin " + rows.length + " ödeme listeden silinir.", ok: "Temizle", icon: "trash" })) { d.rows = []; save(); render(); } } }) : null
     ]
-  });
+  }));
 }
 
 function renderShopping() {
@@ -600,22 +463,18 @@ function renderShopping() {
   if (tab === "shop") {
     const items = listOf("shop");
     const doneMine = items.filter(i => i.done && canDel(i));
-    body = h("section", { class: "card t-lilac", style: "max-width:42rem" },
-      doodle("basket"),
-      addForm("shop", "Listeye ekle", "shop", (t, v) => addItem("shop", { text: t, done: false }, v)),
-      h("div", { style: "margin-top:.75rem;position:relative" }, checklist(items, { empty: "Liste boş." })),
-      doneMine.length ? h("button", { class: "btn", type: "button", style: "margin-top:1rem;align-self:flex-start;position:relative", text: "Alınanları temizle (" + doneMine.length + ")",
-        onclick: async () => { if (await ask({ title: "Alınanlar temizlensin mi?", text: "İşaretlenen " + doneMine.length + " ürün listeden kaldırılacak.", ok: "Temizle", icon: "cart" })) doneMine.forEach(i => delItem(i)); } }) : null
-    );
-  } else {
-    body = h("div", { class: "grid" },
-      financeSummary(),
-      paymentsCard(),
-      h("div", { class: "stack span-5" }, incomeCard(), planCard())
-    );
-  }
+    body = h("div", { style: "max-width:42rem" }, card({
+      title: "Alışveriş Listesi", icon: "cart", tint: "t-lilac", span: "", doodle: "basket",
+      body: [
+        addForm("shop", "Listeye ekle", "shop", (t, v) => addItem("shop", { text: t, done: false }, v)),
+        h("div", { style: "margin-top:.75rem;position:relative" }, checklist(items, { empty: "Liste boş." })),
+        doneMine.length ? h("button", { class: "btn", type: "button", style: "margin-top:1rem;align-self:flex-start;position:relative", text: "Alınanları temizle (" + doneMine.length + ")",
+          onclick: async () => { if (await ask({ title: "Alınanlar temizlensin mi?", text: "İşaretlenen " + doneMine.length + " ürün listeden kaldırılacak.", ok: "Temizle", icon: "cart" })) doneMine.forEach(i => delItem(i)); } }) : null
+      ]
+    }));
+  } else body = renderPayPane();
   return h("div", {},
-    pageHead("Ödemelerim ve Alışveriş", tab === "pay" ? "Maaşını gir, ödemelerini ekle; kalanı ve toplam borcunu otomatik hesaplasın." : "Alınacakları yaz, aldıkça işaretle."),
+    pageHead("Ödemelerim - Alışveriş", tab === "pay" ? "Maaşını gir, ödediklerini ekle; kalan maaşın otomatik hesaplansın." : "Alınacakları yaz, aldıkça işaretle."),
     tabs, body);
 }
 
